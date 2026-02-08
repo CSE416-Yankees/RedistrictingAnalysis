@@ -1,0 +1,136 @@
+.home {
+  display: flex;
+  height: calc(100vh - var(--header-height));
+}
+
+.home__map {
+  flex: 1;
+  position: relative;
+}
+
+.home__panel {
+  width: 380px;
+  min-width: 380px;
+  overflow-y: auto;
+  background: var(--color-surface);
+  border-left: 1px solid var(--color-border);
+  padding: 28px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+.home__heading {
+  font-size: 1.4rem;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+  color: var(--color-text);
+}
+
+.home__desc {
+  margin-top: 8px;
+  font-size: 0.9rem;
+  color: var(--color-text-secondary);
+  line-height: 1.6;
+}
+
+.home__states-heading {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: var(--color-text-secondary);
+  margin-bottom: 12px;
+}
+
+.home__state-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.state-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  transition: all 0.15s ease;
+  width: 100%;
+  text-align: left;
+}
+
+.state-card:hover {
+  background: #e8f0fe;
+  border-color: var(--color-primary);
+  transform: translateX(2px);
+}
+
+.state-card__abbr {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  background: var(--color-primary);
+  color: white;
+  border-radius: var(--radius-sm);
+  font-weight: 700;
+  font-size: 0.9rem;
+}
+
+.state-card__name {
+  flex: 1;
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.state-card__arrow {
+  font-size: 1.2rem;
+  color: var(--color-text-secondary);
+  transition: transform 0.15s ease;
+}
+
+.state-card:hover .state-card__arrow {
+  transform: translateX(4px);
+  color: var(--color-primary);
+}
+
+/* Features */
+.home__features {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.feature {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.feature__icon {
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #e8f0fe;
+  border-radius: var(--radius-sm);
+  color: var(--color-primary);
+}
+
+.feature strong {
+  display: block;
+  font-size: 0.85rem;
+  margin-bottom: 2px;
+}
+
+.feature p {
+  font-size: 0.8rem;
+  color: var(--color-text-secondary);
+  line-height: 1.4;
+}

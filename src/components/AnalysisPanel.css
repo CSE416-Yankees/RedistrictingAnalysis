@@ -1,0 +1,52 @@
+.analysis-panel {
+  padding: 16px;
+  overflow-y: auto;
+}
+
+.chart-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 20px;
+  box-shadow: var(--shadow-sm);
+}
+
+.chart-title {
+  font-size: 1rem;
+  font-weight: 600;
+  margin-bottom: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.chart-subtitle {
+  font-size: 0.8rem;
+  font-weight: 400;
+  color: var(--color-text-secondary);
+}
+
+/* Comparison summary */
+.comparison-stats {
+  display: flex;
+  gap: 24px;
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--color-border);
+}
+
+.comparison-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.comparison-stat__label {
+  font-size: 0.75rem;
+  color: var(--color-text-secondary);
+}
+
+.comparison-stat__value {
+  font-size: 1.25rem;
+  font-weight: 700;
+}
