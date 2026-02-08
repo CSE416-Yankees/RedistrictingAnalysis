@@ -34,6 +34,7 @@ export default function StateAnalysisPage() {
           </div>
           <div className="state-analysis__map-container">
             <StateMap
+              key={stateAbbr}
               stateAbbr={stateAbbr}
               center={stateData.center}
               zoom={stateData.zoom}
