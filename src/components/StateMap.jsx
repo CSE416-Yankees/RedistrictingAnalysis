@@ -5,7 +5,7 @@ import './StateMap.css';
 
 // ─── Choropleth color scales ────────────────────────────────────
 // Sequential scale: light → dark (for minority %, etc.)
-const CHOROPLETH_SCALE = [
+const SEQUENTIAL_SCALE = [
   { t: 0, color: '#f7fbff' },
   { t: 0.2, color: '#c6dbef' },
   { t: 0.4, color: '#6baed6' },
@@ -14,19 +14,39 @@ const CHOROPLETH_SCALE = [
   { t: 1, color: '#08306b' },
 ];
 
-function getChoroplethColor(value, min, max) {
-  if (min === max) return CHOROPLETH_SCALE[2].color;
+// Diverging scale: dark red → clear → dark blue (Rep → competitive → Dem)
+const DIVERGING_SCALE = [
+  { t: 0, color: '#8b0000' },   // dark red
+  { t: 0.25, color: '#c0392b' },
+  { t: 0.5, color: '#f5f5f5' }, // clear/white
+  { t: 0.75, color: '#3498db' },
+  { t: 1, color: '#0d47a1' },   // dark blue
+];
+
+function getSequentialColor(value, min, max) {
+  if (min === max) return SEQUENTIAL_SCALE[2].color;
   const t = (value - min) / (max - min);
   const t2 = Math.max(0, Math.min(1, t));
-  for (let i = CHOROPLETH_SCALE.length - 1; i >= 0; i--) {
-    if (t2 >= CHOROPLETH_SCALE[i].t) {
-      const next = CHOROPLETH_SCALE[i + 1] || CHOROPLETH_SCALE[i];
-      const curr = CHOROPLETH_SCALE[i];
-      const frac = (t2 - curr.t) / (next.t - curr.t);
+  return interpolateColor(t2, SEQUENTIAL_SCALE);
+}
+
+function getDivergingColor(demPct) {
+  // 0% Dem = red, 50% Dem = white, 100% Dem = blue
+  const t = demPct / 100;
+  const t2 = Math.max(0, Math.min(1, t));
+  return interpolateColor(t2, DIVERGING_SCALE);
+}
+
+function interpolateColor(t, scale) {
+  for (let i = scale.length - 1; i >= 0; i--) {
+    if (t >= scale[i].t) {
+      const next = scale[i + 1] || scale[i];
+      const curr = scale[i];
+      const frac = (t - curr.t) / (next.t - curr.t);
       return frac < 1 ? curr.color : next.color;
     }
   }
-  return CHOROPLETH_SCALE[0].color;
+  return scale[0].color;
 }
 
 function FlyTo({ center, zoom }) {
@@ -47,17 +67,21 @@ export default function StateMap({ stateAbbr, center, zoom, districtData }) {
   let minVal = Infinity, maxVal = -Infinity;
   if (districtData) {
     districtData.forEach((d) => {
-      const v = metric === 'minorityPct' ? d.minorityPct : metric === 'dem' ? d.dem * 100 : d.rep * 100;
+      const v = metric === 'minorityPct' ? d.minorityPct : d.dem * 100;
       metricLookup[d.id] = v;
       minVal = Math.min(minVal, v);
       maxVal = Math.max(maxVal, v);
     });
   }
 
+  const isDiverging = metric === 'partisan';
+
   const createStyle = (feature) => {
     const distId = feature.properties.district;
     const value = metricLookup[distId] ?? null;
-    const color = value != null ? getChoroplethColor(value, minVal, maxVal) : '#cccccc';
+    const color = value != null
+      ? (isDiverging ? getDivergingColor(value) : getSequentialColor(value, minVal, maxVal))
+      : '#cccccc';
     return {
       fillColor: color,
       weight: 2,
@@ -70,11 +94,16 @@ export default function StateMap({ stateAbbr, center, zoom, districtData }) {
   const createPopup = (feature) => {
     const distId = feature.properties.district;
     const d = districtData?.find((x) => x.id === distId);
-    const value = d ? (metric === 'minorityPct' ? d.minorityPct : metric === 'dem' ? (d.dem * 100).toFixed(1) : (d.rep * 100).toFixed(1)) : '—';
-    const label = metric === 'minorityPct' ? 'Minority %' : metric === 'dem' ? 'Dem %' : 'Rep %';
+    if (!d) return `<div style="text-align:center;padding:6px;"><strong>${feature.properties.name}</strong></div>`;
+    const demPct = (d.dem * 100).toFixed(1);
+    const repPct = (d.rep * 100).toFixed(1);
+    const minorityPct = d.minorityPct;
+    const line2 = metric === 'minorityPct'
+      ? `Minority: ${minorityPct}%`
+      : `Dem: ${demPct}% · Rep: ${repPct}%`;
     return `<div style="text-align:center;padding:6px;">
       <strong>${feature.properties.name}</strong><br/>
-      <span style="font-size:12px;color:#666;">${label}: ${value}${metric === 'minorityPct' ? '%' : '%'}</span>
+      <span style="font-size:12px;color:#666;">${line2}</span>
     </div>`;
   };
 
@@ -108,7 +137,7 @@ export default function StateMap({ stateAbbr, center, zoom, districtData }) {
       });
   }, [stateAbbr]);
 
-  const metricLabel = metric === 'minorityPct' ? 'Minority Population %' : metric === 'dem' ? 'Democrat Vote Share %' : 'Republican Vote Share %';
+  const metricLabel = metric === 'minorityPct' ? 'Minority Population %' : 'Democrat ↔ Republican %';
 
   return (
     <div className="state-map">
@@ -141,22 +170,31 @@ export default function StateMap({ stateAbbr, center, zoom, districtData }) {
       </MapContainer>
 
       {/* Choropleth legend */}
-      {geoData && districtData && minVal <= maxVal && (
+      {geoData && districtData && (
         <div className="choropleth-legend">
           <div className="choropleth-legend__title">{metricLabel}</div>
           <div className="choropleth-legend__scale">
-            {CHOROPLETH_SCALE.map((s, i) => (
+            {(isDiverging ? DIVERGING_SCALE : SEQUENTIAL_SCALE).map((s, i) => (
               <div
                 key={i}
                 className="choropleth-legend__swatch"
                 style={{ background: s.color }}
-                title={`${(minVal + (maxVal - minVal) * s.t).toFixed(0)}%`}
+                title={isDiverging ? `${(s.t * 100).toFixed(0)}% Dem` : `${(minVal + (maxVal - minVal) * s.t).toFixed(0)}%`}
               />
             ))}
           </div>
           <div className="choropleth-legend__labels">
-            <span>{minVal.toFixed(0)}%</span>
-            <span>{maxVal.toFixed(0)}%</span>
+            {isDiverging ? (
+              <>
+                <span>Rep</span>
+                <span>Dem</span>
+              </>
+            ) : (
+              <>
+                <span>{minVal.toFixed(0)}%</span>
+                <span>{maxVal.toFixed(0)}%</span>
+              </>
+            )}
           </div>
         </div>
       )}
@@ -167,8 +205,7 @@ export default function StateMap({ stateAbbr, center, zoom, districtData }) {
           <label>Color by:</label>
           <select value={metric} onChange={(e) => setMetric(e.target.value)}>
             <option value="minorityPct">Minority %</option>
-            <option value="dem">Democrat %</option>
-            <option value="rep">Republican %</option>
+            <option value="partisan">Democrat ↔ Republican</option>
           </select>
         </div>
       )}
