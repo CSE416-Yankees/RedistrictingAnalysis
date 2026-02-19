@@ -38,6 +38,7 @@ export default function StateAnalysisPage() {
               stateAbbr={stateAbbr}
               center={stateData.center}
               zoom={stateData.zoom}
+              districtData={stateData.currentPlanDistricts}
             />
           </div>
         </div>
