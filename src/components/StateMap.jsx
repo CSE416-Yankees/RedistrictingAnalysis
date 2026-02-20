@@ -4,49 +4,44 @@ import 'leaflet/dist/leaflet.css';
 import './StateMap.css';
 
 // ─── Choropleth color scales (15 stops each) ────────────────────
-// Sequential scale: light → dark (for minority %, etc.)
-const SEQUENTIAL_SCALE = [
-  { t: 0 / 14, color: '#f7fbff' },
-  { t: 1 / 14, color: '#ebf4f9' },
-  { t: 2 / 14, color: '#deebf7' },
-  { t: 3 / 14, color: '#c6dbef' },
-  { t: 4 / 14, color: '#9ecae1' },
-  { t: 5 / 14, color: '#6baed6' },
-  { t: 6 / 14, color: '#4292c6' },
-  { t: 7 / 14, color: '#3082be' },
-  { t: 8 / 14, color: '#2171b5' },
-  { t: 9 / 14, color: '#1361a9' },
-  { t: 10 / 14, color: '#08519c' },
-  { t: 11 / 14, color: '#0b4084' },
-  { t: 12 / 14, color: '#08306b' },
-  { t: 13 / 14, color: '#062a5c' },
-  { t: 14 / 14, color: '#04234d' },
+// Heat map scale for minority %: yellow (low) → orange → red (high), 10 levels
+const HEAT_SCALE = [
+  { t: 0 / 9, color: '#ffffcc' },
+  { t: 1 / 9, color: '#ffeda0' },
+  { t: 2 / 9, color: '#fed976' },
+  { t: 3 / 9, color: '#feb24c' },
+  { t: 4 / 9, color: '#fd8d3c' },
+  { t: 5 / 9, color: '#fc4e2a' },
+  { t: 6 / 9, color: '#e31a1c' },
+  { t: 7 / 9, color: '#bd0026' },
+  { t: 8 / 9, color: '#8c0d11' },
+  { t: 9 / 9, color: '#5c0008' },
 ];
 
-// Diverging scale: dark red → purple (competitive) → dark blue
+// Partisan scale: dark red (Rep) → light red → light gray (competitive) → light blue → dark blue (Dem)
 const DIVERGING_SCALE = [
-  { t: 0 / 14, color: '#4a0000' },
-  { t: 1 / 14, color: '#5c0000' },
-  { t: 2 / 14, color: '#730000' },
-  { t: 3 / 14, color: '#8b0000' },
-  { t: 4 / 14, color: '#a31515' },
-  { t: 5 / 14, color: '#b71c1c' },
-  { t: 6 / 14, color: '#c62828' },
-  { t: 7 / 14, color: '#7e57c2' },   // purple midpoint (50% Dem)
-  { t: 8 / 14, color: '#42a5f5' },
-  { t: 9 / 14, color: '#1e88e5' },
-  { t: 10 / 14, color: '#1976d2' },
-  { t: 11 / 14, color: '#1565c0' },
-  { t: 12 / 14, color: '#0d47a1' },
-  { t: 13 / 14, color: '#06418a' },
-  { t: 14 / 14, color: '#002171' },
+  { t: 0 / 14, color: '#5c0000' },     // dark red (very Rep)
+  { t: 1 / 14, color: '#8b0000' },
+  { t: 2 / 14, color: '#a52a2a' },
+  { t: 3 / 14, color: '#b22222' },
+  { t: 4 / 14, color: '#c0392b' },
+  { t: 5 / 14, color: '#e57373' },     // light red (slightly Rep)
+  { t: 6 / 14, color: '#ef9a9a' },
+  { t: 7 / 14, color: '#eeeeee' },     // light gray (competitive)
+  { t: 8 / 14, color: '#90caf9' },     // light blue (slightly Dem)
+  { t: 9 / 14, color: '#64b5f6' },
+  { t: 10 / 14, color: '#42a5f5' },
+  { t: 11 / 14, color: '#1976d2' },
+  { t: 12 / 14, color: '#1565c0' },
+  { t: 13 / 14, color: '#0d47a1' },
+  { t: 14 / 14, color: '#002171' },    // dark blue (very Dem)
 ];
 
-function getSequentialColor(value, min, max) {
-  if (min === max) return SEQUENTIAL_SCALE[2].color;
+function getHeatColor(value, min, max) {
+  if (min === max) return HEAT_SCALE[4].color;
   const t = (value - min) / (max - min);
   const t2 = Math.max(0, Math.min(1, t));
-  return interpolateColor(t2, SEQUENTIAL_SCALE);
+  return interpolateColor(t2, HEAT_SCALE);
 }
 
 function getDivergingColor(demPct) {
@@ -99,7 +94,7 @@ export default function StateMap({ stateAbbr, center, zoom, districtData }) {
     const distId = feature.properties.district;
     const value = metricLookup[distId] ?? null;
     const color = value != null
-      ? (isDiverging ? getDivergingColor(value) : getSequentialColor(value, minVal, maxVal))
+      ? (isDiverging ? getDivergingColor(value) : getHeatColor(value, minVal, maxVal))
       : '#cccccc';
     return {
       fillColor: color,
@@ -193,7 +188,7 @@ export default function StateMap({ stateAbbr, center, zoom, districtData }) {
         <div className="choropleth-legend">
           <div className="choropleth-legend__title">{metricLabel}</div>
           <div className="choropleth-legend__scale">
-            {(isDiverging ? DIVERGING_SCALE : SEQUENTIAL_SCALE).map((s, i) => (
+            {(isDiverging ? DIVERGING_SCALE : HEAT_SCALE).map((s, i) => (
               <div
                 key={i}
                 className="choropleth-legend__swatch"
