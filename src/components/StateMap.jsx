@@ -125,9 +125,9 @@ export default function StateMap({ stateAbbr, center, zoom, districtData }) {
       : '#cccccc';
     return {
       fillColor: color,
-      weight: 1,
+      weight: 0,
       opacity: 0.9,
-      color: '#e0e0e0',
+      color: color,
       fillOpacity: 0.7,
     };
   };
@@ -162,7 +162,7 @@ export default function StateMap({ stateAbbr, center, zoom, districtData }) {
     layer.bindPopup(createPrecinctPopup(feature));
     layer.on({
       mouseover: (e) => {
-        e.target.setStyle({ fillOpacity: 0.9, weight: 2 });
+        e.target.setStyle({ fillOpacity: 0.9 });
         e.target.bringToFront();
       },
       mouseout: (e) => {
