@@ -3,24 +3,43 @@ import { useEffect, useState } from 'react';
 import 'leaflet/dist/leaflet.css';
 import './StateMap.css';
 
-// ─── Choropleth color scales ────────────────────────────────────
+// ─── Choropleth color scales (15 stops each) ────────────────────
 // Sequential scale: light → dark (for minority %, etc.)
 const SEQUENTIAL_SCALE = [
-  { t: 0, color: '#f7fbff' },
-  { t: 0.2, color: '#c6dbef' },
-  { t: 0.4, color: '#6baed6' },
-  { t: 0.6, color: '#2171b5' },
-  { t: 0.8, color: '#08519c' },
-  { t: 1, color: '#08306b' },
+  { t: 0 / 14, color: '#f7fbff' },
+  { t: 1 / 14, color: '#ebf4f9' },
+  { t: 2 / 14, color: '#deebf7' },
+  { t: 3 / 14, color: '#c6dbef' },
+  { t: 4 / 14, color: '#9ecae1' },
+  { t: 5 / 14, color: '#6baed6' },
+  { t: 6 / 14, color: '#4292c6' },
+  { t: 7 / 14, color: '#3082be' },
+  { t: 8 / 14, color: '#2171b5' },
+  { t: 9 / 14, color: '#1361a9' },
+  { t: 10 / 14, color: '#08519c' },
+  { t: 11 / 14, color: '#0b4084' },
+  { t: 12 / 14, color: '#08306b' },
+  { t: 13 / 14, color: '#062a5c' },
+  { t: 14 / 14, color: '#04234d' },
 ];
 
-// Diverging scale: dark red → clear → dark blue (Rep → competitive → Dem)
+// Diverging scale: dark red → purple (competitive) → dark blue
 const DIVERGING_SCALE = [
-  { t: 0, color: '#8b0000' },   // dark red
-  { t: 0.25, color: '#c0392b' },
-  { t: 0.5, color: '#f5f5f5' }, // clear/white
-  { t: 0.75, color: '#3498db' },
-  { t: 1, color: '#0d47a1' },   // dark blue
+  { t: 0 / 14, color: '#4a0000' },
+  { t: 1 / 14, color: '#5c0000' },
+  { t: 2 / 14, color: '#730000' },
+  { t: 3 / 14, color: '#8b0000' },
+  { t: 4 / 14, color: '#a31515' },
+  { t: 5 / 14, color: '#b71c1c' },
+  { t: 6 / 14, color: '#c62828' },
+  { t: 7 / 14, color: '#7e57c2' },   // purple midpoint (50% Dem)
+  { t: 8 / 14, color: '#42a5f5' },
+  { t: 9 / 14, color: '#1e88e5' },
+  { t: 10 / 14, color: '#1976d2' },
+  { t: 11 / 14, color: '#1565c0' },
+  { t: 12 / 14, color: '#0d47a1' },
+  { t: 13 / 14, color: '#06418a' },
+  { t: 14 / 14, color: '#002171' },
 ];
 
 function getSequentialColor(value, min, max) {

@@ -40,8 +40,8 @@
 
 .choropleth-legend__scale {
   display: flex;
-  width: 140px;
-  height: 12px;
+  width: 220px;
+  height: 14px;
   border-radius: 2px;
   overflow: hidden;
 }
