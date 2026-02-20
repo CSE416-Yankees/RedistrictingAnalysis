@@ -89,10 +89,19 @@ export default function StateMap({ stateAbbr, center, zoom, districtData }) {
     return { type: 'FeatureCollection', features: geoData.features.map((f) => ({ type: 'Feature', geometry: f.geometry, properties: { district: f.properties.district, name: `District ${f.properties.district}` } })) };
   }, [geoData]);
 
-  // Min/max from district data (precincts inherit district values)
+  // Min/max: use precinct-level data when available, else district-level
   const { minVal, maxVal } = useMemo(() => {
     let min = Infinity, max = -Infinity;
-    if (districtData) {
+    if (precinctData?.features?.length && precinctData.features.some((f) => f.properties.minorityPct != null || f.properties.demPct != null)) {
+      precinctData.features.forEach((f) => {
+        const v = metric === 'minorityPct' ? f.properties.minorityPct : f.properties.demPct;
+        if (v != null && !Number.isNaN(v)) {
+          min = Math.min(min, v);
+          max = Math.max(max, v);
+        }
+      });
+    }
+    if (min === Infinity && districtData) {
       districtData.forEach((d) => {
         const v = metric === 'minorityPct' ? d.minorityPct : d.dem * 100;
         min = Math.min(min, v);
@@ -100,14 +109,17 @@ export default function StateMap({ stateAbbr, center, zoom, districtData }) {
       });
     }
     return { minVal: min === Infinity ? 0 : min, maxVal: max === -Infinity ? 100 : max };
-  }, [districtData, metric]);
+  }, [precinctData, districtData, metric]);
 
   const isDiverging = metric === 'partisan';
 
   const createPrecinctStyle = (feature) => {
-    const distId = feature.properties.district;
+    const p = feature.properties;
+    const distId = p.district;
     const d = districtDataLookup[distId];
-    const value = d ? (metric === 'minorityPct' ? d.minorityPct : d.dem * 100) : null;
+    const precinctVal = metric === 'minorityPct' ? p.minorityPct : p.demPct;
+    const districtVal = d ? (metric === 'minorityPct' ? d.minorityPct : d.dem * 100) : null;
+    const value = precinctVal != null ? precinctVal : districtVal;
     const color = value != null
       ? (isDiverging ? getDivergingColor(value) : getHeatColor(value, minVal, maxVal))
       : '#cccccc';
@@ -121,12 +133,14 @@ export default function StateMap({ stateAbbr, center, zoom, districtData }) {
   };
 
   const createPrecinctPopup = (feature) => {
-    const distId = feature.properties.district;
+    const p = feature.properties;
+    const distId = p.district;
     const d = districtData?.find((x) => x.id === distId);
-    const name = feature.properties.name || feature.properties.geoid || `District ${distId}`;
-    const minorityPct = d?.minorityPct?.toFixed(1) ?? '—';
-    const demPct = d ? (d.dem * 100).toFixed(1) : '—';
-    const repPct = d ? (d.rep * 100).toFixed(1) : '—';
+    const name = p.name || p.geoid || `District ${distId}`;
+    const minorityPct = p.minorityPct != null ? p.minorityPct.toFixed(1) : (d?.minorityPct?.toFixed(1) ?? '—');
+    const demPctVal = p.demPct != null ? p.demPct : (d ? d.dem * 100 : null);
+    const demPct = demPctVal != null ? demPctVal.toFixed(1) : '—';
+    const repPct = demPctVal != null ? (100 - demPctVal).toFixed(1) : (d ? (d.rep * 100).toFixed(1) : '—');
     const line2 = metric === 'minorityPct'
       ? `Minority: ${minorityPct}%`
       : `Dem: ${demPct}% · Rep: ${repPct}%`;
