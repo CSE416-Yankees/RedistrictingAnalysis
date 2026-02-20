@@ -1,8 +1,7 @@
 import { MapContainer, TileLayer, GeoJSON, useMap } from 'react-leaflet';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import 'leaflet/dist/leaflet.css';
 import './StateMap.css';
-
 // ─── Choropleth color scales (15 stops each) ────────────────────
 // Heat map scale for minority %: yellow (low) → orange → red (high), 10 levels
 const HEAT_SCALE = [
@@ -76,73 +75,99 @@ export default function StateMap({ stateAbbr, center, zoom, districtData }) {
   const [loading, setLoading] = useState(true);
   const [metric, setMetric] = useState('minorityPct');
 
-  // Build lookup: district id → value for the selected metric
-  const metricLookup = {};
-  let minVal = Infinity, maxVal = -Infinity;
-  if (districtData) {
-    districtData.forEach((d) => {
-      const v = metric === 'minorityPct' ? d.minorityPct : d.dem * 100;
-      metricLookup[d.id] = v;
-      minVal = Math.min(minVal, v);
-      maxVal = Math.max(maxVal, v);
+  const districtDataLookup = useMemo(() => {
+    const lookup = {};
+    districtData?.forEach((d) => {
+      lookup[d.id] = { minorityPct: d.minorityPct, dem: d.dem };
     });
-  }
+    return lookup;
+  }, [districtData]);
+
+  const [precinctData, setPrecinctData] = useState(null);
+  const districtOutlines = useMemo(() => {
+    if (!geoData?.features?.length) return null;
+    return { type: 'FeatureCollection', features: geoData.features.map((f) => ({ type: 'Feature', geometry: f.geometry, properties: { district: f.properties.district, name: `District ${f.properties.district}` } })) };
+  }, [geoData]);
+
+  // Min/max from district data (precincts inherit district values)
+  const { minVal, maxVal } = useMemo(() => {
+    let min = Infinity, max = -Infinity;
+    if (districtData) {
+      districtData.forEach((d) => {
+        const v = metric === 'minorityPct' ? d.minorityPct : d.dem * 100;
+        min = Math.min(min, v);
+        max = Math.max(max, v);
+      });
+    }
+    return { minVal: min === Infinity ? 0 : min, maxVal: max === -Infinity ? 100 : max };
+  }, [districtData, metric]);
 
   const isDiverging = metric === 'partisan';
 
-  const createStyle = (feature) => {
+  const createPrecinctStyle = (feature) => {
     const distId = feature.properties.district;
-    const value = metricLookup[distId] ?? null;
+    const d = districtDataLookup[distId];
+    const value = d ? (metric === 'minorityPct' ? d.minorityPct : d.dem * 100) : null;
     const color = value != null
       ? (isDiverging ? getDivergingColor(value) : getHeatColor(value, minVal, maxVal))
       : '#cccccc';
     return {
       fillColor: color,
-      weight: 2,
-      opacity: 1,
-      color: '#ffffff',
-      fillOpacity: 0.65,
+      weight: 1,
+      opacity: 0.9,
+      color: '#e0e0e0',
+      fillOpacity: 0.7,
     };
   };
 
-  const createPopup = (feature) => {
+  const createPrecinctPopup = (feature) => {
     const distId = feature.properties.district;
     const d = districtData?.find((x) => x.id === distId);
-    if (!d) return `<div style="text-align:center;padding:6px;"><strong>${feature.properties.name}</strong></div>`;
-    const demPct = (d.dem * 100).toFixed(1);
-    const repPct = (d.rep * 100).toFixed(1);
-    const minorityPct = d.minorityPct;
+    const name = feature.properties.name || feature.properties.geoid || `District ${distId}`;
+    const minorityPct = d?.minorityPct?.toFixed(1) ?? '—';
+    const demPct = d ? (d.dem * 100).toFixed(1) : '—';
+    const repPct = d ? (d.rep * 100).toFixed(1) : '—';
     const line2 = metric === 'minorityPct'
       ? `Minority: ${minorityPct}%`
       : `Dem: ${demPct}% · Rep: ${repPct}%`;
     return `<div style="text-align:center;padding:6px;">
-      <strong>${feature.properties.name}</strong><br/>
+      <strong>${name} (District ${distId})</strong><br/>
       <span style="font-size:12px;color:#666;">${line2}</span>
     </div>`;
   };
 
-  function onEachDistrict(feature, layer) {
-    layer.bindPopup(createPopup(feature));
+  const outlineStyle = {
+    fillColor: 'none',
+    fillOpacity: 0,
+    weight: 3,
+    color: '#1a1a1a',
+    opacity: 1,
+  };
+
+  function onEachPrecinct(feature, layer) {
+    layer.bindPopup(createPrecinctPopup(feature));
     layer.on({
       mouseover: (e) => {
-        e.target.setStyle({ fillOpacity: 0.85, weight: 3 });
+        e.target.setStyle({ fillOpacity: 0.9, weight: 2 });
         e.target.bringToFront();
       },
       mouseout: (e) => {
-        e.target.setStyle(createStyle(feature));
+        e.target.setStyle(createPrecinctStyle(feature));
       },
     });
   }
 
   useEffect(() => {
     setLoading(true);
-    fetch(`${import.meta.env.BASE_URL}data/${stateAbbr}.json`)
-      .then((res) => {
-        if (!res.ok) throw new Error(`Failed to load ${stateAbbr} districts`);
-        return res.json();
-      })
-      .then((data) => {
-        setGeoData(data);
+    setPrecinctData(null);
+    const base = import.meta.env.BASE_URL;
+    Promise.all([
+      fetch(`${base}data/${stateAbbr}.json`).then((r) => (r.ok ? r.json() : null)),
+      fetch(`${base}data/${stateAbbr}-precincts.json`).then((r) => (r.ok ? r.json() : null)),
+    ])
+      .then(([districts, precincts]) => {
+        setGeoData(districts);
+        setPrecinctData(precincts);
         setLoading(false);
       })
       .catch((err) => {
@@ -170,21 +195,38 @@ export default function StateMap({ stateAbbr, center, zoom, districtData }) {
         <FlyTo center={center} zoom={zoom} />
         {loading && (
           <div className="state-map__loading">
-            Loading districts...
+            Loading...
           </div>
         )}
-        {geoData && (
+        {precinctData?.features?.length > 0 ? (
+          <>
+            <GeoJSON
+              key={`${stateAbbr}-${metric}-precincts`}
+              data={precinctData}
+              style={(f) => createPrecinctStyle(f)}
+              onEachFeature={onEachPrecinct}
+            />
+            {districtOutlines && (
           <GeoJSON
-            key={`${stateAbbr}-${metric}`}
+            key={`${stateAbbr}-outlines`}
+            data={districtOutlines}
+            style={() => outlineStyle}
+            interactive={false}
+          />
+            )}
+          </>
+        ) : geoData && (
+          <GeoJSON
+            key={`${stateAbbr}-${metric}-districts`}
             data={geoData}
-            style={(f) => createStyle(f)}
-            onEachFeature={onEachDistrict}
+            style={(f) => createPrecinctStyle(f)}
+            onEachFeature={onEachPrecinct}
           />
         )}
       </MapContainer>
 
       {/* Choropleth legend */}
-      {geoData && districtData && (
+      {(precinctData || geoData) && districtData && (
         <div className="choropleth-legend">
           <div className="choropleth-legend__title">{metricLabel}</div>
           <div className="choropleth-legend__scale">
@@ -214,7 +256,7 @@ export default function StateMap({ stateAbbr, center, zoom, districtData }) {
       )}
 
       {/* Metric selector */}
-      {geoData && districtData && (
+      {(precinctData || geoData) && districtData && (
         <div className="choropleth-metric">
           <label>Color by:</label>
           <select value={metric} onChange={(e) => setMetric(e.target.value)}>
