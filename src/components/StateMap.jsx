@@ -78,6 +78,19 @@ function FlyTo({ center, zoom }) {
   return null;
 }
 
+async function fetchGeoJson(url, signal) {
+  try {
+    const response = await fetch(url, { signal });
+    if (!response.ok) return null;
+    return await response.json();
+  } catch (err) {
+    if (err.name !== 'AbortError') {
+      console.error(`Failed to load ${url}`, err);
+    }
+    return null;
+  }
+}
+
 export default function StateMap({
   stateAbbr,
   center,
@@ -328,22 +341,26 @@ export default function StateMap({
     const controller = new AbortController();
     const base = import.meta.env.BASE_URL;
     Promise.all([
-      fetch(`${base}data/${stateAbbr}.json`, { signal: controller.signal }).then((response) => (response.ok ? response.json() : null)),
-      fetch(`${base}data/${stateAbbr}-precincts.json`, { signal: controller.signal }).then((response) => (response.ok ? response.json() : null)),
-      fetch(`${base}data/${stateAbbr}-blocks.json`, { signal: controller.signal }).then((response) => (response.ok ? response.json() : null)),
-    ])
-      .then(([districts, precincts, blocks]) => {
-        setGeoData(districts);
-        setPrecinctData(precincts);
-        setBlockData(blocks);
-      })
-      .catch((err) => {
-        if (err.name !== 'AbortError') {
-          console.error(err);
-        }
-      });
+      fetchGeoJson(`${base}data/${stateAbbr}.json`, controller.signal),
+      fetchGeoJson(`${base}data/${stateAbbr}-precincts.json`, controller.signal),
+    ]).then(([districts, precincts]) => {
+      setGeoData(districts);
+      setPrecinctData(precincts);
+    });
     return () => controller.abort();
   }, [stateAbbr]);
+
+  useEffect(() => {
+    if (geographyLevel !== 'censusBlock' || blockData?.features?.length) return undefined;
+
+    const controller = new AbortController();
+    const base = import.meta.env.BASE_URL;
+    fetchGeoJson(`${base}data/${stateAbbr}-blocks.json`, controller.signal)
+      .then((blocks) => {
+        setBlockData(blocks);
+      });
+    return () => controller.abort();
+  }, [stateAbbr, geographyLevel, blockData]);
 
   const isLoading = !geoData && !precinctData && !blockData;
   const isEiGapMetric = activeMetric === 'eiTurnoutGap';
