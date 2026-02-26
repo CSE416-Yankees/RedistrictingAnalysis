@@ -1,17 +1,65 @@
 import './Sidebar.css';
 
 export default function Sidebar({
+  stateAbbr,
+  states,
+  onStateChange,
   stateData,
   ensembleType,
   onEnsembleChange,
   analysisView,
   onAnalysisViewChange,
+  highlightedDistrict,
+  onHighlightDistrict,
+  mapPlanMode,
+  onMapPlanModeChange,
+  onReset,
+  planDistricts = [],
+  planLabel,
 }) {
   if (!stateData) return null;
 
+  const analysisOptions = [
+    { value: 'stateSummary', label: 'State Data Summary' },
+    { value: 'boxWhisker', label: 'Box & Whisker Data' },
+    { value: 'ensembleSplits', label: 'Ensemble Splits (Bar)' },
+    { value: 'voteSeatCurve', label: 'Vote Share vs Seat Share' },
+    { value: 'congressional', label: 'Congressional Representation' },
+    { value: 'gingles', label: 'Gingles Summary' },
+    { value: 'ginglesTable', label: 'Gingles 2/3 Table' },
+    { value: 'eiCandidates', label: 'EI Candidate Results' },
+    { value: 'eiPrecinctBar', label: 'EI Precinct Bar' },
+    { value: 'eiChoropleth', label: 'EI Choropleth' },
+    { value: 'eiKde', label: 'EI KDE' },
+    { value: 'seatShare', label: 'Seat Share Distribution' },
+    { value: 'opportunity', label: 'Opportunity Districts' },
+    { value: 'comparison', label: 'Ensemble Comparison' },
+  ];
+
   return (
     <aside className="sidebar">
-      {/* State Info */}
+      <section className="sidebar__section">
+        <h3 className="sidebar__heading">Controls</h3>
+        <div className="sidebar__stack">
+          <label className="sidebar__select-label" htmlFor="state-select">State</label>
+          <select
+            id="state-select"
+            className="sidebar__select"
+            value={stateAbbr}
+            onChange={(event) => onStateChange(event.target.value)}
+          >
+            {Object.values(states).map((state) => (
+              <option key={state.abbr} value={state.abbr}>
+                {state.name}
+              </option>
+            ))}
+          </select>
+          <button type="button" className="sidebar__reset" onClick={onReset}>
+            Reset Page
+          </button>
+        </div>
+      </section>
+
       <section className="sidebar__section">
         <h3 className="sidebar__heading">State Info</h3>
         <div className="sidebar__info-grid">
@@ -34,7 +82,6 @@ export default function Sidebar({
         </div>
       </section>
 
-      {/* Demographics */}
       <section className="sidebar__section">
         <h3 className="sidebar__heading">Demographics</h3>
         <div className="sidebar__bars">
@@ -45,17 +92,52 @@ export default function Sidebar({
         </div>
       </section>
 
-      {/* Ensemble Selection */}
+      <section className="sidebar__section">
+        <h3 className="sidebar__heading">Map Plan</h3>
+        <div className="sidebar__toggle-group sidebar__toggle-group--plans">
+          <button
+            type="button"
+            className={`sidebar__toggle ${mapPlanMode === 'current' ? 'sidebar__toggle--active' : ''}`}
+            onClick={() => onMapPlanModeChange('current')}
+          >
+            Current
+          </button>
+          <button
+            type="button"
+            className={`sidebar__toggle ${mapPlanMode === 'comparison' ? 'sidebar__toggle--active' : ''}`}
+            onClick={() => onMapPlanModeChange('comparison')}
+          >
+            Comparison
+          </button>
+          <button
+            type="button"
+            className={`sidebar__toggle ${mapPlanMode === 'delta' ? 'sidebar__toggle--active' : ''}`}
+            onClick={() => onMapPlanModeChange('delta')}
+          >
+            Delta
+          </button>
+          <button
+            type="button"
+            className={`sidebar__toggle ${mapPlanMode === 'interesting' ? 'sidebar__toggle--active' : ''}`}
+            onClick={() => onMapPlanModeChange('interesting')}
+          >
+            Interesting
+          </button>
+        </div>
+      </section>
+
       <section className="sidebar__section">
         <h3 className="sidebar__heading">Ensemble Type</h3>
-        <div className="sidebar__toggle-group">
+        <div className="sidebar__toggle-group sidebar__toggle-group--ensemble">
           <button
+            type="button"
             className={`sidebar__toggle ${ensembleType === 'raceBlind' ? 'sidebar__toggle--active' : ''}`}
             onClick={() => onEnsembleChange('raceBlind')}
           >
             Race-Blind
           </button>
           <button
+            type="button"
             className={`sidebar__toggle ${ensembleType === 'vra' ? 'sidebar__toggle--active' : ''}`}
             onClick={() => onEnsembleChange('vra')}
           >
@@ -64,16 +146,10 @@ export default function Sidebar({
         </div>
       </section>
 
-      {/* Analysis View */}
       <section className="sidebar__section">
         <h3 className="sidebar__heading">Analysis View</h3>
         <div className="sidebar__radio-group">
-          {[
-            { value: 'boxPlot', label: 'Minority % Box Plot' },
-            { value: 'seatShare', label: 'Seat Share Distribution' },
-            { value: 'opportunity', label: 'Opportunity Districts' },
-            { value: 'comparison', label: 'Ensemble Comparison' },
-          ].map((opt) => (
+          {analysisOptions.map((opt) => (
             <label key={opt.value} className="sidebar__radio">
               <input
                 type="radio"
@@ -82,16 +158,14 @@ export default function Sidebar({
                 checked={analysisView === opt.value}
                 onChange={() => onAnalysisViewChange(opt.value)}
               />
-              <span className="sidebar__radio-custom" />
               <span>{opt.label}</span>
             </label>
           ))}
         </div>
       </section>
 
-      {/* Current Plan */}
       <section className="sidebar__section">
-        <h3 className="sidebar__heading">Current Plan Districts</h3>
+        <h3 className="sidebar__heading">{planLabel}</h3>
         <div className="sidebar__table-wrap">
           <table className="sidebar__table">
             <thead>
@@ -103,12 +177,17 @@ export default function Sidebar({
               </tr>
             </thead>
             <tbody>
-              {stateData.currentPlanDistricts.map((d) => (
-                <tr key={d.id}>
-                  <td>{d.id}</td>
-                  <td style={{ color: 'var(--color-dem)' }}>{(d.dem * 100).toFixed(0)}%</td>
-                  <td style={{ color: 'var(--color-rep)' }}>{(d.rep * 100).toFixed(0)}%</td>
-                  <td style={{ color: 'var(--color-minority)' }}>{d.minorityPct}%</td>
+              {planDistricts.map((district) => (
+                <tr
+                  key={district.id}
+                  className={highlightedDistrict === district.id ? 'sidebar__table-row--active' : ''}
+                  onClick={() => onHighlightDistrict(district.id)}
+                  title={`Highlight District ${district.id}`}
+                >
+                  <td>{district.id}</td>
+                  <td style={{ color: 'var(--color-dem)' }}>{(district.dem * 100).toFixed(0)}%</td>
+                  <td style={{ color: 'var(--color-rep)' }}>{(district.rep * 100).toFixed(0)}%</td>
+                  <td style={{ color: 'var(--color-minority)' }}>{district.minorityPct}%</td>
                 </tr>
               ))}
             </tbody>

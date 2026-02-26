@@ -1,6 +1,7 @@
 .home {
   display: flex;
   height: calc(100vh - var(--header-height));
+  background: linear-gradient(180deg, #f4f7fb 0%, #eef2f8 100%);
 }
 
 .home__map {
@@ -18,6 +19,7 @@
   display: flex;
   flex-direction: column;
   gap: 28px;
+  box-shadow: -4px 0 18px rgba(17, 24, 39, 0.06);
 }
 
 .home__heading {
@@ -60,6 +62,7 @@
   transition: all 0.15s ease;
   width: 100%;
   text-align: left;
+  box-shadow: 0 1px 2px rgba(17, 24, 39, 0.04);
 }
 
 .state-card:hover {
@@ -133,4 +136,26 @@
   font-size: 0.8rem;
   color: var(--color-text-secondary);
   line-height: 1.4;
+}
+
+@media (max-width: 980px) {
+  .home {
+    flex-direction: column;
+    height: auto;
+    min-height: calc(100vh - var(--header-height));
+  }
+
+  .home__map {
+    min-height: 45vh;
+  }
+
+  .home__panel {
+    width: 100%;
+    min-width: 0;
+    border-left: none;
+    border-top: 1px solid var(--color-border);
+    box-shadow: none;
+    padding: 16px;
+    gap: 20px;
+  }
 }

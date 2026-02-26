@@ -10,6 +10,7 @@
   position: sticky;
   top: 0;
   z-index: 1000;
+  backdrop-filter: blur(4px);
 }
 
 .header__left {
@@ -49,6 +50,11 @@
   transition: all 0.15s ease;
 }
 
+.header__link:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(26, 115, 232, 0.18);
+}
+
 .header__link:hover {
   background: var(--color-surface-hover);
   color: var(--color-text);
@@ -72,4 +78,18 @@
   font-size: 0.75rem;
   font-weight: 600;
   color: var(--color-text-secondary);
+}
+
+@media (max-width: 760px) {
+  .header {
+    padding: 0 12px;
+  }
+
+  .header__title {
+    font-size: 0.95rem;
+  }
+
+  .header__badge {
+    display: none;
+  }
 }

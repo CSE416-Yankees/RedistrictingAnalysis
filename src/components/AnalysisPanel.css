@@ -1,6 +1,8 @@
 .analysis-panel {
   padding: 16px;
   overflow-y: auto;
+  display: grid;
+  gap: 12px;
 }
 
 .chart-card {
@@ -9,6 +11,7 @@
   border-radius: var(--radius-md);
   padding: 20px;
   box-shadow: var(--shadow-sm);
+  background-image: linear-gradient(180deg, #ffffff 0%, #fbfdff 100%);
 }
 
 .chart-title {
@@ -49,4 +52,116 @@
 .comparison-stat__value {
   font-size: 1.25rem;
   font-weight: 700;
+}
+
+.analysis-table-wrap {
+  overflow-x: auto;
+  margin-top: 10px;
+}
+
+.analysis-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.84rem;
+}
+
+.analysis-table th {
+  text-align: left;
+  font-weight: 600;
+  padding: 6px 8px;
+  border-bottom: 2px solid var(--color-border);
+  color: var(--color-text-secondary);
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.analysis-table td {
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--color-bg);
+  font-variant-numeric: tabular-nums;
+}
+
+.analysis-table tbody tr {
+  cursor: default;
+}
+
+.analysis-table__row--active {
+  background: #e8f0fe;
+  outline: 1px solid #d2e3fc;
+}
+
+.analysis-table--clickable tbody tr {
+  cursor: pointer;
+}
+
+.analysis-table--clickable tbody tr:hover {
+  background: #f7f9fc;
+}
+
+.analysis-table--compact th,
+.analysis-table--compact td {
+  font-size: 0.78rem;
+}
+
+.analysis-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(160px, 1fr));
+  gap: 10px;
+}
+
+.analysis-kpi {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  background: #fafbfd;
+}
+
+.analysis-kpi__label {
+  font-size: 0.72rem;
+  color: var(--color-text-secondary);
+}
+
+.analysis-kpi__value {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #111827;
+}
+
+.analysis-kpi__value--warn {
+  margin-top: 12px;
+  color: #b45309;
+}
+
+.analysis-kpi__value--ok {
+  margin-top: 12px;
+  color: #047857;
+}
+
+.analysis-note {
+  margin: 0;
+  color: var(--color-text-secondary);
+  font-size: 0.9rem;
+}
+
+@media (max-width: 760px) {
+  .analysis-panel {
+    padding: 12px;
+  }
+
+  .chart-card {
+    padding: 14px;
+  }
+
+  .analysis-kpi-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .comparison-stats {
+    flex-direction: column;
+    gap: 10px;
+  }
 }
