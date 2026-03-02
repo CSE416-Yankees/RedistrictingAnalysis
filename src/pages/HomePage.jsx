@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import USMap from '../components/USMap';
-import { stateMarkers } from '../data/mockData';
+import { stateMarkers, states } from '../data/mockData';
 import './HomePage.css';
 
 export default function HomePage() {
@@ -12,16 +12,16 @@ export default function HomePage() {
         <USMap />
       </div>
       <div className="home__panel">
-        <div className="home__intro">
-          <h1 className="home__heading">Redistricting Analysis Tool</h1>
+        <div className="home__intro home__fade-in">
+          <h1 className="home__heading">See the people behind the district lines</h1>
           <p className="home__desc">
-            Analyze the impact of potential revisions to the Voting Rights Act
-            on congressional redistricting. Compare race-blind and VRA-constrained
-            ensembles to evaluate fairness and detect gerrymandering.
+            Explore each state like a conversation, not just a chart. Compare
+            plans, inspect representation, and follow how demographic patterns
+            shape political outcomes.
           </p>
         </div>
-        <div className="home__states">
-          <h2 className="home__states-heading">Select a State</h2>
+        <div className="home__states home__fade-in" style={{ animationDelay: '90ms' }}>
+          <h2 className="home__states-heading">Choose A State To Begin</h2>
           <div className="home__state-cards">
             {stateMarkers.map((s) => (
               <button
@@ -29,14 +29,21 @@ export default function HomePage() {
                 className="state-card"
                 onClick={() => navigate(`/state/${s.abbr}`)}
               >
-                <span className="state-card__abbr">{s.abbr}</span>
-                <span className="state-card__name">{s.name}</span>
+                <span className="state-card__abbr" aria-hidden="true">{s.abbr}</span>
+                <span className="state-card__copy">
+                  <span className="state-card__name">{s.name}</span>
+                  <span className="state-card__meta">
+                    {states[s.abbr].numDistricts} districts
+                    {states[s.abbr].preclearance ? ' • preclearance context' : ' • standard review'}
+                  </span>
+                </span>
                 <span className="state-card__arrow">→</span>
               </button>
             ))}
           </div>
         </div>
-        <div className="home__features">
+        <div className="home__features home__fade-in" style={{ animationDelay: '180ms' }}>
+          <h2 className="home__states-heading">What You Can Explore</h2>
           <div className="feature">
             <div className="feature__icon">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="20" height="20">
@@ -45,8 +52,8 @@ export default function HomePage() {
               </svg>
             </div>
             <div>
-              <strong>Interactive Maps</strong>
-              <p>View district boundaries with demographic overlays</p>
+              <strong>Interactive Geography</strong>
+              <p>Move between precinct and census-block views with demographic overlays.</p>
             </div>
           </div>
           <div className="feature">
@@ -58,8 +65,8 @@ export default function HomePage() {
               </svg>
             </div>
             <div>
-              <strong>Ensemble Analysis</strong>
-              <p>Compare 5,000 simulated redistricting plans</p>
+              <strong>Scenario Comparison</strong>
+              <p>Contrast current, comparison, delta, and interesting district plans.</p>
             </div>
           </div>
           <div className="feature">
@@ -69,8 +76,8 @@ export default function HomePage() {
               </svg>
             </div>
             <div>
-              <strong>Fairness Measures</strong>
-              <p>Evaluate seat share, opportunity districts, and racial polarization</p>
+              <strong>Voting Rights Diagnostics</strong>
+              <p>Review Gingles, EI, ensemble splits, and seat-vote responsiveness in one place.</p>
             </div>
           </div>
         </div>

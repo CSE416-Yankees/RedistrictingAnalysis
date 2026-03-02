@@ -2,7 +2,10 @@
   display: flex;
   height: calc(100vh - var(--header-height));
   overflow: hidden;
-  background: linear-gradient(180deg, #f4f7fb 0%, #eef2f8 100%);
+  background:
+    radial-gradient(circle at 90% 12%, rgba(198, 225, 215, 0.26) 0%, transparent 27%),
+    radial-gradient(circle at 6% 96%, rgba(245, 214, 186, 0.24) 0%, transparent 30%),
+    linear-gradient(180deg, rgba(246, 241, 233, 0.56) 0%, rgba(239, 230, 217, 0.74) 100%);
 }
 
 .state-analysis__main {
@@ -25,9 +28,10 @@
   justify-content: space-between;
   gap: 14px;
   padding: 14px 16px;
-  background: var(--color-surface);
-  border-bottom: 1px solid var(--color-border);
-  box-shadow: 0 1px 0 rgba(17, 24, 39, 0.04);
+  background: rgba(255, 252, 247, 0.9);
+  border-bottom: 1px solid rgba(190, 173, 154, 0.56);
+  box-shadow: 0 1px 5px rgba(31, 43, 51, 0.04);
+  animation: riseIn 0.45s ease;
 }
 
 .state-analysis__title-group {
@@ -37,9 +41,10 @@
 }
 
 .state-analysis__title {
-  font-size: 1.15rem;
-  font-weight: 700;
-  letter-spacing: -0.3px;
+  font-size: clamp(1.02rem, 2.1vw, 1.42rem);
+  line-height: 1.1;
+  letter-spacing: -0.25px;
+  color: #16323a;
 }
 
 .state-analysis__subtitle {
@@ -50,43 +55,48 @@
 .state-analysis__chips {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 6px;
   justify-content: flex-end;
 }
 
 .state-analysis__chip {
-  padding: 3px 10px;
-  background: var(--color-bg);
-  border: 1px solid var(--color-border);
-  border-radius: 20px;
-  font-size: 0.75rem;
-  font-weight: 500;
-  color: var(--color-text-secondary);
+  padding: 3px 9px;
+  background: #faf2e8;
+  border: 1px solid #e4d4c1;
+  border-radius: 999px;
+  font-size: 0.69rem;
+  font-weight: 700;
+  color: #654f37;
+  letter-spacing: 0.08px;
 }
 
 .state-analysis__chip--selected {
-  background: #e8f0fe;
-  border-color: #c8dbff;
-  color: #1d4ed8;
+  background: #e8f4f8;
+  border-color: #bad7df;
+  color: #1f5564;
 }
 
 .state-analysis__chip--warn {
-  background: #fff3e0;
-  border-color: #ffe0b2;
-  color: #e65100;
+  background: #fde8d2;
+  border-color: #f3c79b;
+  color: #8f4500;
 }
 
 .state-analysis__map-container {
   flex: 1;
-  min-height: 300px;
+  min-height: 340px;
+  padding: 10px 10px 0;
+  animation: riseIn 0.55s ease;
 }
 
 .state-analysis__charts {
   flex-shrink: 0;
-  max-height: 420px;
+  max-height: 430px;
   overflow-y: auto;
-  border-top: 1px solid var(--color-border);
-  background: rgba(255, 255, 255, 0.76);
+  border-top: 1px solid rgba(190, 173, 154, 0.56);
+  background: rgba(255, 252, 247, 0.62);
+  backdrop-filter: blur(6px);
+  animation: riseIn 0.65s ease;
 }
 
 @media (max-width: 1150px) {
@@ -98,7 +108,7 @@
   }
 
   .state-analysis__main {
-    min-height: 900px;
+    min-height: 980px;
   }
 
   .state-analysis__map-header {
@@ -109,19 +119,23 @@
   .state-analysis__chips {
     justify-content: flex-start;
   }
+
+  .state-analysis__map-container {
+    padding: 8px 8px 0;
+  }
 }
 
 @media (max-width: 760px) {
   .state-analysis__title {
-    font-size: 1rem;
+    font-size: 1.05rem;
   }
 
   .state-analysis__subtitle {
-    font-size: 0.73rem;
+    font-size: 0.72rem;
   }
 
   .state-analysis__map-container {
-    min-height: 340px;
+    min-height: 350px;
   }
 
   .state-analysis__charts {

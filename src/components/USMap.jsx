@@ -9,22 +9,22 @@ const createIcon = (color) =>
   L.divIcon({
     className: 'custom-marker',
     html: `<div style="
-      background: ${color};
-      width: 36px;
-      height: 36px;
-      border-radius: 50%;
+      background: linear-gradient(145deg, ${color} 0%, #245b79 100%);
+      width: 38px;
+      height: 38px;
+      border-radius: 14px;
       border: 3px solid white;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+      box-shadow: 0 5px 14px rgba(0,0,0,0.26);
       display: flex;
       align-items: center;
       justify-content: center;
       color: white;
       font-weight: 700;
       font-size: 11px;
-      font-family: -apple-system, sans-serif;
+      font-family: 'Manrope', 'Avenir Next', sans-serif;
     "></div>`,
-    iconSize: [36, 36],
-    iconAnchor: [18, 18],
+    iconSize: [38, 38],
+    iconAnchor: [19, 19],
   });
 
 export default function USMap() {
@@ -53,23 +53,26 @@ export default function USMap() {
           }}
         >
           <Popup>
-            <div style={{ textAlign: 'center', padding: '4px' }}>
-              <strong style={{ fontSize: '14px' }}>{state.name}</strong>
-              <br />
+            <div style={{ textAlign: 'center', padding: '6px 4px', minWidth: '170px' }}>
+              <strong style={{ fontSize: '14px', color: '#17313a' }}>{state.name}</strong>
+              <div style={{ fontSize: '11px', color: '#5b6972', marginTop: '3px' }}>
+                Open interactive district analysis
+              </div>
               <button
                 onClick={() => navigate(`/state/${state.abbr}`)}
                 style={{
                   marginTop: '8px',
-                  padding: '4px 14px',
-                  background: '#1a73e8',
+                  padding: '5px 14px',
+                  background: '#1f6f78',
                   color: 'white',
                   border: 'none',
-                  borderRadius: '4px',
+                  borderRadius: '999px',
                   cursor: 'pointer',
                   fontSize: '12px',
+                  fontWeight: 700,
                 }}
               >
-                Analyze →
+                Explore →
               </button>
             </div>
           </Popup>

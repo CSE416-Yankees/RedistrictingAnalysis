@@ -24,7 +24,7 @@ export default function AnalysisPanel({
   onHighlightDistrict,
 }) {
   const data = ensembleData[stateAbbr];
-  if (!data) return <div className="analysis-panel">No data available</div>;
+  if (!data) return <div className="analysis-panel"><div className="analysis-panel__empty">No analysis data is available for this state yet.</div></div>;
 
   const current = data[ensembleType];
 

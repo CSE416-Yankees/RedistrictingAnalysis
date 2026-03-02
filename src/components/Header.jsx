@@ -3,6 +3,9 @@ import './Header.css';
 
 export default function Header() {
   const location = useLocation();
+  const stateLabel = location.pathname.includes('/state/')
+    ? location.pathname.split('/state/')[1]?.toUpperCase()
+    : 'Overview';
 
   return (
     <header className="header">
@@ -12,7 +15,10 @@ export default function Header() {
             <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
             <polyline points="9 22 9 12 15 12 15 22" />
           </svg>
-          <span className="header__title">Redistricting Analysis</span>
+          <span className="header__brand-copy">
+            <span className="header__title">District Story Lab</span>
+            <span className="header__subtitle">Redistricting analysis with people in mind</span>
+          </span>
         </Link>
       </div>
       <nav className="header__nav">
@@ -20,7 +26,7 @@ export default function Header() {
           to="/"
           className={`header__link ${location.pathname === '/' ? 'header__link--active' : ''}`}
         >
-          Map
+          Home
         </Link>
         <Link
           to="/state/MS"
@@ -36,7 +42,7 @@ export default function Header() {
         </Link>
       </nav>
       <div className="header__right">
-        <span className="header__badge">CSE 416</span>
+        <span className="header__badge">Viewing: {stateLabel}</span>
       </div>
     </header>
   );

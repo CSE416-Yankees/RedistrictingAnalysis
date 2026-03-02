@@ -57,6 +57,17 @@ export default function Sidebar({
           <button type="button" className="sidebar__reset" onClick={onReset}>
             Reset Page
           </button>
+          <button
+            type="button"
+            className="sidebar__clear"
+            onClick={() => onHighlightDistrict(null)}
+            disabled={highlightedDistrict == null}
+          >
+            Clear District Highlight
+          </button>
+          {highlightedDistrict != null && (
+            <div className="sidebar__focus-chip">Focused District: {highlightedDistrict}</div>
+          )}
         </div>
       </section>
 
