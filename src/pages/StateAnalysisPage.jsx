@@ -32,6 +32,7 @@ export default function StateAnalysisPage() {
   const [mapPlanMode, setMapPlanMode] = useState('current');
   const [isAnalysisOpen, setIsAnalysisOpen] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [isEnsembleOpen, setIsEnsembleOpen] = useState(true);
 
   const handleReset = useCallback(() => {
     setEnsembleType('raceBlind');
@@ -39,6 +40,7 @@ export default function StateAnalysisPage() {
     setSelectedDistrictId(null);
     setMapPlanMode('current');
     setIsAnalysisOpen(false);
+    setIsEnsembleOpen(true);
   }, []);
 
   if (!stateData) {
@@ -136,31 +138,47 @@ export default function StateAnalysisPage() {
               </button>
             </div>
           </div>
-          <div className="state-analysis__ensemble-summary">
-            <h3 className="state-analysis__ensemble-title">Available Ensembles (Selected State)</h3>
-            <div className="state-analysis__ensemble-table-wrap">
-              <table className="state-analysis__ensemble-table">
-                <thead>
-                  <tr>
-                    <th>Ensemble</th>
-                    <th>District Plans</th>
-                    <th>Population Equality Threshold</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {ensembleSummaryRows.map((row) => (
-                    <tr key={row.label}>
-                      <td>{row.label}</td>
-                      <td>{row.plans}</td>
-                      <td>{row.threshold}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+          <div className={`state-analysis__ensemble-summary ${isEnsembleOpen ? '' : 'state-analysis__ensemble-summary--collapsed'}`}>
+            <div className="state-analysis__ensemble-header">
+              <h3 className="state-analysis__ensemble-title">Available Ensembles (Selected State)</h3>
+              <button
+                type="button"
+                className="state-analysis__ensemble-toggle"
+                onClick={() => setIsEnsembleOpen((prev) => !prev)}
+                aria-expanded={isEnsembleOpen}
+                aria-controls="ensemble-summary-content"
+              >
+                {isEnsembleOpen ? 'Collapse' : 'Expand'}
+                <span>{isEnsembleOpen ? '▾' : '▸'}</span>
+              </button>
             </div>
-            <p className="state-analysis__ensemble-note">
-              MCMC threshold values are mock placeholders until final ensemble metadata is provided.
-            </p>
+            {isEnsembleOpen && (
+              <div id="ensemble-summary-content">
+                <div className="state-analysis__ensemble-table-wrap">
+                  <table className="state-analysis__ensemble-table">
+                    <thead>
+                      <tr>
+                        <th>Ensemble</th>
+                        <th>District Plans</th>
+                        <th>Population Equality Threshold</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {ensembleSummaryRows.map((row) => (
+                        <tr key={row.label}>
+                          <td>{row.label}</td>
+                          <td>{row.plans}</td>
+                          <td>{row.threshold}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                <p className="state-analysis__ensemble-note">
+                  MCMC threshold values are mock placeholders until final ensemble metadata is provided.
+                </p>
+              </div>
+            )}
           </div>
           <div className="state-analysis__map-container">
             <StateMap

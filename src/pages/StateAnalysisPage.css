@@ -168,6 +168,17 @@
   animation: riseIn 0.5s ease;
 }
 
+.state-analysis__ensemble-summary--collapsed {
+  padding-bottom: 8px;
+}
+
+.state-analysis__ensemble-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
 .state-analysis__ensemble-title {
   font-family: var(--font-body);
   font-size: 0.74rem;
@@ -175,10 +186,35 @@
   text-transform: uppercase;
   letter-spacing: 0.9px;
   color: #655341;
-  margin-bottom: 8px;
+  margin: 0;
+}
+
+.state-analysis__ensemble-toggle {
+  border: 1px solid rgba(178, 159, 138, 0.66);
+  border-radius: 999px;
+  background: rgba(255, 250, 242, 0.96);
+  color: #5c4d3c;
+  font-size: 0.71rem;
+  font-weight: 800;
+  letter-spacing: 0.2px;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 4px 10px;
+}
+
+.state-analysis__ensemble-toggle:hover {
+  border-color: #bfa37f;
+  background: #fff3e0;
+}
+
+.state-analysis__ensemble-toggle:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(191, 163, 127, 0.3);
 }
 
 .state-analysis__ensemble-table-wrap {
+  margin-top: 8px;
   overflow-x: auto;
 }
 
