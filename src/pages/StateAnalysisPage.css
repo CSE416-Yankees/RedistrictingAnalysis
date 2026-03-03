@@ -66,6 +66,40 @@
   margin-left: auto;
 }
 
+.state-analysis__analysis-menu {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border: 1px solid rgba(178, 159, 138, 0.64);
+  border-radius: 999px;
+  background: rgba(255, 250, 242, 0.96);
+}
+
+.state-analysis__analysis-menu label {
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.2px;
+  color: #5c4d3c;
+  text-transform: uppercase;
+}
+
+.state-analysis__analysis-menu select {
+  border: 1px solid rgba(178, 159, 138, 0.72);
+  border-radius: 999px;
+  padding: 4px 10px;
+  min-width: 190px;
+  background: #fffefb;
+  color: #2a3e45;
+  font-size: 0.79rem;
+  font-weight: 700;
+}
+
+.state-analysis__analysis-menu select:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(191, 163, 127, 0.3);
+}
+
 .state-analysis__panel-toggle {
   align-self: center;
   border: 1px solid rgba(178, 159, 138, 0.64);
@@ -239,6 +273,17 @@
     align-self: flex-start;
   }
 
+  .state-analysis__analysis-menu {
+    width: 100%;
+    border-radius: 12px;
+    justify-content: space-between;
+  }
+
+  .state-analysis__analysis-menu select {
+    min-width: 0;
+    width: min(100%, 340px);
+  }
+
   .state-analysis__map-container {
     padding: 8px 8px 0;
   }
@@ -273,6 +318,17 @@
   .state-analysis__panel-toggle {
     font-size: 0.72rem;
     padding: 5px 10px;
+  }
+
+  .state-analysis__analysis-menu {
+    width: 100%;
+    border-radius: 10px;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .state-analysis__analysis-menu select {
+    width: 100%;
   }
 
   .state-analysis__sidebar-reopen {

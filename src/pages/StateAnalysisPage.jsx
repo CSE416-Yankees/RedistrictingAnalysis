@@ -9,6 +9,22 @@ import './StateAnalysisPage.css';
 export default function StateAnalysisPage() {
   const { stateAbbr } = useParams();
   const stateData = states[stateAbbr];
+  const analysisOptions = [
+    { value: 'stateSummary', label: 'State Data Summary' },
+    { value: 'boxWhisker', label: 'Box & Whisker Data' },
+    { value: 'ensembleSplits', label: 'Ensemble Splits (Bar)' },
+    { value: 'voteSeatCurve', label: 'Vote Share vs Seat Share' },
+    { value: 'congressional', label: 'Congressional Representation' },
+    { value: 'gingles', label: 'Gingles Summary' },
+    { value: 'ginglesTable', label: 'Gingles 2/3 Table' },
+    { value: 'eiCandidates', label: 'EI Candidate Results' },
+    { value: 'eiPrecinctBar', label: 'EI Precinct Bar' },
+    { value: 'eiChoropleth', label: 'EI Choropleth' },
+    { value: 'eiKde', label: 'EI KDE' },
+    { value: 'seatShare', label: 'Seat Share Distribution' },
+    { value: 'opportunity', label: 'Opportunity Districts' },
+    { value: 'comparison', label: 'Ensemble Comparison' },
+  ];
 
   const [ensembleType, setEnsembleType] = useState('raceBlind');
   const [analysisView, setAnalysisView] = useState('stateSummary');
@@ -84,15 +100,33 @@ export default function StateAnalysisPage() {
               )}
             </div>
             <div className="state-analysis__header-actions">
-              <button
-                type="button"
-                className="state-analysis__panel-toggle"
-                onClick={() => setIsAnalysisOpen((prev) => !prev)}
-                aria-expanded={isAnalysisOpen}
-              >
-                {isAnalysisOpen ? 'Hide Analysis' : 'Show Analysis'}
-                <span className="state-analysis__panel-toggle-icon">{isAnalysisOpen ? '▾' : '▸'}</span>
-              </button>
+              <div className="state-analysis__analysis-menu">
+                <label htmlFor="analysis-view-select">Analysis View</label>
+                <select
+                  id="analysis-view-select"
+                  value={analysisView}
+                  onFocus={() => setIsAnalysisOpen(true)}
+                  onChange={(event) => {
+                    setAnalysisView(event.target.value);
+                    setIsAnalysisOpen(true);
+                  }}
+                >
+                  {analysisOptions.map((option) => (
+                    <option key={option.value} value={option.value}>{option.label}</option>
+                  ))}
+                </select>
+              </div>
+              {isAnalysisOpen && (
+                <button
+                  type="button"
+                  className="state-analysis__panel-toggle"
+                  onClick={() => setIsAnalysisOpen(false)}
+                  aria-expanded={isAnalysisOpen}
+                >
+                  Hide Analysis
+                  <span className="state-analysis__panel-toggle-icon">▾</span>
+                </button>
+              )}
               <button
                 type="button"
                 className="state-analysis__panel-toggle"
