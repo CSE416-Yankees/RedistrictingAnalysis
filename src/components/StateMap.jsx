@@ -17,15 +17,15 @@ const HEAT_SCALE = [
 ];
 
 const DEMOGRAPHIC_SCALE = [
-  '#f2f8ff',
-  '#dbeafe',
-  '#bfdbfe',
-  '#93c5fd',
-  '#60a5fa',
-  '#3b82f6',
-  '#2563eb',
-  '#1d4ed8',
-  '#1e3a8a',
+  '#f1f8f2',
+  '#d8efdb',
+  '#bfe7c5',
+  '#9fdaaa',
+  '#78ca8a',
+  '#53b86f',
+  '#369e57',
+  '#1f7f42',
+  '#145e30',
 ];
 
 const DIVERGING_SCALE = [
