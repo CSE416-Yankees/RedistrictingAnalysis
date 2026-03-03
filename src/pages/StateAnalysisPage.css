@@ -247,6 +247,51 @@
   animation: riseIn 0.65s ease;
 }
 
+.state-analysis__analysis-tab {
+  align-self: center;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  border: 1px solid rgba(177, 157, 134, 0.72);
+  border-radius: 999px;
+  background: rgba(255, 250, 242, 0.98);
+  color: #5c4d3c;
+  font-size: 0.74rem;
+  font-weight: 800;
+  letter-spacing: 0.15px;
+  padding: 4px 10px 4px 8px;
+  margin: -10px auto 6px;
+  position: relative;
+  z-index: 6;
+  box-shadow: 0 2px 8px rgba(31, 43, 51, 0.14);
+}
+
+.state-analysis__analysis-tab-handle {
+  width: 18px;
+  height: 4px;
+  border-radius: 999px;
+  background: rgba(150, 128, 102, 0.52);
+}
+
+.state-analysis__analysis-tab-icon {
+  font-size: 0.82rem;
+  line-height: 1;
+}
+
+.state-analysis__analysis-tab:hover {
+  border-color: #bfa37f;
+  background: #fff3e0;
+}
+
+.state-analysis__analysis-tab:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(191, 163, 127, 0.3);
+}
+
+.state-analysis__analysis-tab--open {
+  margin-bottom: -10px;
+}
+
 @media (max-width: 1150px) {
   .state-analysis {
     flex-direction: column;
@@ -291,6 +336,10 @@
   .state-analysis__ensemble-summary {
     margin: 8px 8px 0;
   }
+
+  .state-analysis__analysis-tab {
+    margin-top: -8px;
+  }
 }
 
 @media (max-width: 760px) {
@@ -329,6 +378,16 @@
 
   .state-analysis__analysis-menu select {
     width: 100%;
+  }
+
+  .state-analysis__analysis-tab {
+    font-size: 0.71rem;
+    padding: 4px 9px 4px 7px;
+    margin-bottom: 4px;
+  }
+
+  .state-analysis__analysis-tab--open {
+    margin-bottom: -8px;
   }
 
   .state-analysis__sidebar-reopen {

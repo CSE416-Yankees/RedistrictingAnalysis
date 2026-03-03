@@ -184,8 +184,19 @@ export default function StateAnalysisPage() {
             />
           </div>
         </div>
+        <button
+          type="button"
+          className={`state-analysis__analysis-tab ${isAnalysisOpen ? 'state-analysis__analysis-tab--open' : ''}`}
+          onClick={() => setIsAnalysisOpen((prev) => !prev)}
+          aria-expanded={isAnalysisOpen}
+          aria-controls="analysis-panel-region"
+        >
+          <span className="state-analysis__analysis-tab-handle" />
+          <span>{isAnalysisOpen ? 'Hide Analysis' : 'Show Analysis'}</span>
+          <span className="state-analysis__analysis-tab-icon">{isAnalysisOpen ? '▾' : '▴'}</span>
+        </button>
         {isAnalysisOpen && (
-          <div className="state-analysis__charts">
+          <div id="analysis-panel-region" className="state-analysis__charts">
             <AnalysisPanel
               stateAbbr={stateAbbr}
               ensembleType={ensembleType}
