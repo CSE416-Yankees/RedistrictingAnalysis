@@ -163,6 +163,28 @@
   background: #fff3e0;
 }
 
+.state-analysis__check-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  border: 1px solid rgba(178, 159, 138, 0.64);
+  border-radius: 999px;
+  background: rgba(255, 250, 242, 0.96);
+  color: #5c4d3c;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 6px 11px;
+  min-height: 34px;
+}
+
+.state-analysis__check-pill input {
+  accent-color: #1f6f78;
+}
+
+.state-analysis__check-pill span {
+  line-height: 1;
+}
+
 .state-analysis__panel-toggle--active {
   border-color: rgba(44, 115, 124, 0.7);
   background: rgba(233, 248, 250, 0.94);
@@ -324,7 +346,7 @@
 
 .state-analysis__workspace--split {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(360px, 42%);
+  grid-template-columns: minmax(0, 1fr) minmax(360px, 44%);
   gap: 10px;
   flex: 1;
   min-height: 0;

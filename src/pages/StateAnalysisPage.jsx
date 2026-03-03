@@ -1,7 +1,6 @@
 import { useCallback, useState } from 'react';
 import { useParams, Navigate } from 'react-router-dom';
 import StateMap from '../components/StateMap';
-import Sidebar from '../components/Sidebar';
 import AnalysisPanel from '../components/AnalysisPanel';
 import { states, ensembleData } from '../data/mockData';
 import './StateAnalysisPage.css';
@@ -51,7 +50,6 @@ export default function StateAnalysisPage() {
   const [selectedDistrictId, setSelectedDistrictId] = useState(null);
   const [mapPlanMode, setMapPlanMode] = useState('current');
   const [isAnalysisOpen, setIsAnalysisOpen] = useState(false);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isEnsembleInfoOpen, setIsEnsembleInfoOpen] = useState(false);
 
   const [mapMetric, setMapMetric] = useState('demographic');
@@ -173,30 +171,21 @@ export default function StateAnalysisPage() {
                 </select>
               </label>
 
-              <button
-                type="button"
-                className={`state-analysis__panel-toggle ${showDistrictOutlines ? 'state-analysis__panel-toggle--active' : ''}`}
-                onClick={() => setShowDistrictOutlines((prev) => !prev)}
-                aria-pressed={showDistrictOutlines}
-              >
-                {showDistrictOutlines ? 'Hide Boundaries' : 'Show Boundaries'}
-              </button>
-
-              <button
-                type="button"
-                className="state-analysis__panel-toggle"
-                onClick={() => setSelectedDistrictId(null)}
-                disabled={selectedDistrictId == null}
-              >
-                Clear Highlight
-              </button>
+              <label className="state-analysis__check-pill">
+                <input
+                  type="checkbox"
+                  checked={showDistrictOutlines}
+                  onChange={(event) => setShowDistrictOutlines(event.target.checked)}
+                />
+                <span>Boundaries</span>
+              </label>
 
               <button
                 type="button"
                 className="state-analysis__panel-toggle"
                 onClick={handleReset}
               >
-                Reset Page
+                Reset
               </button>
 
               <button
@@ -207,16 +196,6 @@ export default function StateAnalysisPage() {
               >
                 {isAnalysisOpen ? 'Hide Analysis' : 'Show Analysis'}
                 <span className="state-analysis__panel-toggle-icon">{isAnalysisOpen ? '▾' : '▸'}</span>
-              </button>
-
-              <button
-                type="button"
-                className="state-analysis__panel-toggle"
-                onClick={() => setIsSidebarOpen((prev) => !prev)}
-                aria-expanded={isSidebarOpen}
-              >
-                {isSidebarOpen ? 'Hide Districts' : 'Show Districts'}
-                <span className="state-analysis__panel-toggle-icon">{isSidebarOpen ? '▾' : '▸'}</span>
               </button>
             </div>
           </div>
@@ -338,23 +317,6 @@ export default function StateAnalysisPage() {
           </div>
         </div>
       </div>
-
-      {isSidebarOpen && (
-        <Sidebar
-          highlightedDistrict={selectedDistrictId}
-          onHighlightDistrict={setSelectedDistrictId}
-          mapPlanMode={mapPlanMode}
-          onMapPlanModeChange={setMapPlanMode}
-          planDistricts={activeDistricts}
-          planLabel={
-            mapPlanMode === 'comparison'
-              ? 'Comparison Plan Districts'
-              : mapPlanMode === 'interesting'
-                ? 'Interesting Plan Districts'
-                : 'Current Plan Districts'
-          }
-        />
-      )}
     </div>
   );
 }
