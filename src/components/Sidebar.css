@@ -80,6 +80,12 @@
   width: fit-content;
 }
 
+.sidebar__hint {
+  margin: 0;
+  font-size: 0.72rem;
+  color: #6f5e49;
+}
+
 .sidebar__info-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -176,34 +182,6 @@
   background: var(--color-primary);
   border-color: var(--color-primary-dark);
   color: #f8fffd;
-}
-
-.sidebar__radio-group {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  max-height: 250px;
-  overflow-y: auto;
-  padding-right: 4px;
-}
-
-.sidebar__radio {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 0.83rem;
-  cursor: pointer;
-  border-radius: 8px;
-  padding: 3px 4px;
-}
-
-.sidebar__radio input {
-  accent-color: var(--color-primary);
-}
-
-.sidebar__radio:focus-within {
-  outline: none;
-  border-color: rgba(31, 111, 120, 0.35);
 }
 
 .sidebar__table-wrap {

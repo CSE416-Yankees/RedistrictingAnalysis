@@ -4,8 +4,6 @@ export default function Sidebar({
   stateData,
   ensembleType,
   onEnsembleChange,
-  analysisView,
-  onAnalysisViewChange,
   highlightedDistrict,
   onHighlightDistrict,
   mapPlanMode,
@@ -15,23 +13,6 @@ export default function Sidebar({
   planLabel,
 }) {
   if (!stateData) return null;
-
-  const analysisOptions = [
-    { value: 'stateSummary', label: 'State Data Summary' },
-    { value: 'boxWhisker', label: 'Box & Whisker Data' },
-    { value: 'ensembleSplits', label: 'Ensemble Splits (Bar)' },
-    { value: 'voteSeatCurve', label: 'Vote Share vs Seat Share' },
-    { value: 'congressional', label: 'Congressional Representation' },
-    { value: 'gingles', label: 'Gingles Summary' },
-    { value: 'ginglesTable', label: 'Gingles 2/3 Table' },
-    { value: 'eiCandidates', label: 'EI Candidate Results' },
-    { value: 'eiPrecinctBar', label: 'EI Precinct Bar' },
-    { value: 'eiChoropleth', label: 'EI Choropleth' },
-    { value: 'eiKde', label: 'EI KDE' },
-    { value: 'seatShare', label: 'Seat Share Distribution' },
-    { value: 'opportunity', label: 'Opportunity Districts' },
-    { value: 'comparison', label: 'Ensemble Comparison' },
-  ];
 
   return (
     <aside className="sidebar">
@@ -52,6 +33,9 @@ export default function Sidebar({
           {highlightedDistrict != null && (
             <div className="sidebar__focus-chip">Focused District: {highlightedDistrict}</div>
           )}
+          <p className="sidebar__hint">
+            Use the top `Analysis View` menu to pick charts.
+          </p>
         </div>
       </section>
 
@@ -138,24 +122,6 @@ export default function Sidebar({
           >
             VRA Constrained
           </button>
-        </div>
-      </section>
-
-      <section className="sidebar__section">
-        <h3 className="sidebar__heading">Analysis View</h3>
-        <div className="sidebar__radio-group">
-          {analysisOptions.map((opt) => (
-            <label key={opt.value} className="sidebar__radio">
-              <input
-                type="radio"
-                name="analysisView"
-                value={opt.value}
-                checked={analysisView === opt.value}
-                onChange={() => onAnalysisViewChange(opt.value)}
-              />
-              <span>{opt.label}</span>
-            </label>
-          ))}
         </div>
       </section>
 

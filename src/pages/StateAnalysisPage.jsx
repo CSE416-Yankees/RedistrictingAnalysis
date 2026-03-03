@@ -116,17 +116,15 @@ export default function StateAnalysisPage() {
                   ))}
                 </select>
               </div>
-              {isAnalysisOpen && (
-                <button
-                  type="button"
-                  className="state-analysis__panel-toggle"
-                  onClick={() => setIsAnalysisOpen(false)}
-                  aria-expanded={isAnalysisOpen}
-                >
-                  Hide Analysis
-                  <span className="state-analysis__panel-toggle-icon">▾</span>
-                </button>
-              )}
+              <button
+                type="button"
+                className="state-analysis__panel-toggle"
+                onClick={() => setIsAnalysisOpen((prev) => !prev)}
+                aria-expanded={isAnalysisOpen}
+              >
+                {isAnalysisOpen ? 'Hide Analysis' : 'Show Analysis'}
+                <span className="state-analysis__panel-toggle-icon">{isAnalysisOpen ? '▾' : '▸'}</span>
+              </button>
               <button
                 type="button"
                 className="state-analysis__panel-toggle"
@@ -202,11 +200,6 @@ export default function StateAnalysisPage() {
           stateData={stateData}
           ensembleType={ensembleType}
           onEnsembleChange={setEnsembleType}
-          analysisView={analysisView}
-          onAnalysisViewChange={(nextView) => {
-            setAnalysisView(nextView);
-            setIsAnalysisOpen(true);
-          }}
           highlightedDistrict={selectedDistrictId}
           onHighlightDistrict={setSelectedDistrictId}
           mapPlanMode={mapPlanMode}
@@ -221,15 +214,6 @@ export default function StateAnalysisPage() {
                 : 'Current Plan Districts'
           }
         />
-      )}
-      {!isSidebarOpen && (
-        <button
-          type="button"
-          className="state-analysis__sidebar-reopen"
-          onClick={() => setIsSidebarOpen(true)}
-        >
-          Show Controls ▸
-        </button>
       )}
     </div>
   );
