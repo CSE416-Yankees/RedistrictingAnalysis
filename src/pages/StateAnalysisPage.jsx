@@ -6,25 +6,31 @@ import AnalysisPanel from '../components/AnalysisPanel';
 import { states, ensembleData } from '../data/mockData';
 import './StateAnalysisPage.css';
 
+const ANALYSIS_OPTIONS = [
+  { value: 'stateSummary', label: 'State Data Summary' },
+  { value: 'boxWhisker', label: 'Box & Whisker Data' },
+  { value: 'ensembleSplits', label: 'Ensemble Splits (Bar)' },
+  { value: 'voteSeatCurve', label: 'Vote Share vs Seat Share' },
+  { value: 'congressional', label: 'Congressional Representation' },
+  { value: 'gingles', label: 'Gingles Summary' },
+  { value: 'ginglesTable', label: 'Gingles 2/3 Table' },
+  { value: 'eiCandidates', label: 'EI Candidate Results' },
+  { value: 'eiPrecinctBar', label: 'EI Precinct Bar' },
+  { value: 'eiChoropleth', label: 'EI Choropleth' },
+  { value: 'eiKde', label: 'EI KDE' },
+  { value: 'seatShare', label: 'Seat Share Distribution' },
+  { value: 'opportunity', label: 'Opportunity Districts' },
+  { value: 'comparison', label: 'Ensemble Comparison' },
+];
+
+const ENSEMBLE_OPTIONS = [
+  { value: 'raceBlind', label: 'Race-Blind' },
+  { value: 'vra', label: 'VRA Constrained' },
+];
+
 export default function StateAnalysisPage() {
   const { stateAbbr } = useParams();
   const stateData = states[stateAbbr];
-  const analysisOptions = [
-    { value: 'stateSummary', label: 'State Data Summary' },
-    { value: 'boxWhisker', label: 'Box & Whisker Data' },
-    { value: 'ensembleSplits', label: 'Ensemble Splits (Bar)' },
-    { value: 'voteSeatCurve', label: 'Vote Share vs Seat Share' },
-    { value: 'congressional', label: 'Congressional Representation' },
-    { value: 'gingles', label: 'Gingles Summary' },
-    { value: 'ginglesTable', label: 'Gingles 2/3 Table' },
-    { value: 'eiCandidates', label: 'EI Candidate Results' },
-    { value: 'eiPrecinctBar', label: 'EI Precinct Bar' },
-    { value: 'eiChoropleth', label: 'EI Choropleth' },
-    { value: 'eiKde', label: 'EI KDE' },
-    { value: 'seatShare', label: 'Seat Share Distribution' },
-    { value: 'opportunity', label: 'Opportunity Districts' },
-    { value: 'comparison', label: 'Ensemble Comparison' },
-  ];
 
   const [ensembleType, setEnsembleType] = useState('raceBlind');
   const [analysisView, setAnalysisView] = useState('stateSummary');
@@ -32,7 +38,13 @@ export default function StateAnalysisPage() {
   const [mapPlanMode, setMapPlanMode] = useState('current');
   const [isAnalysisOpen, setIsAnalysisOpen] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
-  const [isEnsembleOpen, setIsEnsembleOpen] = useState(true);
+  const [isEnsembleInfoOpen, setIsEnsembleInfoOpen] = useState(false);
+  const [sidebarTab, setSidebarTab] = useState('summary');
+
+  const [mapMetric, setMapMetric] = useState('demographic');
+  const [mapDemographicGroup, setMapDemographicGroup] = useState('overall');
+  const [mapGeographyLevel, setMapGeographyLevel] = useState('precinct');
+  const [showDistrictOutlines, setShowDistrictOutlines] = useState(true);
 
   const handleReset = useCallback(() => {
     setEnsembleType('raceBlind');
@@ -40,7 +52,12 @@ export default function StateAnalysisPage() {
     setSelectedDistrictId(null);
     setMapPlanMode('current');
     setIsAnalysisOpen(false);
-    setIsEnsembleOpen(true);
+    setIsEnsembleInfoOpen(false);
+    setSidebarTab('summary');
+    setMapMetric('demographic');
+    setMapDemographicGroup('overall');
+    setMapGeographyLevel('precinct');
+    setShowDistrictOutlines(true);
   }, []);
 
   if (!stateData) {
@@ -64,19 +81,33 @@ export default function StateAnalysisPage() {
         : 'Current Plan';
 
   const stateEnsembleData = ensembleData[stateAbbr] || {};
-  const ensembleSummaryRows = [
-    { label: 'Race-Blind', key: 'raceBlind' },
-    { label: 'VRA Constrained', key: 'vra' },
-  ].map((row) => {
-    const details = stateEnsembleData[row.key] || {};
-    return {
-      label: row.label,
-      plans: details.totalPlans ?? 'TBD',
-      threshold: details.populationEqualityThresholdPct != null
-        ? `${details.populationEqualityThresholdPct}%`
-        : 'TBD',
-    };
-  });
+  const selectedEnsembleDetails = stateEnsembleData[ensembleType] || {};
+  const ensembleRows = ENSEMBLE_OPTIONS.map((option) => ({
+    ...option,
+    details: stateEnsembleData[option.value] || {},
+  }));
+
+  const activeLayerChips = [];
+  const metricLabel = {
+    demographic: 'Demographic Heat Map',
+    partisan: 'Democrat ↔ Republican',
+    eiCandidateA: 'EI: Candidate A Support',
+    eiTurnoutGap: 'EI: Turnout Gap',
+  }[mapMetric] || mapMetric;
+  activeLayerChips.push({ key: 'metric', label: metricLabel });
+
+  if (mapMetric === 'demographic') {
+    const groupLabel = {
+      overall: 'All Minority',
+      black: 'Black',
+      hispanic: 'Hispanic',
+      asian: 'Asian',
+    }[mapDemographicGroup] || mapDemographicGroup;
+    activeLayerChips.push({ key: 'group', label: groupLabel });
+  }
+
+  activeLayerChips.push({ key: 'geography', label: mapGeographyLevel === 'censusBlock' ? 'Census Block' : 'Precinct' });
+  activeLayerChips.push({ key: 'plan', label: mapPlanLabel });
 
   return (
     <div className="state-analysis">
@@ -87,37 +118,39 @@ export default function StateAnalysisPage() {
               <h2 className="state-analysis__title">{stateData.name}</h2>
               <span className="state-analysis__subtitle">Redistricting Analysis Workspace</span>
             </div>
-            <div className="state-analysis__chips">
-              <span className="state-analysis__chip">{stateData.numDistricts} Congressional Districts</span>
-              <span className="state-analysis__chip">{mapPlanLabel}</span>
-              {selectedDistrictId != null && (
-                <span className="state-analysis__chip state-analysis__chip--selected">
-                  District {selectedDistrictId} highlighted
-                </span>
-              )}
-              {stateData.preclearance && (
-                <span className="state-analysis__chip state-analysis__chip--warn">
-                  Preclearance State
-                </span>
-              )}
+
+            <div className="state-analysis__analysis-menu">
+              <label htmlFor="analysis-view-select">Analysis View</label>
+              <select
+                id="analysis-view-select"
+                value={analysisView}
+                onFocus={() => setIsAnalysisOpen(true)}
+                onChange={(event) => {
+                  setAnalysisView(event.target.value);
+                  setIsAnalysisOpen(true);
+                }}
+              >
+                {ANALYSIS_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>{option.label}</option>
+                ))}
+              </select>
             </div>
+
             <div className="state-analysis__header-actions">
-              <div className="state-analysis__analysis-menu">
-                <label htmlFor="analysis-view-select">Analysis View</label>
+              <label className="state-analysis__control-field" htmlFor="plan-picker-select">
+                <span>Plan</span>
                 <select
-                  id="analysis-view-select"
-                  value={analysisView}
-                  onFocus={() => setIsAnalysisOpen(true)}
-                  onChange={(event) => {
-                    setAnalysisView(event.target.value);
-                    setIsAnalysisOpen(true);
-                  }}
+                  id="plan-picker-select"
+                  value={mapPlanMode}
+                  onChange={(event) => setMapPlanMode(event.target.value)}
                 >
-                  {analysisOptions.map((option) => (
-                    <option key={option.value} value={option.value}>{option.label}</option>
-                  ))}
+                  <option value="current">Current</option>
+                  <option value="comparison">Comparison</option>
+                  <option value="delta">Delta</option>
+                  <option value="interesting">Interesting</option>
                 </select>
-              </div>
+              </label>
+
               <button
                 type="button"
                 className="state-analysis__panel-toggle"
@@ -127,6 +160,7 @@ export default function StateAnalysisPage() {
                 {isAnalysisOpen ? 'Hide Analysis' : 'Show Analysis'}
                 <span className="state-analysis__panel-toggle-icon">{isAnalysisOpen ? '▾' : '▸'}</span>
               </button>
+
               <button
                 type="button"
                 className="state-analysis__panel-toggle"
@@ -138,22 +172,49 @@ export default function StateAnalysisPage() {
               </button>
             </div>
           </div>
-          <div className={`state-analysis__ensemble-summary ${isEnsembleOpen ? '' : 'state-analysis__ensemble-summary--collapsed'}`}>
+
+          <section className={`state-analysis__ensemble-summary ${isEnsembleInfoOpen ? '' : 'state-analysis__ensemble-summary--collapsed'}`}>
             <div className="state-analysis__ensemble-header">
               <h3 className="state-analysis__ensemble-title">Available Ensembles (Selected State)</h3>
-              <button
-                type="button"
-                className="state-analysis__ensemble-toggle"
-                onClick={() => setIsEnsembleOpen((prev) => !prev)}
-                aria-expanded={isEnsembleOpen}
-                aria-controls="ensemble-summary-content"
-              >
-                {isEnsembleOpen ? 'Collapse' : 'Expand'}
-                <span>{isEnsembleOpen ? '▾' : '▸'}</span>
-              </button>
+              <div className="state-analysis__ensemble-inline">
+                <label className="state-analysis__control-field state-analysis__control-field--inline" htmlFor="ensemble-select">
+                  <span>Ensemble</span>
+                  <select
+                    id="ensemble-select"
+                    value={ensembleType}
+                    onChange={(event) => setEnsembleType(event.target.value)}
+                    aria-label="Select ensemble type"
+                  >
+                    {ENSEMBLE_OPTIONS.map((option) => (
+                      <option key={option.value} value={option.value}>{option.label}</option>
+                    ))}
+                  </select>
+                </label>
+                <button
+                  type="button"
+                  className="state-analysis__ensemble-toggle"
+                  onClick={() => setIsEnsembleInfoOpen((prev) => !prev)}
+                  aria-expanded={isEnsembleInfoOpen}
+                >
+                  {isEnsembleInfoOpen ? 'Collapse' : 'Expand'}
+                  <span>{isEnsembleInfoOpen ? '▾' : '▸'}</span>
+                </button>
+              </div>
             </div>
-            {isEnsembleOpen && (
-              <div id="ensemble-summary-content">
+            {isEnsembleInfoOpen && (
+              <div className="state-analysis__ensemble-meta">
+                <div className="state-analysis__ensemble-focus">
+                  <span className="state-analysis__ensemble-focus-label">Selected</span>
+                  <span className="state-analysis__ensemble-focus-value">
+                    {ENSEMBLE_OPTIONS.find((option) => option.value === ensembleType)?.label}
+                  </span>
+                  <span className="state-analysis__ensemble-focus-detail">
+                    {selectedEnsembleDetails.totalPlans ?? 'TBD'} plans · threshold&nbsp;
+                    {selectedEnsembleDetails.populationEqualityThresholdPct != null
+                      ? `${selectedEnsembleDetails.populationEqualityThresholdPct}%`
+                      : 'TBD'}
+                  </span>
+                </div>
                 <div className="state-analysis__ensemble-table-wrap">
                   <table className="state-analysis__ensemble-table">
                     <thead>
@@ -164,22 +225,43 @@ export default function StateAnalysisPage() {
                       </tr>
                     </thead>
                     <tbody>
-                      {ensembleSummaryRows.map((row) => (
-                        <tr key={row.label}>
+                      {ensembleRows.map((row) => (
+                        <tr key={row.value} className={row.value === ensembleType ? 'state-analysis__ensemble-row--active' : ''}>
                           <td>{row.label}</td>
-                          <td>{row.plans}</td>
-                          <td>{row.threshold}</td>
+                          <td>{row.details.totalPlans ?? 'TBD'}</td>
+                          <td>
+                            {row.details.populationEqualityThresholdPct != null
+                              ? `${row.details.populationEqualityThresholdPct}%`
+                              : 'TBD'}
+                          </td>
                         </tr>
                       ))}
                     </tbody>
                   </table>
                 </div>
                 <p className="state-analysis__ensemble-note">
-                  MCMC threshold values are mock placeholders until final ensemble metadata is provided.
+                  MCMC threshold and plan counts are mock placeholders until final ensemble metadata is connected.
                 </p>
               </div>
             )}
+          </section>
+
+          <div className="state-analysis__active-filters">
+            {activeLayerChips.map((chip) => (
+              <button
+                key={chip.key}
+                type="button"
+                className="state-analysis__filter-chip"
+                onClick={() => {
+                  setIsSidebarOpen(true);
+                  setSidebarTab('layers');
+                }}
+              >
+                {chip.label}
+              </button>
+            ))}
           </div>
+
           <div className="state-analysis__map-container">
             <StateMap
               key={stateAbbr}
@@ -197,9 +279,18 @@ export default function StateAnalysisPage() {
               highlightedDistrict={selectedDistrictId}
               onDistrictSelect={setSelectedDistrictId}
               analysisView={analysisView}
+              mapMetric={mapMetric}
+              onMapMetricChange={setMapMetric}
+              mapDemographicGroup={mapDemographicGroup}
+              onMapDemographicGroupChange={setMapDemographicGroup}
+              mapGeographyLevel={mapGeographyLevel}
+              onMapGeographyLevelChange={setMapGeographyLevel}
+              showDistrictOutlines={showDistrictOutlines}
+              showOverlayControls={false}
             />
           </div>
         </div>
+
         {isAnalysisOpen && (
           <div className="state-analysis__charts">
             <AnalysisPanel
@@ -213,11 +304,20 @@ export default function StateAnalysisPage() {
           </div>
         )}
       </div>
+
       {isSidebarOpen && (
         <Sidebar
           stateData={stateData}
-          ensembleType={ensembleType}
-          onEnsembleChange={setEnsembleType}
+          activeTab={sidebarTab}
+          onActiveTabChange={setSidebarTab}
+          mapMetric={mapMetric}
+          onMapMetricChange={setMapMetric}
+          mapDemographicGroup={mapDemographicGroup}
+          onMapDemographicGroupChange={setMapDemographicGroup}
+          mapGeographyLevel={mapGeographyLevel}
+          onMapGeographyLevelChange={setMapGeographyLevel}
+          showDistrictOutlines={showDistrictOutlines}
+          onShowDistrictOutlinesChange={setShowDistrictOutlines}
           highlightedDistrict={selectedDistrictId}
           onHighlightDistrict={setSelectedDistrictId}
           mapPlanMode={mapPlanMode}

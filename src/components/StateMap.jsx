@@ -164,14 +164,30 @@ export default function StateMap({
   highlightedDistrict,
   onDistrictSelect,
   analysisView,
+  mapMetric,
+  onMapMetricChange,
+  mapDemographicGroup,
+  onMapDemographicGroupChange,
+  mapGeographyLevel,
+  onMapGeographyLevelChange,
+  showDistrictOutlines = true,
+  showOverlayControls = true,
 }) {
   const [geoData, setGeoData] = useState(null);
   const [precinctData, setPrecinctData] = useState(null);
   const [blockData, setBlockData] = useState(null);
   const [blockDataStateAbbr, setBlockDataStateAbbr] = useState(null);
-  const [metric, setMetric] = useState('demographic');
-  const [geographyLevel, setGeographyLevel] = useState('precinct');
-  const [demographicGroup, setDemographicGroup] = useState('overall');
+  const [internalMetric, setInternalMetric] = useState('demographic');
+  const [internalGeographyLevel, setInternalGeographyLevel] = useState('precinct');
+  const [internalDemographicGroup, setInternalDemographicGroup] = useState('overall');
+
+  const metric = mapMetric ?? internalMetric;
+  const setMetric = onMapMetricChange ?? setInternalMetric;
+  const geographyLevel = mapGeographyLevel ?? internalGeographyLevel;
+  const setGeographyLevel = onMapGeographyLevelChange ?? setInternalGeographyLevel;
+  const demographicGroup = mapDemographicGroup ?? internalDemographicGroup;
+  const setDemographicGroup = onMapDemographicGroupChange ?? setInternalDemographicGroup;
+
   const isDeltaMode = planMode === 'delta';
   const isEiChoroplethView = analysisView === 'eiChoropleth';
   const activeMetric = analysisView === 'eiChoropleth'
@@ -583,7 +599,7 @@ export default function StateMap({
             onEachFeature={onEachFeature}
           />
         )}
-        {districtOutlines && (
+        {showDistrictOutlines && districtOutlines && (
           <GeoJSON
             key={`${stateAbbr}-outlines-${highlightedDistrict ?? 'none'}`}
             data={districtOutlines}
@@ -651,7 +667,7 @@ export default function StateMap({
         </div>
       )}
 
-      {(activeGeoData || districtData) && (
+      {showOverlayControls && (activeGeoData || districtData) && (
         <div className="choropleth-controls">
           <div className="choropleth-metric">
             <label htmlFor="metric-select">Color by:</label>
