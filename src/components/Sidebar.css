@@ -12,9 +12,19 @@
   box-shadow: -6px 0 20px rgba(21, 35, 43, 0.06);
 }
 
+.sidebar__title {
+  font-family: var(--font-body);
+  font-size: 0.78rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: #62523f;
+  padding: 0 2px;
+}
+
 .sidebar__tabs {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 6px;
   background: rgba(241, 233, 222, 0.62);
   border: 1px solid rgba(185, 168, 148, 0.38);

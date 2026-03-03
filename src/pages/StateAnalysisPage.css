@@ -99,6 +99,8 @@
 .state-analysis__header-actions {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
+  justify-content: flex-end;
   gap: 8px;
   margin-left: auto;
 }
@@ -159,6 +161,17 @@
 .state-analysis__filter-chip:hover {
   border-color: #bfa37f;
   background: #fff3e0;
+}
+
+.state-analysis__panel-toggle--active {
+  border-color: rgba(44, 115, 124, 0.7);
+  background: rgba(233, 248, 250, 0.94);
+  color: #1a5a64;
+}
+
+.state-analysis__panel-toggle:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
 }
 
 .state-analysis__panel-toggle-icon {

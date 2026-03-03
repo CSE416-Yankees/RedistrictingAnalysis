@@ -28,6 +28,20 @@ const ENSEMBLE_OPTIONS = [
   { value: 'vra', label: 'VRA Constrained' },
 ];
 
+const MAP_METRIC_OPTIONS = [
+  { value: 'demographic', label: 'Demographic' },
+  { value: 'partisan', label: 'Partisan' },
+  { value: 'eiCandidateA', label: 'EI Candidate A' },
+  { value: 'eiTurnoutGap', label: 'EI Turnout Gap' },
+];
+
+const DEMOGRAPHIC_GROUP_OPTIONS = [
+  { value: 'overall', label: 'All Minority' },
+  { value: 'black', label: 'Black' },
+  { value: 'hispanic', label: 'Hispanic' },
+  { value: 'asian', label: 'Asian' },
+];
+
 export default function StateAnalysisPage() {
   const { stateAbbr } = useParams();
   const stateData = states[stateAbbr];
@@ -39,7 +53,6 @@ export default function StateAnalysisPage() {
   const [isAnalysisOpen, setIsAnalysisOpen] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isEnsembleInfoOpen, setIsEnsembleInfoOpen] = useState(false);
-  const [sidebarTab, setSidebarTab] = useState('summary');
 
   const [mapMetric, setMapMetric] = useState('demographic');
   const [mapDemographicGroup, setMapDemographicGroup] = useState('overall');
@@ -53,7 +66,6 @@ export default function StateAnalysisPage() {
     setMapPlanMode('current');
     setIsAnalysisOpen(false);
     setIsEnsembleInfoOpen(false);
-    setSidebarTab('summary');
     setMapMetric('demographic');
     setMapDemographicGroup('overall');
     setMapGeographyLevel('precinct');
@@ -72,42 +84,12 @@ export default function StateAnalysisPage() {
     activeDistricts = stateData.interestingPlanDistricts || stateData.currentPlanDistricts;
   }
 
-  const mapPlanLabel = mapPlanMode === 'comparison'
-    ? 'Comparison Plan'
-    : mapPlanMode === 'delta'
-      ? 'Delta View'
-      : mapPlanMode === 'interesting'
-        ? 'Interesting Plan'
-        : 'Current Plan';
-
   const stateEnsembleData = ensembleData[stateAbbr] || {};
   const selectedEnsembleDetails = stateEnsembleData[ensembleType] || {};
   const ensembleRows = ENSEMBLE_OPTIONS.map((option) => ({
     ...option,
     details: stateEnsembleData[option.value] || {},
   }));
-
-  const activeLayerChips = [];
-  const metricLabel = {
-    demographic: 'Demographic Heat Map',
-    partisan: 'Democrat ↔ Republican',
-    eiCandidateA: 'EI: Candidate A Support',
-    eiTurnoutGap: 'EI: Turnout Gap',
-  }[mapMetric] || mapMetric;
-  activeLayerChips.push({ key: 'metric', label: metricLabel });
-
-  if (mapMetric === 'demographic') {
-    const groupLabel = {
-      overall: 'All Minority',
-      black: 'Black',
-      hispanic: 'Hispanic',
-      asian: 'Asian',
-    }[mapDemographicGroup] || mapDemographicGroup;
-    activeLayerChips.push({ key: 'group', label: groupLabel });
-  }
-
-  activeLayerChips.push({ key: 'geography', label: mapGeographyLevel === 'censusBlock' ? 'Census Block' : 'Precinct' });
-  activeLayerChips.push({ key: 'plan', label: mapPlanLabel });
 
   return (
     <div className="state-analysis">
@@ -151,6 +133,72 @@ export default function StateAnalysisPage() {
                 </select>
               </label>
 
+              <label className="state-analysis__control-field" htmlFor="map-metric-select">
+                <span>Color</span>
+                <select
+                  id="map-metric-select"
+                  value={mapMetric}
+                  onChange={(event) => setMapMetric(event.target.value)}
+                >
+                  {MAP_METRIC_OPTIONS.map((option) => (
+                    <option key={option.value} value={option.value}>{option.label}</option>
+                  ))}
+                </select>
+              </label>
+
+              {mapMetric === 'demographic' && (
+                <label className="state-analysis__control-field" htmlFor="map-group-select">
+                  <span>Group</span>
+                  <select
+                    id="map-group-select"
+                    value={mapDemographicGroup}
+                    onChange={(event) => setMapDemographicGroup(event.target.value)}
+                  >
+                    {DEMOGRAPHIC_GROUP_OPTIONS.map((option) => (
+                      <option key={option.value} value={option.value}>{option.label}</option>
+                    ))}
+                  </select>
+                </label>
+              )}
+
+              <label className="state-analysis__control-field" htmlFor="map-geography-select">
+                <span>Geography</span>
+                <select
+                  id="map-geography-select"
+                  value={mapGeographyLevel}
+                  onChange={(event) => setMapGeographyLevel(event.target.value)}
+                >
+                  <option value="precinct">Precinct</option>
+                  <option value="censusBlock">Census Block</option>
+                </select>
+              </label>
+
+              <button
+                type="button"
+                className={`state-analysis__panel-toggle ${showDistrictOutlines ? 'state-analysis__panel-toggle--active' : ''}`}
+                onClick={() => setShowDistrictOutlines((prev) => !prev)}
+                aria-pressed={showDistrictOutlines}
+              >
+                {showDistrictOutlines ? 'Hide Boundaries' : 'Show Boundaries'}
+              </button>
+
+              <button
+                type="button"
+                className="state-analysis__panel-toggle"
+                onClick={() => setSelectedDistrictId(null)}
+                disabled={selectedDistrictId == null}
+              >
+                Clear Highlight
+              </button>
+
+              <button
+                type="button"
+                className="state-analysis__panel-toggle"
+                onClick={handleReset}
+              >
+                Reset Page
+              </button>
+
               <button
                 type="button"
                 className="state-analysis__panel-toggle"
@@ -167,7 +215,7 @@ export default function StateAnalysisPage() {
                 onClick={() => setIsSidebarOpen((prev) => !prev)}
                 aria-expanded={isSidebarOpen}
               >
-                {isSidebarOpen ? 'Hide Controls' : 'Show Controls'}
+                {isSidebarOpen ? 'Hide Districts' : 'Show Districts'}
                 <span className="state-analysis__panel-toggle-icon">{isSidebarOpen ? '▾' : '▸'}</span>
               </button>
             </div>
@@ -246,22 +294,6 @@ export default function StateAnalysisPage() {
             )}
           </section>
 
-          <div className="state-analysis__active-filters">
-            {activeLayerChips.map((chip) => (
-              <button
-                key={chip.key}
-                type="button"
-                className="state-analysis__filter-chip"
-                onClick={() => {
-                  setIsSidebarOpen(true);
-                  setSidebarTab('layers');
-                }}
-              >
-                {chip.label}
-              </button>
-            ))}
-          </div>
-
           <div className={`state-analysis__workspace ${isAnalysisOpen ? 'state-analysis__workspace--split' : ''}`}>
             <div className="state-analysis__map-container">
               <StateMap
@@ -309,22 +341,10 @@ export default function StateAnalysisPage() {
 
       {isSidebarOpen && (
         <Sidebar
-          stateData={stateData}
-          activeTab={sidebarTab}
-          onActiveTabChange={setSidebarTab}
-          mapMetric={mapMetric}
-          onMapMetricChange={setMapMetric}
-          mapDemographicGroup={mapDemographicGroup}
-          onMapDemographicGroupChange={setMapDemographicGroup}
-          mapGeographyLevel={mapGeographyLevel}
-          onMapGeographyLevelChange={setMapGeographyLevel}
-          showDistrictOutlines={showDistrictOutlines}
-          onShowDistrictOutlinesChange={setShowDistrictOutlines}
           highlightedDistrict={selectedDistrictId}
           onHighlightDistrict={setSelectedDistrictId}
           mapPlanMode={mapPlanMode}
           onMapPlanModeChange={setMapPlanMode}
-          onReset={handleReset}
           planDistricts={activeDistricts}
           planLabel={
             mapPlanMode === 'comparison'
