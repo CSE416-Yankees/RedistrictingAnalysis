@@ -66,6 +66,32 @@
   font-size: 10px;
 }
 
+.choropleth-legend__bins {
+  display: grid;
+  gap: 4px;
+  min-width: 170px;
+}
+
+.choropleth-legend__bin-row {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: #5f5344;
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.choropleth-legend__bin-swatch {
+  width: 14px;
+  height: 10px;
+  border-radius: 2px;
+  border: 1px solid rgba(149, 138, 122, 0.35);
+}
+
+.choropleth-legend__bin-range {
+  white-space: nowrap;
+}
+
 .choropleth-controls {
   position: absolute;
   top: 12px;

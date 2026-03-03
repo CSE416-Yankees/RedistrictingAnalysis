@@ -1,9 +1,6 @@
 import './Sidebar.css';
 
 export default function Sidebar({
-  stateAbbr,
-  states,
-  onStateChange,
   stateData,
   ensembleType,
   onEnsembleChange,
@@ -39,21 +36,8 @@ export default function Sidebar({
   return (
     <aside className="sidebar">
       <section className="sidebar__section">
-        <h3 className="sidebar__heading">Controls</h3>
+        <h3 className="sidebar__heading">Quick Actions</h3>
         <div className="sidebar__stack">
-          <label className="sidebar__select-label" htmlFor="state-select">State</label>
-          <select
-            id="state-select"
-            className="sidebar__select"
-            value={stateAbbr}
-            onChange={(event) => onStateChange(event.target.value)}
-          >
-            {Object.values(states).map((state) => (
-              <option key={state.abbr} value={state.abbr}>
-                {state.name}
-              </option>
-            ))}
-          </select>
           <button type="button" className="sidebar__reset" onClick={onReset}>
             Reset Page
           </button>

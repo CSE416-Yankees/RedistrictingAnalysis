@@ -16,6 +16,18 @@ const HEAT_SCALE = [
   { t: 9 / 9, color: '#5c0008' },
 ];
 
+const DEMOGRAPHIC_SCALE = [
+  '#f2f8ff',
+  '#dbeafe',
+  '#bfdbfe',
+  '#93c5fd',
+  '#60a5fa',
+  '#3b82f6',
+  '#2563eb',
+  '#1d4ed8',
+  '#1e3a8a',
+];
+
 const DIVERGING_SCALE = [
   { t: 0 / 14, color: '#5c0000' },
   { t: 1 / 14, color: '#8b0000' },
@@ -70,11 +82,61 @@ function normalizeDistrictId(properties) {
   return Number.isFinite(value) ? value : null;
 }
 
+function hashString(input) {
+  const value = String(input ?? '');
+  let hash = 0;
+  for (let i = 0; i < value.length; i++) {
+    hash = ((hash << 5) - hash) + value.charCodeAt(i);
+    hash |= 0;
+  }
+  return Math.abs(hash);
+}
+
+function clampNumber(value, min, max) {
+  return Math.max(min, Math.min(max, value));
+}
+
+function findNumericProperty(properties, keys) {
+  for (const key of keys) {
+    const raw = properties?.[key];
+    if (raw == null) continue;
+    const value = Number(raw);
+    if (Number.isFinite(value)) return value;
+  }
+  return null;
+}
+
 function FlyTo({ center, zoom }) {
   const map = useMap();
   useEffect(() => {
     map.flyTo(center, zoom, { duration: 1 });
   }, [center, zoom, map]);
+  return null;
+}
+
+function SyncMapSize() {
+  const map = useMap();
+  useEffect(() => {
+    const resize = () => map.invalidateSize({ pan: false });
+    const raf = requestAnimationFrame(resize);
+    const container = map.getContainer();
+
+    if (typeof ResizeObserver === 'function') {
+      const observer = new ResizeObserver(() => resize());
+      observer.observe(container);
+      return () => {
+        cancelAnimationFrame(raf);
+        observer.disconnect();
+      };
+    }
+
+    window.addEventListener('resize', resize);
+    return () => {
+      cancelAnimationFrame(raf);
+      window.removeEventListener('resize', resize);
+    };
+  }, [map]);
+
   return null;
 }
 
@@ -97,6 +159,7 @@ export default function StateMap({
   zoom,
   districtData,
   comparisonDistrictData,
+  stateDemographics,
   planMode,
   highlightedDistrict,
   onDistrictSelect,
@@ -105,8 +168,10 @@ export default function StateMap({
   const [geoData, setGeoData] = useState(null);
   const [precinctData, setPrecinctData] = useState(null);
   const [blockData, setBlockData] = useState(null);
-  const [metric, setMetric] = useState('minorityPct');
+  const [blockDataStateAbbr, setBlockDataStateAbbr] = useState(null);
+  const [metric, setMetric] = useState('demographic');
   const [geographyLevel, setGeographyLevel] = useState('precinct');
+  const [demographicGroup, setDemographicGroup] = useState('overall');
   const isDeltaMode = planMode === 'delta';
   const isEiChoroplethView = analysisView === 'eiChoropleth';
   const activeMetric = analysisView === 'eiChoropleth'
@@ -115,6 +180,7 @@ export default function StateMap({
     && metric !== 'eiTurnoutGap'
     ? 'eiCandidateA'
     : metric;
+  const isDemographicMetric = activeMetric === 'demographic';
 
   const districtDataLookup = useMemo(() => {
     const lookup = {};
@@ -155,13 +221,47 @@ export default function StateMap({
     };
   }, [geoData]);
 
+  const hasBlockDataForState = blockDataStateAbbr === stateAbbr && Boolean(blockData?.features?.length);
+
   const activeGeoData = useMemo(() => {
-    if (geographyLevel === 'censusBlock' && blockData?.features?.length) return blockData;
+    if (geographyLevel === 'censusBlock' && hasBlockDataForState) return blockData;
     if (precinctData?.features?.length) return precinctData;
     return geoData;
-  }, [geographyLevel, blockData, precinctData, geoData]);
+  }, [geographyLevel, hasBlockDataForState, blockData, precinctData, geoData]);
 
-  const usingBlockFallback = geographyLevel === 'censusBlock' && !(blockData?.features?.length);
+  const usingBlockFallback = geographyLevel === 'censusBlock' && !hasBlockDataForState;
+
+  const demographicShareTotal = (stateDemographics?.blackPercent || 0)
+    + (stateDemographics?.hispanicPercent || 0)
+    + (stateDemographics?.asianPercent || 0);
+  const demographicShares = {
+    black: demographicShareTotal > 0 ? (stateDemographics?.blackPercent || 0) / demographicShareTotal : 0.5,
+    hispanic: demographicShareTotal > 0 ? (stateDemographics?.hispanicPercent || 0) / demographicShareTotal : 0.3,
+    asian: demographicShareTotal > 0 ? (stateDemographics?.asianPercent || 0) / demographicShareTotal : 0.2,
+  };
+
+  const resolveDemographicValue = (feature, district) => {
+    const properties = feature.properties || {};
+    const minorityPct = findNumericProperty(properties, ['minorityPct', 'minority_pct', 'MINORITY_PCT'])
+      ?? district?.minorityPct
+      ?? null;
+    if (minorityPct == null) return null;
+    if (demographicGroup === 'overall') return minorityPct;
+
+    const directKeyMap = {
+      black: ['blackPct', 'black_pct', 'BLACK_PCT', 'blackPercent'],
+      hispanic: ['hispanicPct', 'hispanic_pct', 'HISPANIC_PCT', 'latinoPct', 'hispanicPercent'],
+      asian: ['asianPct', 'asian_pct', 'ASIAN_PCT', 'asianPercent'],
+    };
+    const directValue = findNumericProperty(properties, directKeyMap[demographicGroup] || []);
+    if (directValue != null) return clampNumber(directValue, 0, minorityPct);
+
+    // Placeholder when group-level precinct data is missing: split minority % by statewide shares with stable local variation.
+    const base = minorityPct * (demographicShares[demographicGroup] || 0);
+    const seed = `${properties.geoid || properties.name || ''}-${properties.district || district?.id || ''}`;
+    const jitter = ((hashString(seed) % 1000) / 1000 - 0.5) * 0.24;
+    return clampNumber(base * (1 + jitter), 0, minorityPct);
+  };
 
   const valueForFeature = (feature) => {
     const districtId = normalizeDistrictId(feature.properties);
@@ -172,6 +272,9 @@ export default function StateMap({
       const comparisonDistrict = comparisonLookup[districtId];
       if (!currentDistrict || !comparisonDistrict) return null;
       return comparisonDistrict.minorityPct - currentDistrict.minorityPct;
+    }
+    if (isDemographicMetric) {
+      return resolveDemographicValue(feature, district);
     }
     if (activeMetric === 'partisan') {
       const demPct = feature.properties?.demPct;
@@ -193,8 +296,8 @@ export default function StateMap({
       const whiteTurnout = 39 + (100 - minorityPct) * 0.31;
       return minorityTurnout - whiteTurnout;
     }
-    const minorityPct = feature.properties?.minorityPct;
-    if (minorityPct != null) return minorityPct;
+    const overallMinority = feature.properties?.minorityPct;
+    if (overallMinority != null) return overallMinority;
     return district?.minorityPct ?? null;
   };
 
@@ -223,6 +326,13 @@ export default function StateMap({
     if (min === Infinity) {
       districtData?.forEach((district) => {
         let value = district.minorityPct;
+        if (isDemographicMetric) {
+          if (demographicGroup === 'overall') {
+            value = district.minorityPct;
+          } else {
+            value = district.minorityPct * (demographicShares[demographicGroup] || 0);
+          }
+        }
         if (activeMetric === 'partisan') value = district.dem * 100;
         if (activeMetric === 'eiCandidateA') {
           value = Math.max(0, Math.min(100, 16 + district.minorityPct * 0.5 + district.dem * 100 * 0.24));
@@ -242,12 +352,59 @@ export default function StateMap({
       };
   })();
 
+  const demographicBins = (() => {
+    if (!isDemographicMetric) return [];
+    const values = [];
+    activeGeoData?.features?.forEach((feature) => {
+      const value = valueForFeature(feature);
+      if (value == null || Number.isNaN(value)) return;
+      values.push(value);
+    });
+    if (!values.length && districtData?.length) {
+      districtData.forEach((district) => {
+        let value = district.minorityPct;
+        if (demographicGroup !== 'overall') {
+          value = district.minorityPct * (demographicShares[demographicGroup] || 0);
+        }
+        values.push(value);
+      });
+    }
+    if (!values.length) return [];
+
+    const minInt = Math.floor(Math.min(...values));
+    const maxInt = Math.ceil(Math.max(...values));
+    const binCount = 8;
+    const binWidth = Math.max(1, Math.ceil((maxInt - minInt + 1) / binCount));
+    const bins = [];
+    for (let i = 0; i < binCount; i++) {
+      const start = minInt + i * binWidth;
+      if (start > maxInt) break;
+      const end = i === binCount - 1 ? maxInt : Math.min(maxInt, start + binWidth - 1);
+      const count = values.filter((value) => value >= start && value <= end).length;
+      bins.push({ start, end, count });
+    }
+    const usedBins = bins.filter((bin) => bin.count > 0);
+    return usedBins.map((bin, index) => {
+      const colorIndex = usedBins.length === 1
+        ? DEMOGRAPHIC_SCALE.length - 2
+        : Math.round((index / (usedBins.length - 1)) * (DEMOGRAPHIC_SCALE.length - 1));
+      return { ...bin, color: DEMOGRAPHIC_SCALE[colorIndex] };
+    });
+  })();
+
   const createColor = (value) => {
     if (value == null) return '#d1d5db';
     if (planMode === 'delta') {
       if (minVal === maxVal) return DELTA_SCALE[4].color;
       const t = (value - minVal) / (maxVal - minVal);
       return interpolateColor(Math.max(0, Math.min(1, t)), DELTA_SCALE);
+    }
+    if (isDemographicMetric) {
+      if (!demographicBins.length) return DEMOGRAPHIC_SCALE[2];
+      const bin = demographicBins.find((entry) => value >= entry.start && value <= entry.end);
+      if (bin) return bin.color;
+      if (value < demographicBins[0].start) return demographicBins[0].color;
+      return demographicBins[demographicBins.length - 1].color;
     }
     if (activeMetric === 'partisan') {
       const t = Math.max(0, Math.min(1, value / 100));
@@ -290,6 +447,15 @@ export default function StateMap({
         ? (comparisonDistrict.minorityPct - currentDistrict.minorityPct).toFixed(1)
         : '—';
       detailLine = `Minority % change: ${delta}%`;
+    } else if (isDemographicMetric) {
+      const demographicValue = valueForFeature(feature);
+      const labels = {
+        overall: 'Minority',
+        black: 'Black',
+        hispanic: 'Hispanic',
+        asian: 'Asian',
+      };
+      detailLine = `${labels[demographicGroup] || 'Minority'}: ${demographicValue != null ? demographicValue.toFixed(1) : '—'}%`;
     } else if (activeMetric === 'partisan') {
       const demPct = feature.properties?.demPct ?? (district ? district.dem * 100 : null);
       const repPct = demPct != null ? 100 - demPct : null;
@@ -351,28 +517,40 @@ export default function StateMap({
   }, [stateAbbr]);
 
   useEffect(() => {
-    if (geographyLevel !== 'censusBlock' || blockData?.features?.length) return undefined;
+    if (geographyLevel !== 'censusBlock') return undefined;
+    if (blockDataStateAbbr === stateAbbr) return undefined;
 
     const controller = new AbortController();
     const base = import.meta.env.BASE_URL;
     fetchGeoJson(`${base}data/${stateAbbr}-blocks.json`, controller.signal)
       .then((blocks) => {
         setBlockData(blocks);
+        setBlockDataStateAbbr(stateAbbr);
       });
     return () => controller.abort();
-  }, [stateAbbr, geographyLevel, blockData]);
+  }, [stateAbbr, geographyLevel, blockDataStateAbbr]);
 
   const isLoading = !geoData && !precinctData && !blockData;
   const isEiGapMetric = activeMetric === 'eiTurnoutGap';
+  const demographicGroupLabel = {
+    overall: 'All Minority',
+    black: 'Black',
+    hispanic: 'Hispanic',
+    asian: 'Asian',
+  }[demographicGroup] || 'All Minority';
   const legendScale = isDeltaMode
     ? DELTA_SCALE
-    : activeMetric === 'partisan'
+    : isDemographicMetric
+      ? []
+      : activeMetric === 'partisan'
       ? DIVERGING_SCALE
       : isEiGapMetric
         ? DELTA_SCALE
         : HEAT_SCALE;
   const legendTitle = isDeltaMode
     ? 'Minority % Delta (Comparison - Current)'
+    : isDemographicMetric
+      ? `${demographicGroupLabel} Population % (Precinct Bins)`
     : activeMetric === 'partisan'
       ? 'Democrat ↔ Republican %'
       : activeMetric === 'eiCandidateA'
@@ -395,10 +573,11 @@ export default function StateMap({
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
+        <SyncMapSize />
         <FlyTo center={center} zoom={zoom} />
         {activeGeoData?.features?.length > 0 && (
           <GeoJSON
-            key={`${stateAbbr}-${planMode}-${activeMetric}-${geographyLevel}`}
+            key={`${stateAbbr}-${planMode}-${activeMetric}-${demographicGroup}-${geographyLevel}`}
             data={activeGeoData}
             style={createFeatureStyle}
             onEachFeature={onEachFeature}
@@ -428,28 +607,47 @@ export default function StateMap({
       {(activeGeoData || districtData) && (
         <div className="choropleth-legend">
           <div className="choropleth-legend__title">{legendTitle}</div>
-          <div className="choropleth-legend__scale">
-            {legendScale.map((step, index) => (
-              <div
-                key={index}
-                className="choropleth-legend__swatch"
-                style={{ background: step.color }}
-              />
-            ))}
-          </div>
-          <div className="choropleth-legend__labels">
-            {activeMetric === 'partisan' && !isDeltaMode ? (
-              <>
-                <span>Rep</span>
-                <span>Dem</span>
-              </>
-            ) : (
-              <>
-                <span>{minVal.toFixed(0)}%</span>
-                <span>{maxVal.toFixed(0)}%</span>
-              </>
-            )}
-          </div>
+          {isDemographicMetric ? (
+            <div className="choropleth-legend__bins">
+              {demographicBins.length > 0 ? (
+                demographicBins.map((bin) => (
+                  <div key={`${bin.start}-${bin.end}`} className="choropleth-legend__bin-row">
+                    <span className="choropleth-legend__bin-swatch" style={{ background: bin.color }} />
+                    <span className="choropleth-legend__bin-range">{bin.start}% - {bin.end}%</span>
+                  </div>
+                ))
+              ) : (
+                <div className="choropleth-legend__bin-row">
+                  <span className="choropleth-legend__bin-range">No values available</span>
+                </div>
+              )}
+            </div>
+          ) : (
+            <>
+              <div className="choropleth-legend__scale">
+                {legendScale.map((step, index) => (
+                  <div
+                    key={index}
+                    className="choropleth-legend__swatch"
+                    style={{ background: step.color }}
+                  />
+                ))}
+              </div>
+              <div className="choropleth-legend__labels">
+                {activeMetric === 'partisan' && !isDeltaMode ? (
+                  <>
+                    <span>Rep</span>
+                    <span>Dem</span>
+                  </>
+                ) : (
+                  <>
+                    <span>{minVal.toFixed(0)}%</span>
+                    <span>{maxVal.toFixed(0)}%</span>
+                  </>
+                )}
+              </div>
+            </>
+          )}
         </div>
       )}
 
@@ -470,7 +668,7 @@ export default function StateMap({
                 </>
               ) : (
                 <>
-                  <option value="minorityPct">Minority %</option>
+                  <option value="demographic">Demographic Heat Map</option>
                   <option value="partisan">Democrat ↔ Republican</option>
                   <option value="eiCandidateA">EI: Candidate A Support</option>
                   <option value="eiTurnoutGap">EI: Turnout Gap</option>
@@ -478,6 +676,21 @@ export default function StateMap({
               )}
             </select>
           </div>
+          {isDemographicMetric && (
+            <div className="choropleth-metric">
+              <label htmlFor="group-select">Minority group:</label>
+              <select
+                id="group-select"
+                value={demographicGroup}
+                onChange={(event) => setDemographicGroup(event.target.value)}
+              >
+                <option value="overall">All Minority</option>
+                <option value="black">Black</option>
+                <option value="hispanic">Hispanic</option>
+                <option value="asian">Asian</option>
+              </select>
+            </div>
+          )}
           <div className="choropleth-metric">
             <label htmlFor="geography-select">Geography:</label>
             <select
