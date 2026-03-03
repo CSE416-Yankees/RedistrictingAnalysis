@@ -262,47 +262,49 @@ export default function StateAnalysisPage() {
             ))}
           </div>
 
-          <div className="state-analysis__map-container">
-            <StateMap
-              key={stateAbbr}
-              stateAbbr={stateAbbr}
-              center={stateData.center}
-              zoom={stateData.zoom}
-              districtData={activeDistricts}
-              comparisonDistrictData={stateData.comparisonPlanDistricts}
-              stateDemographics={{
-                blackPercent: stateData.blackPercent,
-                hispanicPercent: stateData.hispanicPercent,
-                asianPercent: stateData.asianPercent,
-              }}
-              planMode={mapPlanMode}
-              highlightedDistrict={selectedDistrictId}
-              onDistrictSelect={setSelectedDistrictId}
-              analysisView={analysisView}
-              mapMetric={mapMetric}
-              onMapMetricChange={setMapMetric}
-              mapDemographicGroup={mapDemographicGroup}
-              onMapDemographicGroupChange={setMapDemographicGroup}
-              mapGeographyLevel={mapGeographyLevel}
-              onMapGeographyLevelChange={setMapGeographyLevel}
-              showDistrictOutlines={showDistrictOutlines}
-              showOverlayControls={false}
-            />
+          <div className={`state-analysis__workspace ${isAnalysisOpen ? 'state-analysis__workspace--split' : ''}`}>
+            <div className="state-analysis__map-container">
+              <StateMap
+                key={stateAbbr}
+                stateAbbr={stateAbbr}
+                center={stateData.center}
+                zoom={stateData.zoom}
+                districtData={activeDistricts}
+                comparisonDistrictData={stateData.comparisonPlanDistricts}
+                stateDemographics={{
+                  blackPercent: stateData.blackPercent,
+                  hispanicPercent: stateData.hispanicPercent,
+                  asianPercent: stateData.asianPercent,
+                }}
+                planMode={mapPlanMode}
+                highlightedDistrict={selectedDistrictId}
+                onDistrictSelect={setSelectedDistrictId}
+                analysisView={analysisView}
+                mapMetric={mapMetric}
+                onMapMetricChange={setMapMetric}
+                mapDemographicGroup={mapDemographicGroup}
+                onMapDemographicGroupChange={setMapDemographicGroup}
+                mapGeographyLevel={mapGeographyLevel}
+                onMapGeographyLevelChange={setMapGeographyLevel}
+                showDistrictOutlines={showDistrictOutlines}
+                showOverlayControls={false}
+              />
+            </div>
+
+            {isAnalysisOpen && (
+              <div className="state-analysis__charts">
+                <AnalysisPanel
+                  stateAbbr={stateAbbr}
+                  ensembleType={ensembleType}
+                  analysisView={analysisView}
+                  stateData={stateData}
+                  highlightedDistrict={selectedDistrictId}
+                  onHighlightDistrict={setSelectedDistrictId}
+                />
+              </div>
+            )}
           </div>
         </div>
-
-        {isAnalysisOpen && (
-          <div className="state-analysis__charts">
-            <AnalysisPanel
-              stateAbbr={stateAbbr}
-              ensembleType={ensembleType}
-              analysisView={analysisView}
-              stateData={stateData}
-              highlightedDistrict={selectedDistrictId}
-              onHighlightDistrict={setSelectedDistrictId}
-            />
-          </div>
-        )}
       </div>
 
       {isSidebarOpen && (
