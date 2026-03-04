@@ -28,9 +28,9 @@
 }
 
 .state-analysis__map-header {
-  display: grid;
-  grid-template-columns: minmax(220px, 1fr) auto minmax(0, 1.25fr);
-  align-items: end;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
   gap: 8px;
   padding: 10px 12px;
   border: 1px solid rgba(190, 173, 154, 0.52);
@@ -59,7 +59,7 @@
 }
 
 .state-analysis__analysis-menu {
-  --pill-dropdown-trigger-width: 190px;
+  --pill-dropdown-trigger-width: 170px;
   display: flex;
   align-items: center;
   gap: 6px;
@@ -95,9 +95,12 @@
   align-items: center;
   flex-wrap: wrap;
   justify-content: flex-end;
+  align-content: flex-start;
   gap: 6px;
   margin-left: auto;
+  flex: 1;
   min-width: 0;
+  max-width: 100%;
   row-gap: 6px;
 }
 
@@ -111,6 +114,7 @@
   background: rgba(255, 250, 242, 0.96);
   padding: 4px 8px;
   min-height: 30px;
+  min-width: 0;
 }
 
 .state-analysis__control-field .pill-dropdown__label {
@@ -370,18 +374,6 @@
   min-height: 0;
 }
 
-@media (max-width: 1180px) {
-  .state-analysis__map-header {
-    grid-template-columns: minmax(220px, 1fr) auto;
-  }
-
-  .state-analysis__analysis-menu {
-    order: 3;
-    grid-column: 1 / -1;
-    justify-self: stretch;
-  }
-}
-
 @media (max-width: 1150px) {
   .state-analysis {
     flex-direction: column;
@@ -395,24 +387,24 @@
   }
 
   .state-analysis__map-header {
-    grid-template-columns: 1fr;
+    flex-direction: column;
     align-items: stretch;
   }
 
   .state-analysis__header-actions {
     margin-left: 0;
     flex-wrap: wrap;
+    justify-content: flex-start;
+    width: 100%;
   }
 
   .state-analysis__analysis-menu {
-    width: 100%;
     border-radius: 12px;
-    justify-content: space-between;
   }
 
   .state-analysis__analysis-menu .pill-dropdown__trigger {
-    min-width: 0;
-    width: min(100%, 360px);
+    min-width: 170px;
+    width: auto;
   }
 
   .state-analysis__map-container {
@@ -459,13 +451,13 @@
   }
 
   .state-analysis__analysis-menu {
+    width: 100%;
     border-radius: 10px;
-    flex-wrap: wrap;
-    gap: 6px;
   }
 
   .state-analysis__analysis-menu .pill-dropdown__trigger {
     width: 100%;
+    min-width: 0;
   }
 
   .state-analysis__control-field {

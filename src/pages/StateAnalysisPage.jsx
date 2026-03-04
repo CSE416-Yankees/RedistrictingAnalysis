@@ -102,19 +102,19 @@ export default function StateAnalysisPage() {
               <span className="state-analysis__subtitle">Redistricting Analysis Workspace</span>
             </div>
 
-            <PillDropdown
-              className="state-analysis__analysis-menu"
-              label="Analysis View"
-              value={analysisView}
-              options={ANALYSIS_OPTIONS}
-              align="right"
-              onChange={(nextValue) => {
-                setAnalysisView(nextValue);
-                setIsAnalysisOpen(true);
-              }}
-            />
-
             <div className="state-analysis__header-actions">
+              <PillDropdown
+                className="state-analysis__analysis-menu"
+                label="Analysis View"
+                value={analysisView}
+                options={ANALYSIS_OPTIONS}
+                align="right"
+                onChange={(nextValue) => {
+                  setAnalysisView(nextValue);
+                  setIsAnalysisOpen(true);
+                }}
+              />
+
               <PillDropdown
                 className="state-analysis__control-field"
                 label="Plan"
