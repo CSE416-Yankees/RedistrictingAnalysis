@@ -45,7 +45,11 @@ export default function AnalysisPanel({
         <BoxWhiskerChart data={current.boxWhisker} ensembleType={ensembleType} />
       )}
       {analysisView === 'ensembleSplits' && (
-        <EnsembleSplitsChart data={current.ensembleSplits} />
+        <EnsembleSplitsChart
+          data={current.ensembleSplits}
+          ensembleCatalog={data}
+          selectedEnsembleType={ensembleType}
+        />
       )}
       {analysisView === 'voteSeatCurve' && (
         <VoteSeatCurveChart data={current.voteSeatCurve} ensembleType={ensembleType} />
@@ -68,9 +72,6 @@ export default function AnalysisPanel({
       )}
       {analysisView === 'eiPrecinctBar' && (
         <EIPrecinctBarChart data={current.ei.precinctBar} />
-      )}
-      {analysisView === 'eiChoropleth' && (
-        <EIChoroplethPlaceholder />
       )}
       {analysisView === 'eiKde' && (
         <EIKdeChart data={current.ei.kde} />
@@ -276,15 +277,58 @@ function VoteSeatCurveChart({ data, ensembleType }) {
   );
 }
 
-function EnsembleSplitsChart({ data }) {
+function EnsembleSplitsChart({ data, ensembleCatalog, selectedEnsembleType }) {
+  const availableRows = [
+    { key: 'raceBlind', label: 'Race-Blind', details: ensembleCatalog?.raceBlind || {} },
+    { key: 'vra', label: 'VRA Constrained', details: ensembleCatalog?.vra || {} },
+  ];
+  const selectedRow = availableRows.find((row) => row.key === selectedEnsembleType) || availableRows[0];
+
   return (
     <div className="chart-card">
       <h3 className="chart-title">
         Ensemble Splits
         <span className="chart-subtitle">Distribution of simulated seat outcomes</span>
       </h3>
+      <div className="analysis-summary-grid">
+        <div className="analysis-summary-card">
+          <span className="analysis-summary-card__label">Selected Ensemble</span>
+          <span className="analysis-summary-card__value">{selectedRow?.label || 'N/A'}</span>
+        </div>
+        <div className="analysis-summary-card">
+          <span className="analysis-summary-card__label">Population Equality Threshold</span>
+          <span className="analysis-summary-card__value">
+            {selectedRow?.details?.populationEqualityThresholdPct != null
+              ? `${selectedRow.details.populationEqualityThresholdPct}%`
+              : 'TBD'}
+          </span>
+        </div>
+      </div>
+      <div className="analysis-table-wrap">
+        <table className="analysis-table analysis-table--compact">
+          <thead>
+            <tr>
+              <th>Ensemble</th>
+              <th>District Plans</th>
+              <th>Population Equality Threshold</th>
+            </tr>
+          </thead>
+          <tbody>
+            {availableRows.map((row) => (
+              <tr key={row.key} className={row.key === selectedEnsembleType ? 'analysis-table__row--active' : ''}>
+                <td>{row.label}</td>
+                <td>{row.details.totalPlans ?? 'TBD'}</td>
+                <td>{row.details.populationEqualityThresholdPct != null ? `${row.details.populationEqualityThresholdPct}%` : 'TBD'}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <p className="analysis-note">
+        MCMC threshold and plan counts are mock placeholders until final ensemble metadata is connected.
+      </p>
       <ResponsiveContainer width="100%" height={320}>
-        <BarChart data={data} margin={{ top: 10, right: 20, bottom: 10, left: 10 }}>
+        <BarChart data={data || EMPTY_LIST} margin={{ top: 10, right: 20, bottom: 10, left: 10 }}>
           <CartesianGrid strokeDasharray="3 3" stroke="#eee" />
           <XAxis dataKey="seatsWonByRep" tick={{ fontSize: 11 }} />
           <YAxis
@@ -293,7 +337,7 @@ function EnsembleSplitsChart({ data }) {
           />
           <Tooltip contentStyle={{ fontSize: 12, borderRadius: 6 }} />
           <Bar dataKey="plans" name="Plans" radius={[4, 4, 0, 0]}>
-            {data.map((row, i) => (
+            {(data || EMPTY_LIST).map((row, i) => (
               <Cell key={i} fill={row.seatsWonByRep > row.seatsWonByDem ? '#e53935' : '#1e88e5'} />
             ))}
           </Bar>
@@ -714,20 +758,6 @@ function EIPrecinctBarChart({ data }) {
           <Bar dataKey="whiteTurnoutPct" name="White turnout %" fill="#78909c" radius={[4, 4, 0, 0]} />
         </BarChart>
       </ResponsiveContainer>
-    </div>
-  );
-}
-
-function EIChoroplethPlaceholder() {
-  return (
-    <div className="chart-card">
-      <h3 className="chart-title">
-        EI Choropleth
-        <span className="chart-subtitle">Map now supports EI candidate support and turnout-gap choropleths</span>
-      </h3>
-      <p className="analysis-note">
-        In the map "Color by" menu, choose `EI: Candidate A Support` or `EI: Turnout Gap`.
-      </p>
     </div>
   );
 }
