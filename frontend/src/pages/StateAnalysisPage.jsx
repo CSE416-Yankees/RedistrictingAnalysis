@@ -1,5 +1,6 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useParams, Navigate } from 'react-router-dom';
+import axios from 'axios';
 import StateMap from '../components/StateMap';
 import AnalysisPanel from '../components/AnalysisPanel';
 import PillDropdown from '../components/PillDropdown';
@@ -57,6 +58,11 @@ export default function StateAnalysisPage() {
   const { stateAbbr } = useParams();
   const stateData = states[stateAbbr];
 
+  // Local state for the server-backed state summary endpoint.
+  const [serverSummary, setServerSummary] = useState(null);
+  const [isSummaryLoading, setIsSummaryLoading] = useState(false);
+  const [summaryError, setSummaryError] = useState(null);
+
   const [ensembleType, setEnsembleType] = useState('raceBlind');
   const [analysisView, setAnalysisView] = useState('stateSummary');
   const [selectedDistrictId, setSelectedDistrictId] = useState(null);
@@ -83,6 +89,45 @@ export default function StateAnalysisPage() {
   if (!stateData) {
     return <Navigate to="/" replace />;
   }
+
+  // When the route changes to a new state, fetch the backend summary for that state.
+  useEffect(() => {
+    let isCancelled = false;
+
+    const loadSummary = async () => {
+      setIsSummaryLoading(true);
+      setSummaryError(null);
+
+      try {
+        const response = await axios.get(
+          `http://localhost:8080/api/states/${stateAbbr}/summary`,
+        );
+        if (!isCancelled) {
+          setServerSummary(response.data);
+        }
+      } catch (error) {
+        // Keep the rest of the page usable even if the server call fails.
+        // The summary card will show an unavailable/error state instead of mock data.
+        if (!isCancelled) {
+          // Optional: log to console for local debugging during development.
+          // eslint-disable-next-line no-console
+          console.error('Failed to load server-backed state summary:', error);
+          setServerSummary(null);
+          setSummaryError('Unable to load state summary from server.');
+        }
+      } finally {
+        if (!isCancelled) {
+          setIsSummaryLoading(false);
+        }
+      }
+    };
+
+    loadSummary();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [stateAbbr]);
 
   let activeDistricts = stateData.currentPlanDistricts;
   if (mapPlanMode === 'comparison') {
@@ -222,6 +267,9 @@ export default function StateAnalysisPage() {
                   ensembleType={ensembleType}
                   analysisView={analysisView}
                   stateData={stateData}
+                  serverSummary={serverSummary}
+                  isSummaryLoading={isSummaryLoading}
+                  summaryError={summaryError}
                   highlightedDistrict={selectedDistrictId}
                   onHighlightDistrict={setSelectedDistrictId}
                 />

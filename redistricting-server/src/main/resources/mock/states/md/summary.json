@@ -2,9 +2,14 @@
   "abbr": "MD",
   "name": "Maryland",
   "population": 6177224,
+  "congressionalDistricts": 8,
+  "avgMinorityPct": 46.0,
+  "avgDemVotePct": 62.9,
+  "opportunityDistricts": 4,
+  "preclearance": false,
   "statewideVote": {
-    "democraticPct": 0.63,
-    "republicanPct": 0.37
+    "democraticPct": 0.634,
+    "republicanPct": 0.366
   },
   "demographics": {
     "blackPct": 0.31,
@@ -13,15 +18,10 @@
     "whitePct": 0.48,
     "otherPct": 0.02
   },
-  "redistrictingControl": "Democratic legislature / governor",
+  "redistrictingControl": "Democratic trifecta (governor + legislature)",
   "representativeSummary": {
     "democrats": 7,
     "republicans": 1
-  },
-  "ensembleSummary": {
-    "raceBlindPlans": 5000,
-    "vraPlans": 5000,
-    "populationEqualityThresholdPct": 1.0
   }
 }
 

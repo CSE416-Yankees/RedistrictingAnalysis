@@ -18,6 +18,33 @@ public class StateSummaryResponse {
     /** Total state population (rounded to the nearest whole number). */
     private long population;
 
+    /** Number of congressional districts in the enacted plan. */
+    private int congressionalDistricts;
+
+    /**
+     * Average minority percentage across districts, expressed as a
+     * whole-number percentage (for example 40.9 means 40.9%).
+     */
+    private double avgMinorityPct;
+
+    /**
+     * Average Democratic vote share across districts, expressed as a
+     * whole-number percentage (for example 60.8 means 60.8%).
+     */
+    private double avgDemVotePct;
+
+    /**
+     * Number of opportunity districts as defined by the project
+     * (for this prototype, districts with at least ~37% minority VAP).
+     */
+    private int opportunityDistricts;
+
+    /**
+     * Whether the state is subject to a preclearance-like requirement
+     * for redistricting in the current legal context.
+     */
+    private boolean preclearance;
+
     /** Statewide partisan vote breakdown. */
     private StatewideVoteDto statewideVote;
 
@@ -29,9 +56,6 @@ public class StateSummaryResponse {
 
     /** Summary of how many seats each party currently holds. */
     private RepresentationSummaryDto representativeSummary;
-
-    /** High-level overview of the ensembles used for analysis. */
-    private EnsembleSummaryDto ensembleSummary;
 
     /**
      * Default constructor required for JSON libraries to create
@@ -64,6 +88,46 @@ public class StateSummaryResponse {
         this.population = population;
     }
 
+    public int getCongressionalDistricts() {
+        return congressionalDistricts;
+    }
+
+    public void setCongressionalDistricts(int congressionalDistricts) {
+        this.congressionalDistricts = congressionalDistricts;
+    }
+
+    public double getAvgMinorityPct() {
+        return avgMinorityPct;
+    }
+
+    public void setAvgMinorityPct(double avgMinorityPct) {
+        this.avgMinorityPct = avgMinorityPct;
+    }
+
+    public double getAvgDemVotePct() {
+        return avgDemVotePct;
+    }
+
+    public void setAvgDemVotePct(double avgDemVotePct) {
+        this.avgDemVotePct = avgDemVotePct;
+    }
+
+    public int getOpportunityDistricts() {
+        return opportunityDistricts;
+    }
+
+    public void setOpportunityDistricts(int opportunityDistricts) {
+        this.opportunityDistricts = opportunityDistricts;
+    }
+
+    public boolean isPreclearance() {
+        return preclearance;
+    }
+
+    public void setPreclearance(boolean preclearance) {
+        this.preclearance = preclearance;
+    }
+
     public StatewideVoteDto getStatewideVote() {
         return statewideVote;
     }
@@ -94,14 +158,6 @@ public class StateSummaryResponse {
 
     public void setRepresentativeSummary(RepresentationSummaryDto representativeSummary) {
         this.representativeSummary = representativeSummary;
-    }
-
-    public EnsembleSummaryDto getEnsembleSummary() {
-        return ensembleSummary;
-    }
-
-    public void setEnsembleSummary(EnsembleSummaryDto ensembleSummary) {
-        this.ensembleSummary = ensembleSummary;
     }
 }
 

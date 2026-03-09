@@ -2,12 +2,14 @@ package cse416.yankees.repository;
 
 import cse416.yankees.dto.state.StateSummaryResponse;
 import cse416.yankees.exception.ResourceNotFoundException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Repository;
 
 import java.io.IOException;
 import java.io.InputStream;
+
+// Jackson 3 (tools.jackson) — the default JSON library in Spring Boot 4.
+import tools.jackson.databind.ObjectMapper;
 
 /**
  * Repository implementation that reads state data from static JSON
@@ -28,10 +30,12 @@ public class StaticJsonStateDataRepository implements StateDataRepository {
     private final ObjectMapper objectMapper;
 
     /**
-     * Spring will automatically inject the shared {@link ObjectMapper}
-     * instance that it uses for JSON serialization.
+     * Spring Boot 4 auto-configures a Jackson 3
+     * {@link tools.jackson.databind.json.JsonMapper} bean, which is a
+     * subclass of {@link ObjectMapper}.  Constructor injection picks
+     * it up automatically — no extra configuration required.
      *
-     * @param objectMapper Jackson object mapper
+     * @param objectMapper the Jackson 3 mapper provided by Boot 4
      */
     public StaticJsonStateDataRepository(ObjectMapper objectMapper) {
         this.objectMapper = objectMapper;
@@ -54,8 +58,6 @@ public class StaticJsonStateDataRepository implements StateDataRepository {
         try (InputStream inputStream = resource.getInputStream()) {
             return objectMapper.readValue(inputStream, StateSummaryResponse.class);
         } catch (IOException e) {
-            // For a course project it is reasonable to treat IO issues as
-            // an internal server error rather than exposing details.
             throw new IllegalStateException(
                     "Failed to load state summary JSON for abbreviation: " + abbr.toUpperCase(), e
             );

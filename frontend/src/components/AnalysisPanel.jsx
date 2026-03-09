@@ -28,6 +28,9 @@ export default function AnalysisPanel({
   ensembleType,
   analysisView,
   stateData,
+  serverSummary,
+  isSummaryLoading,
+  summaryError,
   highlightedDistrict,
   onHighlightDistrict,
 }) {
@@ -39,7 +42,12 @@ export default function AnalysisPanel({
   return (
     <div className="analysis-panel">
       {analysisView === 'stateSummary' && (
-        <StateSummaryCard stateData={stateData} />
+        <StateSummaryCard
+          stateData={stateData}
+          serverSummary={serverSummary}
+          isSummaryLoading={isSummaryLoading}
+          summaryError={summaryError}
+        />
       )}
       {analysisView === 'boxWhisker' && (
         <BoxWhiskerChart data={current.boxWhisker} ensembleType={ensembleType} />
@@ -89,20 +97,97 @@ export default function AnalysisPanel({
   );
 }
 
-function StateSummaryCard({ stateData }) {
-  const avgMinority = stateData.currentPlanDistricts.reduce((acc, district) => acc + district.minorityPct, 0)
-    / Math.max(1, stateData.currentPlanDistricts.length);
-  const avgDem = stateData.currentPlanDistricts.reduce((acc, district) => acc + district.dem * 100, 0)
-    / Math.max(1, stateData.currentPlanDistricts.length);
-  const opportunityDistricts = stateData.currentPlanDistricts.filter((district) => district.minorityPct >= 37).length;
-  const representativesByParty = stateData.congressionalRepresentation.reduce(
-    (acc, district) => {
-      acc[district.party] = (acc[district.party] || 0) + 1;
-      return acc;
-    },
-    { Dem: 0, Rep: 0 },
-  );
-  const statewideVote = stateData.statewideVoterDistribution || { dem: avgDem, rep: 100 - avgDem };
+function StateSummaryCard({ stateData, serverSummary, isSummaryLoading, summaryError }) {
+  // 1. Loading state: show a clear loading message instead of mock values.
+  if (isSummaryLoading) {
+    return (
+      <div className="chart-card">
+        <h3 className="chart-title">
+          State Data Summary
+          <span className="chart-subtitle">
+            Population, demographics, party-control context, and statewide Dem-vs-Rep estimate
+          </span>
+        </h3>
+        <p className="analysis-note">Loading server-backed state summary&hellip;</p>
+      </div>
+    );
+  }
+
+  // 2. Error or missing data: show an error/unavailable state.
+  if (!serverSummary) {
+    return (
+      <div className="chart-card">
+        <h3 className="chart-title">
+          State Data Summary
+          <span className="chart-subtitle">
+            Population, demographics, party-control context, and statewide Dem-vs-Rep estimate
+          </span>
+        </h3>
+        <p className="analysis-note">
+          {summaryError || 'State summary is currently unavailable from the server.'}
+        </p>
+      </div>
+    );
+  }
+
+  // 3. Success: drive the entire card from serverSummary only.
+
+  // Population
+  const populationValue = Number.isFinite(serverSummary.population)
+    ? serverSummary.population.toLocaleString()
+    : 'N/A';
+
+  // Congressional districts
+  const congressionalDistricts = Number.isFinite(serverSummary.congressionalDistricts)
+    ? serverSummary.congressionalDistricts
+    : 'N/A';
+
+  // Avg Minority %
+  const avgMinority = Number.isFinite(serverSummary.avgMinorityPct)
+    ? serverSummary.avgMinorityPct
+    : null;
+
+  // Avg Dem Vote %
+  const avgDem = Number.isFinite(serverSummary.avgDemVotePct)
+    ? serverSummary.avgDemVotePct
+    : null;
+
+  // Opportunity Districts
+  const opportunityDistricts = Number.isFinite(serverSummary.opportunityDistricts)
+    ? serverSummary.opportunityDistricts
+    : 'N/A';
+
+  // Preclearance
+  const preclearance = typeof serverSummary.preclearance === 'boolean'
+    ? serverSummary.preclearance
+    : null;
+
+  // Congressional representation by party
+  const serverDemSeats = serverSummary.representativeSummary?.democrats;
+  const serverRepSeats = serverSummary.representativeSummary?.republicans;
+  const representativesByParty = {
+    Dem: Number.isFinite(serverDemSeats) ? serverDemSeats : 'N/A',
+    Rep: Number.isFinite(serverRepSeats) ? serverRepSeats : 'N/A',
+  };
+
+  // Statewide vote (fractions on backend, percentages in UI)
+  let statewideVote = { dem: 0, rep: 0 };
+  if (serverSummary.statewideVote) {
+    const demPct = serverSummary.statewideVote.democraticPct * 100;
+    const repPct = serverSummary.statewideVote.republicanPct * 100;
+    if (Number.isFinite(demPct) && Number.isFinite(repPct)) {
+      const total = demPct + repPct;
+      const normDem = total > 0 ? (demPct / total) * 100 : demPct;
+      const normRep = total > 0 ? (repPct / total) * 100 : repPct;
+      statewideVote = {
+        dem: Number(normDem.toFixed(1)),
+        rep: Number(normRep.toFixed(1)),
+      };
+    }
+  }
+
+  // Party control text
+  const redistrictingControl = serverSummary.redistrictingControl || 'N/A';
 
   return (
     <div className="chart-card">
@@ -113,12 +198,12 @@ function StateSummaryCard({ stateData }) {
         </span>
       </h3>
       <div className="analysis-kpi-grid">
-        <Kpi label="Population" value={stateData.population.toLocaleString()} />
-        <Kpi label="Congressional Districts" value={stateData.numDistricts} />
-        <Kpi label="Avg Minority %" value={`${avgMinority.toFixed(1)}%`} />
-        <Kpi label="Avg Dem Vote %" value={`${avgDem.toFixed(1)}%`} />
+        <Kpi label="Population" value={populationValue} />
+        <Kpi label="Congressional Districts" value={congressionalDistricts} />
+        <Kpi label="Avg Minority %" value={avgMinority != null ? `${avgMinority.toFixed(1)}%` : 'N/A'} />
+        <Kpi label="Avg Dem Vote %" value={avgDem != null ? `${avgDem.toFixed(1)}%` : 'N/A'} />
         <Kpi label="Opportunity Districts" value={opportunityDistricts} />
-        <Kpi label="Preclearance" value={stateData.preclearance ? 'Yes' : 'No'} />
+        <Kpi label="Preclearance" value={preclearance != null ? (preclearance ? 'Yes' : 'No') : 'N/A'} />
       </div>
       <div className="analysis-summary-grid">
         <div className="analysis-summary-card">
@@ -129,7 +214,7 @@ function StateSummaryCard({ stateData }) {
         </div>
         <div className="analysis-summary-card">
           <span className="analysis-summary-card__label">Party Control of Redistricting Process</span>
-          <span className="analysis-summary-card__value">{stateData.redistrictingControl}</span>
+          <span className="analysis-summary-card__value">{redistrictingControl}</span>
         </div>
       </div>
       <div className="analysis-voter-dist">
