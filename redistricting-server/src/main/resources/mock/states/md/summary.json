@@ -1,0 +1,27 @@
+{
+  "abbr": "MD",
+  "name": "Maryland",
+  "population": 6177224,
+  "statewideVote": {
+    "democraticPct": 0.63,
+    "republicanPct": 0.37
+  },
+  "demographics": {
+    "blackPct": 0.31,
+    "hispanicPct": 0.12,
+    "asianPct": 0.07,
+    "whitePct": 0.48,
+    "otherPct": 0.02
+  },
+  "redistrictingControl": "Democratic legislature / governor",
+  "representativeSummary": {
+    "democrats": 7,
+    "republicans": 1
+  },
+  "ensembleSummary": {
+    "raceBlindPlans": 5000,
+    "vraPlans": 5000,
+    "populationEqualityThresholdPct": 1.0
+  }
+}
+

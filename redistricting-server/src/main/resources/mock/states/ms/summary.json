@@ -1,0 +1,27 @@
+{
+  "abbr": "MS",
+  "name": "Mississippi",
+  "population": 2966407,
+  "statewideVote": {
+    "democraticPct": 0.41,
+    "republicanPct": 0.59
+  },
+  "demographics": {
+    "blackPct": 0.37,
+    "hispanicPct": 0.04,
+    "asianPct": 0.01,
+    "whitePct": 0.56,
+    "otherPct": 0.02
+  },
+  "redistrictingControl": "Republican legislature / governor",
+  "representativeSummary": {
+    "democrats": 1,
+    "republicans": 3
+  },
+  "ensembleSummary": {
+    "raceBlindPlans": 4000,
+    "vraPlans": 4000,
+    "populationEqualityThresholdPct": 1.0
+  }
+}
+
