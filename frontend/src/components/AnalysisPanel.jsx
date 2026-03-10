@@ -27,7 +27,6 @@ export default function AnalysisPanel({
   stateAbbr,
   ensembleType,
   analysisView,
-  stateData,
   serverSummary,
   isSummaryLoading,
   summaryError,
@@ -43,7 +42,6 @@ export default function AnalysisPanel({
     <div className="analysis-panel">
       {analysisView === 'stateSummary' && (
         <StateSummaryCard
-          stateData={stateData}
           serverSummary={serverSummary}
           isSummaryLoading={isSummaryLoading}
           summaryError={summaryError}
@@ -97,7 +95,7 @@ export default function AnalysisPanel({
   );
 }
 
-function StateSummaryCard({ stateData, serverSummary, isSummaryLoading, summaryError }) {
+function StateSummaryCard({ serverSummary, isSummaryLoading, summaryError }) {
   // 1. Loading state: show a clear loading message instead of mock values.
   if (isSummaryLoading) {
     return (

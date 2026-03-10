@@ -8,15 +8,8 @@
   "opportunityDistricts": 4,
   "preclearance": false,
   "statewideVote": {
-    "democraticPct": 0.634,
-    "republicanPct": 0.366
-  },
-  "demographics": {
-    "blackPct": 0.31,
-    "hispanicPct": 0.12,
-    "asianPct": 0.07,
-    "whitePct": 0.48,
-    "otherPct": 0.02
+    "democraticPct": 0.6262,
+    "republicanPct": 0.3408
   },
   "redistrictingControl": "Democratic trifecta (governor + legislature)",
   "representativeSummary": {
@@ -24,4 +17,3 @@
     "republicans": 1
   }
 }
-

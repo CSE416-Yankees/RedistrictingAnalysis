@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.RestController;
  * the {@code /api/states} URI namespace.
  *
  * For now we only implement the summary endpoint, but this
- * controller is intentionally structured so you can later add
+ * controller is intentionally structured so i can later add
  * additional endpoints such as representation, districts, and
  * analysis results.
  */

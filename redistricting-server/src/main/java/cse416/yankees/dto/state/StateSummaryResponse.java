@@ -136,14 +136,6 @@ public class StateSummaryResponse {
         this.statewideVote = statewideVote;
     }
 
-    public DemographicSummaryDto getDemographics() {
-        return demographics;
-    }
-
-    public void setDemographics(DemographicSummaryDto demographics) {
-        this.demographics = demographics;
-    }
-
     public String getRedistrictingControl() {
         return redistrictingControl;
     }

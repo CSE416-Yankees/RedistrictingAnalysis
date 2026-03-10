@@ -1,22 +1,15 @@
 {
   "abbr": "MS",
   "name": "Mississippi",
-  "population": 2966407,
+  "population": 2961279,
   "congressionalDistricts": 4,
   "avgMinorityPct": 37.0,
   "avgDemVotePct": 45.0,
   "opportunityDistricts": 1,
   "preclearance": true,
   "statewideVote": {
-    "democraticPct": 0.421,
-    "republicanPct": 0.579
-  },
-  "demographics": {
-    "blackPct": 0.37,
-    "hispanicPct": 0.04,
-    "asianPct": 0.01,
-    "whitePct": 0.56,
-    "otherPct": 0.02
+    "democraticPct": 0.3800,
+    "republicanPct": 0.6089
   },
   "redistrictingControl": "Republican trifecta (governor + legislature)",
   "representativeSummary": {
@@ -24,4 +17,3 @@
     "republicans": 3
   }
 }
-
