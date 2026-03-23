@@ -15,5 +15,47 @@
   "representativeSummary": {
     "democrats": 1,
     "republicans": 3
-  }
+  },
+  "congressionalRepresentation": [
+    {
+      "district": "MS-1",
+      "districtNumber": 1,
+      "representative": "Rep. Alex Carter",
+      "party": "Rep",
+      "representativeRaceEthnicity": "White",
+      "voteMarginPct": 26.0,
+      "demVotePct": 37.0,
+      "repVotePct": 63.0
+    },
+    {
+      "district": "MS-2",
+      "districtNumber": 2,
+      "representative": "Rep. Morgan Fields",
+      "party": "Dem",
+      "representativeRaceEthnicity": "Black",
+      "voteMarginPct": 44.0,
+      "demVotePct": 72.0,
+      "repVotePct": 28.0
+    },
+    {
+      "district": "MS-3",
+      "districtNumber": 3,
+      "representative": "Rep. Jordan Hayes",
+      "party": "Rep",
+      "representativeRaceEthnicity": "White",
+      "voteMarginPct": 32.0,
+      "demVotePct": 34.0,
+      "repVotePct": 66.0
+    },
+    {
+      "district": "MS-4",
+      "districtNumber": 4,
+      "representative": "Rep. Taylor Boone",
+      "party": "Rep",
+      "representativeRaceEthnicity": "White",
+      "voteMarginPct": 28.0,
+      "demVotePct": 36.0,
+      "repVotePct": 64.0
+    }
+  ]
 }

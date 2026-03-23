@@ -12,7 +12,6 @@ const ANALYSIS_OPTIONS = [
   { value: 'boxWhisker', label: 'Box & Whisker Data' },
   { value: 'ensembleSplits', label: 'Ensemble Splits (Bar)' },
   { value: 'voteSeatCurve', label: 'Vote Share vs Seat Share' },
-  { value: 'congressional', label: 'Congressional Representation' },
   { value: 'gingles', label: 'Gingles Summary' },
   { value: 'ginglesTable', label: 'Gingles 2/3 Table' },
   { value: 'eiCandidates', label: 'EI Candidate Results' },
@@ -86,10 +85,6 @@ export default function StateAnalysisPage() {
     setShowDistrictOutlines(true);
   }, []);
 
-  if (!stateData) {
-    return <Navigate to="/" replace />;
-  }
-
   // When the route changes to a new state, fetch the backend summary for that state.
   useEffect(() => {
     let isCancelled = false;
@@ -109,8 +104,6 @@ export default function StateAnalysisPage() {
         // Keep the rest of the page usable even if the server call fails.
         // The summary card will show an unavailable/error state instead of mock data.
         if (!isCancelled) {
-          // Optional: log to console for local debugging during development.
-          // eslint-disable-next-line no-console
           console.error('Failed to load server-backed state summary:', error);
           setServerSummary(null);
           setSummaryError('Unable to load state summary from server.');
@@ -128,6 +121,10 @@ export default function StateAnalysisPage() {
       isCancelled = true;
     };
   }, [stateAbbr]);
+
+  if (!stateData) {
+    return <Navigate to="/" replace />;
+  }
 
   let activeDistricts = stateData.currentPlanDistricts;
   if (mapPlanMode === 'comparison') {

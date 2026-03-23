@@ -15,5 +15,87 @@
   "representativeSummary": {
     "democrats": 7,
     "republicans": 1
-  }
+  },
+  "congressionalRepresentation": [
+    {
+      "district": "MD-1",
+      "districtNumber": 1,
+      "representative": "Rep. Riley Brooks",
+      "party": "Dem",
+      "representativeRaceEthnicity": "White",
+      "voteMarginPct": 20.0,
+      "demVotePct": 60.0,
+      "repVotePct": 40.0
+    },
+    {
+      "district": "MD-2",
+      "districtNumber": 2,
+      "representative": "Rep. Avery Sutton",
+      "party": "Dem",
+      "representativeRaceEthnicity": "Black",
+      "voteMarginPct": 44.0,
+      "demVotePct": 72.0,
+      "repVotePct": 28.0
+    },
+    {
+      "district": "MD-3",
+      "districtNumber": 3,
+      "representative": "Rep. Cameron Ellis",
+      "party": "Dem",
+      "representativeRaceEthnicity": "Black",
+      "voteMarginPct": 26.0,
+      "demVotePct": 63.0,
+      "repVotePct": 37.0
+    },
+    {
+      "district": "MD-4",
+      "districtNumber": 4,
+      "representative": "Rep. Skyler Reed",
+      "party": "Dem",
+      "representativeRaceEthnicity": "Black",
+      "voteMarginPct": 36.0,
+      "demVotePct": 68.0,
+      "repVotePct": 32.0
+    },
+    {
+      "district": "MD-5",
+      "districtNumber": 5,
+      "representative": "Rep. Quinn Harper",
+      "party": "Dem",
+      "representativeRaceEthnicity": "White",
+      "voteMarginPct": 16.0,
+      "demVotePct": 58.0,
+      "repVotePct": 42.0
+    },
+    {
+      "district": "MD-6",
+      "districtNumber": 6,
+      "representative": "Rep. Peyton Moore",
+      "party": "Rep",
+      "representativeRaceEthnicity": "White",
+      "voteMarginPct": 20.0,
+      "demVotePct": 40.0,
+      "repVotePct": 60.0
+    },
+    {
+      "district": "MD-7",
+      "districtNumber": 7,
+      "representative": "Rep. Logan Pierce",
+      "party": "Dem",
+      "representativeRaceEthnicity": "Black",
+      "voteMarginPct": 40.0,
+      "demVotePct": 70.0,
+      "repVotePct": 30.0
+    },
+    {
+      "district": "MD-8",
+      "districtNumber": 8,
+      "representative": "Rep. Hayden Clark",
+      "party": "Dem",
+      "representativeRaceEthnicity": "White",
+      "voteMarginPct": 10.0,
+      "demVotePct": 55.0,
+      "repVotePct": 45.0
+    }
+  ]
 }

@@ -27,6 +27,7 @@ export default function AnalysisPanel({
   stateAbbr,
   ensembleType,
   analysisView,
+  stateData,
   serverSummary,
   isSummaryLoading,
   summaryError,
@@ -42,6 +43,7 @@ export default function AnalysisPanel({
     <div className="analysis-panel">
       {analysisView === 'stateSummary' && (
         <StateSummaryCard
+          stateData={stateData}
           serverSummary={serverSummary}
           isSummaryLoading={isSummaryLoading}
           summaryError={summaryError}
@@ -59,9 +61,6 @@ export default function AnalysisPanel({
       )}
       {analysisView === 'voteSeatCurve' && (
         <VoteSeatCurveChart data={current.voteSeatCurve} ensembleType={ensembleType} />
-      )}
-      {analysisView === 'congressional' && (
-        <CongressionalTable rows={stateData.congressionalRepresentation} />
       )}
       {analysisView === 'gingles' && (
         <GinglesSummary summary={current.gingles.summary} scatterData={current.gingles.scatter} />
@@ -95,7 +94,7 @@ export default function AnalysisPanel({
   );
 }
 
-function StateSummaryCard({ serverSummary, isSummaryLoading, summaryError }) {
+function StateSummaryCard({ stateData, serverSummary, isSummaryLoading, summaryError }) {
   // 1. Loading state: show a clear loading message instead of mock values.
   if (isSummaryLoading) {
     return (
@@ -103,7 +102,7 @@ function StateSummaryCard({ serverSummary, isSummaryLoading, summaryError }) {
         <h3 className="chart-title">
           State Data Summary
           <span className="chart-subtitle">
-            Population, demographics, party-control context, and statewide Dem-vs-Rep estimate
+            Population, demographics, party control, statewide vote, and enacted-plan representation
           </span>
         </h3>
         <p className="analysis-note">Loading server-backed state summary&hellip;</p>
@@ -118,7 +117,7 @@ function StateSummaryCard({ serverSummary, isSummaryLoading, summaryError }) {
         <h3 className="chart-title">
           State Data Summary
           <span className="chart-subtitle">
-            Population, demographics, party-control context, and statewide Dem-vs-Rep estimate
+            Population, demographics, party control, statewide vote, and enacted-plan representation
           </span>
         </h3>
         <p className="analysis-note">
@@ -186,13 +185,14 @@ function StateSummaryCard({ serverSummary, isSummaryLoading, summaryError }) {
 
   // Party control text
   const redistrictingControl = serverSummary.redistrictingControl || 'N/A';
+  const congressionalRows = serverSummary.congressionalRepresentation || stateData?.congressionalRepresentation || EMPTY_LIST;
 
   return (
     <div className="chart-card">
       <h3 className="chart-title">
         State Data Summary
         <span className="chart-subtitle">
-          Population, demographics, party-control context, and statewide Dem-vs-Rep estimate
+          Population, demographics, party control, statewide vote, and enacted-plan representation
         </span>
       </h3>
       <div className="analysis-kpi-grid">
@@ -234,6 +234,41 @@ function StateSummaryCard({ serverSummary, isSummaryLoading, summaryError }) {
           <span>Rep {statewideVote.rep.toFixed(1)}%</span>
         </div>
       </div>
+      <div className="analysis-table-wrap">
+        <table className="analysis-table">
+          <thead>
+            <tr>
+              <th>District #</th>
+              <th>Representative</th>
+              <th>Party</th>
+              <th>Rep Racial/Ethnic Group</th>
+              <th>Vote Margin %</th>
+              <th>Dem Vote %</th>
+              <th>Rep Vote %</th>
+            </tr>
+          </thead>
+          <tbody>
+            {congressionalRows.length > 0 ? congressionalRows.map((row) => (
+              <tr key={row.district}>
+                <td>{row.districtNumber}</td>
+                <td>{row.representative}</td>
+                <td>{row.party}</td>
+                <td>{row.representativeRaceEthnicity}</td>
+                <td>{Number(row.voteMarginPct).toFixed(1)}%</td>
+                <td>{Number(row.demVotePct).toFixed(1)}%</td>
+                <td>{Number(row.repVotePct).toFixed(1)}%</td>
+              </tr>
+            )) : (
+              <tr>
+                <td colSpan="7">Congressional representation rows are not available.</td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+      <p className="analysis-note">
+        Representative rows now belong to the state summary payload and no longer have a separate analysis view.
+      </p>
     </div>
   );
 }
@@ -426,46 +461,6 @@ function EnsembleSplitsChart({ data, ensembleCatalog, selectedEnsembleType }) {
           </Bar>
         </BarChart>
       </ResponsiveContainer>
-    </div>
-  );
-}
-
-function CongressionalTable({ rows }) {
-  return (
-    <div className="chart-card">
-      <h3 className="chart-title">
-        Congressional Representation
-        <span className="chart-subtitle">Enacted-plan district representatives, party, group, and vote margin</span>
-      </h3>
-      <div className="analysis-table-wrap">
-        <table className="analysis-table">
-          <thead>
-            <tr>
-              <th>District #</th>
-              <th>Representative</th>
-              <th>Party</th>
-              <th>Rep Racial/Ethnic Group</th>
-              <th>Vote Margin %</th>
-              <th>Dem Vote %</th>
-              <th>Rep Vote %</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((row) => (
-              <tr key={row.district}>
-                <td>{row.districtNumber}</td>
-                <td>{row.representative}</td>
-                <td>{row.party}</td>
-                <td>{row.representativeRaceEthnicity}</td>
-                <td>{row.voteMarginPct.toFixed(1)}%</td>
-                <td>{row.demVotePct.toFixed(1)}%</td>
-                <td>{row.repVotePct.toFixed(1)}%</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-      <p className="analysis-note">Representative names/groups are mock placeholders until final enacted-plan records are connected.</p>
     </div>
   );
 }

@@ -1,11 +1,13 @@
 package cse416.yankees.dto.state;
 
+import java.util.List;
+
 /**
  * Top-level DTO returned from the state summary endpoint.
  *
- * This object is deliberately small and focused on the data the
- * React frontend needs to render the high-level summary panel for
- * a single state.
+ * This object includes both the high-level state summary values and
+ * the enacted-plan congressional representation table rendered in the
+ * summary panel for a single state.
  */
 public class StateSummaryResponse {
 
@@ -56,6 +58,9 @@ public class StateSummaryResponse {
 
     /** Summary of how many seats each party currently holds. */
     private RepresentationSummaryDto representativeSummary;
+
+    /** Detailed enacted-plan congressional representation rows. */
+    private List<CongressionalRepresentationRowDto> congressionalRepresentation;
 
     /**
      * Default constructor required for JSON libraries to create
@@ -151,5 +156,12 @@ public class StateSummaryResponse {
     public void setRepresentativeSummary(RepresentationSummaryDto representativeSummary) {
         this.representativeSummary = representativeSummary;
     }
-}
 
+    public List<CongressionalRepresentationRowDto> getCongressionalRepresentation() {
+        return congressionalRepresentation;
+    }
+
+    public void setCongressionalRepresentation(List<CongressionalRepresentationRowDto> congressionalRepresentation) {
+        this.congressionalRepresentation = congressionalRepresentation;
+    }
+}
