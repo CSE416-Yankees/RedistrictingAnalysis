@@ -28,4 +28,10 @@ public class EnsembleComparison {
     public double getRbAvgOpportunityDistricts() { return rbAvgOpportunityDistricts; }
     public double getVraAvgOpportunityDistricts() { return vraAvgOpportunityDistricts; }
     public int getTotalPlansEach() { return totalPlansEach; }
+
+    public void setState(State state) { this.state = state; }
+    public void setOpportunityDistrictData(Map<Integer, OpportunityDistrictData> opportunityDistrictData) { this.opportunityDistrictData = opportunityDistrictData; }
+    public void setRbAvgOpportunityDistricts(double rbAvgOpportunityDistricts) { this.rbAvgOpportunityDistricts = rbAvgOpportunityDistricts; }
+    public void setVraAvgOpportunityDistricts(double vraAvgOpportunityDistricts) { this.vraAvgOpportunityDistricts = vraAvgOpportunityDistricts; }
+    public void setTotalPlansEach(int totalPlansEach) { this.totalPlansEach = totalPlansEach; }
 }

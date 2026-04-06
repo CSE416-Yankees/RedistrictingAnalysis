@@ -22,4 +22,7 @@ public class EIPrecinctResults {
 
     public State getState() { return state; }
     public Map<Integer, PrecinctData> getPrecinctData() { return precinctData; }
+
+    public void setState(State state) { this.state = state; }
+    public void setPrecinctData(Map<Integer, PrecinctData> precinctData) { this.precinctData = precinctData; }
 }

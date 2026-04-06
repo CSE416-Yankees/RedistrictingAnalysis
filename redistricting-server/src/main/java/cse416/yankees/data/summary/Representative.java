@@ -12,6 +12,8 @@ public class Representative {
     private int demVotePercent; // 0-100
     private int repVotePercent; // 0-100
 
+    public Representative() {}
+
     public Representative(State state, int districtNumber, String name, String party, String racialEthnicGroup,
                           int voteMarginPercent, int demVotePercent, int repVotePercent) {
         this.state = state;

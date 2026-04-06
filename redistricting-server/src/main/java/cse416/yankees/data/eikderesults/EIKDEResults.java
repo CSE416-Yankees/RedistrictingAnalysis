@@ -22,4 +22,7 @@ public class EIKDEResults {
 
     public State getState() { return state; }
     public Map<Integer, Double> getDistrictKDEScores() { return districtKDEScores; }
+
+    public void setState(State state) { this.state = state; }
+    public void setDistrictKDEScores(Map<Integer, Double> districtKDEScores) { this.districtKDEScores = districtKDEScores; }
 }

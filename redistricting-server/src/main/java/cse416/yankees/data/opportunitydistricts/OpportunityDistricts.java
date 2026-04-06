@@ -24,4 +24,8 @@ public class OpportunityDistricts {
     public State getState() { return state; }
     public EnsembleType getEnsembleType() { return ensembleType; }
     public Map<Integer, Integer> getOpportunityDistrictsToPlans() { return opportunityDistrictsToPlans; }
+
+    public void setState(State state) { this.state = state; }
+    public void setEnsembleType(EnsembleType ensembleType) { this.ensembleType = ensembleType; }
+    public void setOpportunityDistrictsToPlans(Map<Integer, Integer> opportunityDistrictsToPlans) { this.opportunityDistrictsToPlans = opportunityDistrictsToPlans; }
 }

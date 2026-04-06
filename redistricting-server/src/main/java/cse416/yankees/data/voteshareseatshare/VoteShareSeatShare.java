@@ -24,4 +24,8 @@ public class VoteShareSeatShare {
     public State getState() { return state; }
     public EnsembleType getEnsembleType() { return ensembleType; }
     public Map<Double, Double> getVoteShareToSeatShare() { return voteShareToSeatShare; }
+
+    public void setState(State state) { this.state = state; }
+    public void setEnsembleType(EnsembleType ensembleType) { this.ensembleType = ensembleType; }
+    public void setVoteShareToSeatShare(Map<Double, Double> voteShareToSeatShare) { this.voteShareToSeatShare = voteShareToSeatShare; }
 }

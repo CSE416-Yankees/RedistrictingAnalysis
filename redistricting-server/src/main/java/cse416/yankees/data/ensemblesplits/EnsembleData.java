@@ -6,4 +6,7 @@ public class EnsembleData {
 
     public int getDistrictPlans() { return districtPlans; }
     public double getPopEqThresholdPercent() { return popEqThresholdPercent; }
+
+    public void setDistrictPlans(int districtPlans) { this.districtPlans = districtPlans; }
+    public void setPopEqThresholdPercent(double popEqThresholdPercent) { this.popEqThresholdPercent = popEqThresholdPercent; }
 }

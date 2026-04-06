@@ -22,4 +22,7 @@ public class GinglesTable {
 
     public State getState() { return state; }
     public List<TableRow> getRows() { return rows; }
+
+    public void setState(State state) { this.state = state; }
+    public void setRows(List<TableRow> rows) { this.rows = rows; }
 }

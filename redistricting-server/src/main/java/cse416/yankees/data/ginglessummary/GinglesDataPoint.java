@@ -8,6 +8,8 @@ public class GinglesDataPoint {
     private double republicanVotePercentage;
     private double democraticVotePercentage;
 
+    public GinglesDataPoint() {}
+
     public GinglesDataPoint(String group, int district, int precinct, double minorityPercentage,
             double republicanVotePercentage, double democraticVotePercentage) {
         this.group = group;

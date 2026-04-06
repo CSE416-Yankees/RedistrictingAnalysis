@@ -4,6 +4,8 @@ public class PrecinctData {
     private double minorityTurnoutPercentage;
     private double whiteTurnoutPercentage;
 
+    public PrecinctData() {}
+
     public PrecinctData(double minorityTurnoutPercentage, double whiteTurnoutPercentage) {
         this.minorityTurnoutPercentage = minorityTurnoutPercentage;
         this.whiteTurnoutPercentage = whiteTurnoutPercentage;

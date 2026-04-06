@@ -6,6 +6,8 @@ public class GraphPoint {
     private double blackDensity;
     private double hispanicDensity;
 
+    public GraphPoint() {}
+
     public GraphPoint(int supportPercent, double asianDensity, double blackDensity, double hispanicDensity) {
         this.supportPercent = supportPercent;
         this.asianDensity = asianDensity;

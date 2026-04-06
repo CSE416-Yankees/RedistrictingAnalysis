@@ -8,6 +8,8 @@ public class TableRow {
     private double compactness; // 0-1, higher is more compact
     private boolean thresholdMet;
 
+    public TableRow() {}
+
     public TableRow(int district, int minorityPercentage, double cohesion, double blocVoting, double compactness, boolean thresholdMet) {
         this.district = district;
         this.minorityPercentage = minorityPercentage;

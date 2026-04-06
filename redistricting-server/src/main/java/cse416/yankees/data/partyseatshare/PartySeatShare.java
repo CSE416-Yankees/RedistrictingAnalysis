@@ -24,4 +24,8 @@ public class PartySeatShare {
     public State getState() { return state; }
     public EnsembleType getEnsembleType() { return ensembleType; }
     public Map<Integer, Integer> getRepublicanSeatsToPlans() { return republicanSeatsToPlans; }
+
+    public void setState(State state) { this.state = state; }
+    public void setEnsembleType(EnsembleType ensembleType) { this.ensembleType = ensembleType; }
+    public void setRepublicanSeatsToPlans(Map<Integer, Integer> republicanSeatsToPlans) { this.republicanSeatsToPlans = republicanSeatsToPlans; }
 }

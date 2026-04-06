@@ -49,4 +49,18 @@ public class StateSummary {
     public int getDemVoterDistribution() { return demVoterDistribution; }
     public int getRepVoterDistribution() { return repVoterDistribution; }
     public List<Representative> getRepresentatives() { return representatives; }
+
+    public void setState(State state) { this.state = state; }
+    public void setEnsembleType(EnsembleType ensembleType) { this.ensembleType = ensembleType; }
+    public void setPopulation(int population) { this.population = population; }
+    public void setNumCongressionalDistricts(int numCongressionalDistricts) { this.numCongressionalDistricts = numCongressionalDistricts; }
+    public void setAvgMinorityPercent(double avgMinorityPercent) { this.avgMinorityPercent = avgMinorityPercent; }
+    public void setAvgDemVotePercent(double avgDemVotePercent) { this.avgDemVotePercent = avgDemVotePercent; }
+    public void setOpportunityDistricts(int opportunityDistricts) { this.opportunityDistricts = opportunityDistricts; }
+    public void setPreclearance(boolean preclearance) { this.preclearance = preclearance; }
+    public void setRepresentativesByParty(Map<String, Integer> representativesByParty) { this.representativesByParty = representativesByParty; }
+    public void setRedistrictingPartyControl(String redistrictingPartyControl) { this.redistrictingPartyControl = redistrictingPartyControl; }
+    public void setDemVoterDistribution(int demVoterDistribution) { this.demVoterDistribution = demVoterDistribution; }
+    public void setRepVoterDistribution(int repVoterDistribution) { this.repVoterDistribution = repVoterDistribution; }
+    public void setRepresentatives(List<Representative> representatives) { this.representatives = representatives; }
 }

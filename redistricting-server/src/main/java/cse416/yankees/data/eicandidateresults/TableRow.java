@@ -6,6 +6,8 @@ public class TableRow {
     private int candidateBPercentage;
     private int candidateCPercentage;
 
+    public TableRow() {}
+
     public TableRow(int district, int candidateAPercentage, int candidateBPercentage, int candidateCPercentage) {
         this.district = district;
         this.candidateAPercentage = candidateAPercentage;

@@ -23,4 +23,13 @@ public class DistrictBox {
 
     public double getEnactedPercent() { return enactedPercent; }
     public double getProposedPercent() { return proposedPercent; }
+
+    public void setDistrictNumber(int districtNumber) { this.districtNumber = districtNumber; }
+    public void setMinPercent(double minPercent) { this.minPercent = minPercent; }
+    public void setQ1Percent(double q1Percent) { this.q1Percent = q1Percent; }
+    public void setMedianPercent(double medianPercent) { this.medianPercent = medianPercent; }
+    public void setQ3Percent(double q3Percent) { this.q3Percent = q3Percent; }
+    public void setMaxPercent(double maxPercent) { this.maxPercent = maxPercent; }
+    public void setEnactedPercent(double enactedPercent) { this.enactedPercent = enactedPercent; }
+    public void setProposedPercent(double proposedPercent) { this.proposedPercent = proposedPercent; }
 }

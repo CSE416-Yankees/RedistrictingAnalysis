@@ -25,4 +25,9 @@ public class BoxWhisker {
     public EnsembleType getEnsembleType() { return ensembleType; }
     public String getGroup() { return group; }
     public List<DistrictBox> getDistricts() { return districts; }
+
+    public void setState(State state) { this.state = state; }
+    public void setEnsembleType(EnsembleType ensembleType) { this.ensembleType = ensembleType; }
+    public void setGroup(String group) { this.group = group; }
+    public void setDistricts(List<DistrictBox> districts) { this.districts = districts; }
 }

@@ -29,4 +29,9 @@ public class EICandidateResults {
     public EnsembleType getEnsembleType() { return ensembleType; }
     public Map<String, List<GraphPoint>> getGraphPoints() { return graphPoints; }
     public List<TableRow> getTableRows() { return tableRows; }
+
+    public void setState(State state) { this.state = state; }
+    public void setEnsembleType(EnsembleType ensembleType) { this.ensembleType = ensembleType; }
+    public void setGraphPoints(Map<String, List<GraphPoint>> graphPoints) { this.graphPoints = graphPoints; }
+    public void setTableRows(List<TableRow> tableRows) { this.tableRows = tableRows; }
 }
