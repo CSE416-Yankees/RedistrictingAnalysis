@@ -387,13 +387,13 @@ public class DataSeeder implements CommandLineRunner {
         voteShareSeatShareRepo.deleteAll();
 
         voteShareSeatShareRepo.saveAll(Arrays.asList(
-            buildVoteShareSeatShare(State.MD, EnsembleType.RB, Map.of(0.45, 0.125, 0.50, 0.375, 0.55, 0.750, 0.60, 0.875)),
-            buildVoteShareSeatShare(State.MD, EnsembleType.VRA, Map.of(0.45, 0.125, 0.50, 0.500, 0.55, 0.750, 0.60, 1.0)),
-            buildVoteShareSeatShare(State.MS, EnsembleType.RB, Map.of(0.40, 0.25, 0.50, 0.50, 0.55, 0.75))
+            buildVoteShareSeatShare(State.MD, EnsembleType.RB, Map.of(45, 0.125, 50, 0.375, 55, 0.750, 60, 0.875)),
+            buildVoteShareSeatShare(State.MD, EnsembleType.VRA, Map.of(45, 0.125, 50, 0.500, 55, 0.750, 60, 1.0)),
+            buildVoteShareSeatShare(State.MS, EnsembleType.RB, Map.of(40, 0.25, 50, 0.50, 55, 0.75))
         ));
     }
 
-    private VoteShareSeatShare buildVoteShareSeatShare(State state, EnsembleType type, Map<Double, Double> data) {
+    private VoteShareSeatShare buildVoteShareSeatShare(State state, EnsembleType type, Map<Integer, Double> data) {
         VoteShareSeatShare vsss = new VoteShareSeatShare();
         vsss.setState(state);
         vsss.setEnsembleType(type);

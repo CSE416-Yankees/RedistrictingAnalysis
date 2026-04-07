@@ -15,7 +15,7 @@ public class VoteShareSeatShare {
     private State state;
     private EnsembleType ensembleType;
 
-    private Map<Double, Double> voteShareToSeatShare; // Data point of Vote share (0-100) and corresponding observed seat share (0-100)
+    private Map<Integer, Double> voteShareToSeatShare; // Keys are vote share as integer percentage (e.g. 45 = 45%), values are seat share (0.0-1.0)
 
     public VoteShareSeatShare() {}
 
@@ -23,9 +23,9 @@ public class VoteShareSeatShare {
 
     public State getState() { return state; }
     public EnsembleType getEnsembleType() { return ensembleType; }
-    public Map<Double, Double> getVoteShareToSeatShare() { return voteShareToSeatShare; }
+    public Map<Integer, Double> getVoteShareToSeatShare() { return voteShareToSeatShare; }
 
     public void setState(State state) { this.state = state; }
     public void setEnsembleType(EnsembleType ensembleType) { this.ensembleType = ensembleType; }
-    public void setVoteShareToSeatShare(Map<Double, Double> voteShareToSeatShare) { this.voteShareToSeatShare = voteShareToSeatShare; }
+    public void setVoteShareToSeatShare(Map<Integer, Double> voteShareToSeatShare) { this.voteShareToSeatShare = voteShareToSeatShare; }
 }
