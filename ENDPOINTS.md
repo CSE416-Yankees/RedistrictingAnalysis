@@ -611,6 +611,56 @@ GET /api/md/ei/precinct-results
 
 ---
 
+### 4.13 `GET /api/{state}/geo-data`
+
+Returns a GeoJSON FeatureCollection containing all geographic features for the given state at the requested geography level. The response is a valid GeoJSON object consumable directly by Leaflet.
+
+**Parameters**
+
+| Name | In | Required | Type | Description |
+|------|----|----------|------|-------------|
+| `state` | path | yes | string | `md` or `ms` |
+| `level` | query | yes | string | `DISTRICT`, `PRECINCT`, or `CENSUS_BLOCK` (case-insensitive) |
+
+**Example Request**
+```
+GET /api/md/geo-data?level=DISTRICT
+```
+
+**Example Response**
+```json
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "MultiPolygon",
+        "coordinates": [[[[[-76.6, 39.2], [-76.5, 39.3], [-76.6, 39.2]]]]]
+      },
+      "properties": {
+        "district": 1,
+        "name": "District 1",
+        "Code": "MD-01",
+        "District": "Maryland 1st",
+        "color": "#e63946"
+      }
+    }
+  ]
+}
+```
+
+**Notes**
+- One response contains **all features** for the requested state and geography level — not a single district
+- `DISTRICT` returns 8 features for MD (one MultiPolygon per congressional district)
+- `PRECINCT` returns all precinct polygons for the state (hundreds of features); feature properties include `geoid`, `GEOID20`, `VTDST20`, `STATEFP20`, `COUNTYFP20`, `ALAND20`, `AWATER20`, `INTPTLAT20`, `INTPTLON20`, `district` (int, links to district number), `minorityPct`, `demPct`
+- `CENSUS_BLOCK` returns all census block polygons (thousands of features); same property schema as `PRECINCT`
+- District-level geometry type is `MultiPolygon`; precinct and census block geometry type is `Polygon`
+- Precinct and census block responses may include a top-level `fileName` field (non-standard GeoJSON extension, ignored by Leaflet)
+- `bbox` on geometry objects is omitted when not present in the source data
+
+---
+
 ## 5. Full Response Schemas
 
 ### `StateSummary`
@@ -808,5 +858,53 @@ EICandidateTableRow {
 PrecinctData {
   minorityTurnoutPercentage: number   // 0.0–100.0
   whiteTurnoutPercentage:    number   // 0.0–100.0
+}
+```
+
+### `GeoData` (geo-data endpoint)
+```ts
+// Root response — valid GeoJSON FeatureCollection
+GeoJsonFeatureCollection {
+  type:     "FeatureCollection"
+  features: GeoJsonFeature[]
+  fileName?: string   // non-standard field present on precinct/block responses only
+}
+
+GeoJsonFeature {
+  type:       "Feature"
+  geometry:   GeoJsonGeometry
+  properties: Record<string, any>   // schema varies by level (see 4.13 Notes)
+}
+
+GeoJsonGeometry {
+  type:         "Polygon" | "MultiPolygon"
+  coordinates:  number[][][][]   // Polygon, or number[][][][][] for MultiPolygon
+  bbox?:        number[]         // present on precinct/block geometries only
+}
+
+// District-level properties
+DistrictProperties {
+  district:  number    // 1-based district ID
+  name:      string    // e.g. "District 1"
+  Code:      string    // e.g. "MD-01"
+  District:  string    // e.g. "Maryland 1st"
+  color:     string    // hex color string
+}
+
+// Precinct and census block properties
+PrecinctBlockProperties {
+  district:    number    // district this feature belongs to
+  geoid:       string
+  GEOID20:     string
+  VTDST20:     string
+  name:        string
+  STATEFP20:   string
+  COUNTYFP20:  string
+  ALAND20:     number    // land area (sq meters)
+  AWATER20:    number    // water area (sq meters)
+  INTPTLAT20:  string    // interior point latitude
+  INTPTLON20:  string    // interior point longitude
+  minorityPct: number    // 0.0–100.0
+  demPct:      number    // 0.0–100.0
 }
 ```
