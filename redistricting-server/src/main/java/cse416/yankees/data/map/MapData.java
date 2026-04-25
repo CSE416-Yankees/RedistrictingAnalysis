@@ -1,12 +1,12 @@
-package cse416.yankees.data.geodata;
+package cse416.yankees.data.map;
 
 import cse416.yankees.common.GeographyLevel;
 import cse416.yankees.common.State;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
-@Document(collection = "geo_data")
-public class GeoData {
+@Document(collection = "map_data")
+public class MapData {
 
     @Id
     private String id;
@@ -15,7 +15,7 @@ public class GeoData {
     private GeographyLevel level;
     private GeoJsonFeatureCollection featureCollection;
 
-    public GeoData() {}
+    public MapData() {}
 
     public String getId() { return id; }
     public State getState() { return state; }

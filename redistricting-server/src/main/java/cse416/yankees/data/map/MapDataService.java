@@ -1,4 +1,4 @@
-package cse416.yankees.data.geodata;
+package cse416.yankees.data.map;
 
 import cse416.yankees.common.GeographyLevel;
 import cse416.yankees.common.State;
@@ -6,17 +6,17 @@ import cse416.yankees.exception.ResourceNotFoundException;
 import org.springframework.stereotype.Service;
 
 @Service
-public class GeoDataService {
+public class MapDataService {
 
-    private final GeoDataRepository repository;
+    private final MapDataRepository repository;
 
-    public GeoDataService(GeoDataRepository repository) {
+    public MapDataService(MapDataRepository repository) {
         this.repository = repository;
     }
 
-    public GeoData get(State state, GeographyLevel level) {
+    public MapData get(State state, GeographyLevel level) {
         return repository.findByStateAndLevel(state, level)
                 .orElseThrow(() -> new ResourceNotFoundException(
-                        "GeoData not found for state=" + state + " level=" + level));
+                        "MapData not found for state=" + state + " level=" + level));
     }
 }

@@ -1,6 +1,5 @@
 package cse416.yankees.data.summary;
 
-import cse416.yankees.common.EnsembleType;
 import cse416.yankees.common.State;
 import org.springframework.web.bind.annotation.*;
 
@@ -15,11 +14,7 @@ public class StateSummaryController {
     }
 
     @GetMapping
-    public StateSummary getSummary(
-            @PathVariable String state,
-            @RequestParam String ensembleType) {
-        return service.get(
-                State.valueOf(state.toUpperCase()),
-                EnsembleType.valueOf(ensembleType.toUpperCase()));
+    public StateSummary getSummary(@PathVariable String state) {
+        return service.get(State.valueOf(state.toUpperCase()));
     }
 }

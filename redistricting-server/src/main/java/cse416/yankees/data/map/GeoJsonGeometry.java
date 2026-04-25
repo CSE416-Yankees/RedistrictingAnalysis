@@ -1,4 +1,4 @@
-package cse416.yankees.data.geodata;
+package cse416.yankees.data.map;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
@@ -6,16 +6,15 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 public class GeoJsonGeometry {
 
     private String type;
+    // Object because coordinates shape varies by type: double[] for Point,
+    // double[][] for LineString, double[][][] for Polygon, double[][][][] for MultiPolygon
     private Object coordinates;
-    private Object bbox;
 
     public GeoJsonGeometry() {}
 
     public String getType() { return type; }
     public Object getCoordinates() { return coordinates; }
-    public Object getBbox() { return bbox; }
 
     public void setType(String type) { this.type = type; }
     public void setCoordinates(Object coordinates) { this.coordinates = coordinates; }
-    public void setBbox(Object bbox) { this.bbox = bbox; }
 }

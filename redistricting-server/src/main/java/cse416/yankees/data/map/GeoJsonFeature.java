@@ -1,4 +1,4 @@
-package cse416.yankees.data.geodata;
+package cse416.yankees.data.map;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 

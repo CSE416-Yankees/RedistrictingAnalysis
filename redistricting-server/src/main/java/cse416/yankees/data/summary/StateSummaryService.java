@@ -1,6 +1,5 @@
 package cse416.yankees.data.summary;
 
-import cse416.yankees.common.EnsembleType;
 import cse416.yankees.common.State;
 import cse416.yankees.exception.ResourceNotFoundException;
 import org.springframework.stereotype.Service;
@@ -14,9 +13,9 @@ public class StateSummaryService {
         this.repository = repository;
     }
 
-    public StateSummary get(State state, EnsembleType ensembleType) {
-        return repository.findByStateAndEnsembleType(state, ensembleType)
+    public StateSummary get(State state) {
+        return repository.findByState(state)
                 .orElseThrow(() -> new ResourceNotFoundException(
-                        "StateSummary not found for state=" + state + " ensembleType=" + ensembleType));
+                        "StateSummary not found for state=" + state));
     }
 }

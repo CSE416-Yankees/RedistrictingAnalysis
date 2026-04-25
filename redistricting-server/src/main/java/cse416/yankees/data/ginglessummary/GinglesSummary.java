@@ -5,7 +5,8 @@ import java.util.List;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
-import cse416.yankees.common.*;
+import cse416.yankees.common.EnsembleType;
+import cse416.yankees.common.State;
 
 @Document(collection = "gingles_summaries")
 public class GinglesSummary {

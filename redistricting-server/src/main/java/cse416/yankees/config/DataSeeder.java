@@ -5,6 +5,11 @@ import cse416.yankees.common.State;
 import cse416.yankees.data.boxwhisker.BoxWhisker;
 import cse416.yankees.data.boxwhisker.BoxWhiskerRepository;
 import cse416.yankees.data.boxwhisker.DistrictBox;
+import cse416.yankees.data.districtplan.DistrictPlan;
+import cse416.yankees.data.districtplan.DistrictPlanRepository;
+import cse416.yankees.data.districtplan.DistrictSummary;
+import cse416.yankees.data.districtplan.PlanData;
+import cse416.yankees.data.districtplan.StateDisplay;
 import cse416.yankees.data.eicandidateresults.EICandidateResults;
 import cse416.yankees.data.eicandidateresults.EICandidateResultsRepository;
 import cse416.yankees.data.eicandidateresults.GraphPoint;
@@ -25,13 +30,19 @@ import cse416.yankees.data.ginglessummary.GinglesSummary;
 import cse416.yankees.data.ginglessummary.GinglesSummaryRepository;
 import cse416.yankees.data.ginglestable.GinglesTable;
 import cse416.yankees.data.ginglestable.GinglesTableRepository;
+import cse416.yankees.data.map.DemographicHeatMap;
+import cse416.yankees.data.map.DemographicHeatMapRepository;
+import cse416.yankees.data.map.HeatMapBin;
 import cse416.yankees.data.opportunitydistricts.OpportunityDistricts;
 import cse416.yankees.data.opportunitydistricts.OpportunityDistrictsRepository;
 import cse416.yankees.data.partyseatshare.PartySeatShare;
 import cse416.yankees.data.partyseatshare.PartySeatShareRepository;
-import cse416.yankees.data.summary.Representative;
+import cse416.yankees.data.summary.DemographicSummary;
+import cse416.yankees.data.summary.EnsembleSummary;
+import cse416.yankees.data.summary.RepresentationSummary;
 import cse416.yankees.data.summary.StateSummary;
 import cse416.yankees.data.summary.StateSummaryRepository;
+import cse416.yankees.data.summary.StatewideVote;
 import cse416.yankees.data.voteshareseatshare.VoteShareSeatShare;
 import cse416.yankees.data.voteshareseatshare.VoteShareSeatShareRepository;
 import org.springframework.boot.CommandLineRunner;
@@ -48,6 +59,8 @@ import java.util.Map;
 public class DataSeeder implements CommandLineRunner {
 
     private final StateSummaryRepository stateSummaryRepo;
+    private final DistrictPlanRepository districtPlanRepo;
+    private final DemographicHeatMapRepository demographicHeatMapRepo;
     private final BoxWhiskerRepository boxWhiskerRepo;
     private final EICandidateResultsRepository eiCandidateRepo;
     private final EIKDEResultsRepository eiKDERepo;
@@ -61,6 +74,8 @@ public class DataSeeder implements CommandLineRunner {
     private final VoteShareSeatShareRepository voteShareSeatShareRepo;
 
     public DataSeeder(StateSummaryRepository stateSummaryRepo,
+                      DistrictPlanRepository districtPlanRepo,
+                      DemographicHeatMapRepository demographicHeatMapRepo,
                       BoxWhiskerRepository boxWhiskerRepo,
                       EICandidateResultsRepository eiCandidateRepo,
                       EIKDEResultsRepository eiKDERepo,
@@ -73,6 +88,8 @@ public class DataSeeder implements CommandLineRunner {
                       PartySeatShareRepository partySeatShareRepo,
                       VoteShareSeatShareRepository voteShareSeatShareRepo) {
         this.stateSummaryRepo = stateSummaryRepo;
+        this.districtPlanRepo = districtPlanRepo;
+        this.demographicHeatMapRepo = demographicHeatMapRepo;
         this.boxWhiskerRepo = boxWhiskerRepo;
         this.eiCandidateRepo = eiCandidateRepo;
         this.eiKDERepo = eiKDERepo;
@@ -89,6 +106,8 @@ public class DataSeeder implements CommandLineRunner {
     @Override
     public void run(String... args) {
         seedStateSummaries();
+        seedDistrictPlans();
+        seedDemographicHeatMaps();
         seedBoxWhiskers();
         seedEICandidateResults();
         seedEIKDEResults();
@@ -106,59 +125,217 @@ public class DataSeeder implements CommandLineRunner {
     private void seedStateSummaries() {
         stateSummaryRepo.deleteAll();
 
-        StateSummary mdRB = new StateSummary();
-        mdRB.setState(State.MD);
-        mdRB.setEnsembleType(EnsembleType.RB);
-        mdRB.setPopulation(6177224);
-        mdRB.setNumCongressionalDistricts(8);
-        mdRB.setAvgMinorityPercent(42.3);
-        mdRB.setAvgDemVotePercent(55.1);
-        mdRB.setOpportunityDistricts(3);
-        mdRB.setPreclearance(false);
-        mdRB.setRepresentativesByParty(Map.of("Democrat", 7, "Republican", 1));
-        mdRB.setRedistrictingPartyControl("Democrat");
-        mdRB.setDemVoterDistribution(60);
-        mdRB.setRepVoterDistribution(40);
-        mdRB.setRepresentatives(Arrays.asList(
-            new Representative(State.MD, 1, "Andy Harris", "Republican", "White", 65, 30, 65),
-            new Representative(State.MD, 4, "Glenn Ivey", "Democrat", "Black", 70, 70, 25)
-        ));
+        StatewideVote mdVote = new StatewideVote();
+        mdVote.setDemPct(0.62);
 
-        StateSummary mdVRA = new StateSummary();
-        mdVRA.setState(State.MD);
-        mdVRA.setEnsembleType(EnsembleType.VRA);
-        mdVRA.setPopulation(6177224);
-        mdVRA.setNumCongressionalDistricts(8);
-        mdVRA.setAvgMinorityPercent(44.1);
-        mdVRA.setAvgDemVotePercent(56.3);
-        mdVRA.setOpportunityDistricts(4);
-        mdVRA.setPreclearance(false);
-        mdVRA.setRepresentativesByParty(Map.of("Democrat", 7, "Republican", 1));
-        mdVRA.setRedistrictingPartyControl("Democrat");
-        mdVRA.setDemVoterDistribution(62);
-        mdVRA.setRepVoterDistribution(38);
-        mdVRA.setRepresentatives(List.of(
-            new Representative(State.MD, 1, "Andy Harris", "Republican", "White", 65, 30, 65)
-        ));
+        DemographicSummary mdBlack = new DemographicSummary();
+        mdBlack.setGroup("Black");
+        mdBlack.setPopulationPct(0.29);
+        mdBlack.setCvapPct(0.27);
+        mdBlack.setRoughProportionality(0.74);
 
-        StateSummary msRB = new StateSummary();
-        msRB.setState(State.MS);
-        msRB.setEnsembleType(EnsembleType.RB);
-        msRB.setPopulation(2976149);
-        msRB.setNumCongressionalDistricts(4);
-        msRB.setAvgMinorityPercent(37.8);
-        msRB.setAvgDemVotePercent(40.2);
-        msRB.setOpportunityDistricts(1);
-        msRB.setPreclearance(true);
-        msRB.setRepresentativesByParty(Map.of("Democrat", 1, "Republican", 3));
-        msRB.setRedistrictingPartyControl("Republican");
-        msRB.setDemVoterDistribution(40);
-        msRB.setRepVoterDistribution(60);
-        msRB.setRepresentatives(List.of(
-            new Representative(State.MS, 2, "Bennie Thompson", "Democrat", "Black", 67, 67, 30)
-        ));
+        DemographicSummary mdHispanic = new DemographicSummary();
+        mdHispanic.setGroup("Hispanic");
+        mdHispanic.setPopulationPct(0.12);
+        mdHispanic.setCvapPct(0.10);
+        mdHispanic.setRoughProportionality(0.40);
 
-        stateSummaryRepo.saveAll(Arrays.asList(mdRB, mdVRA, msRB));
+        DemographicSummary mdAsian = new DemographicSummary();
+        mdAsian.setGroup("Asian");
+        mdAsian.setPopulationPct(0.08);
+        mdAsian.setCvapPct(0.07);
+        mdAsian.setRoughProportionality(0.29);
+
+        RepresentationSummary mdRep = new RepresentationSummary();
+        mdRep.setDemSeats(7);
+
+        EnsembleSummary mdRBSummary = new EnsembleSummary();
+        mdRBSummary.setPlanCount(5000);
+        mdRBSummary.setPopulationEqualityThresholdPct(1.0);
+
+        EnsembleSummary mdVRASummary = new EnsembleSummary();
+        mdVRASummary.setPlanCount(5000);
+        mdVRASummary.setPopulationEqualityThresholdPct(1.0);
+
+        StateSummary md = new StateSummary();
+        md.setState(State.MD);
+        md.setAbbr("MD");
+        md.setName("Maryland");
+        md.setPopulation(6177224);
+        md.setStatewideVote(mdVote);
+        md.setDemographicSummaries(Arrays.asList(mdBlack, mdHispanic, mdAsian));
+        md.setRedistrictingControl("Democrat");
+        md.setRepresentationSummary(mdRep);
+        md.setEnsembleSummaries(Map.of("RB", mdRBSummary, "VRA", mdVRASummary));
+
+        StatewideVote msVote = new StatewideVote();
+        msVote.setDemPct(0.38);
+
+        DemographicSummary msBlack = new DemographicSummary();
+        msBlack.setGroup("Black");
+        msBlack.setPopulationPct(0.38);
+        msBlack.setCvapPct(0.35);
+        msBlack.setRoughProportionality(0.25);
+
+        RepresentationSummary msRep = new RepresentationSummary();
+        msRep.setDemSeats(1);
+
+        EnsembleSummary msRBSummary = new EnsembleSummary();
+        msRBSummary.setPlanCount(5000);
+        msRBSummary.setPopulationEqualityThresholdPct(1.0);
+
+        EnsembleSummary msVRASummary = new EnsembleSummary();
+        msVRASummary.setPlanCount(5000);
+        msVRASummary.setPopulationEqualityThresholdPct(1.0);
+
+        StateSummary ms = new StateSummary();
+        ms.setState(State.MS);
+        ms.setAbbr("MS");
+        ms.setName("Mississippi");
+        ms.setPopulation(2976149);
+        ms.setStatewideVote(msVote);
+        ms.setDemographicSummaries(List.of(msBlack));
+        ms.setRedistrictingControl("Republican");
+        ms.setRepresentationSummary(msRep);
+        ms.setEnsembleSummaries(Map.of("RB", msRBSummary, "VRA", msVRASummary));
+
+        stateSummaryRepo.saveAll(Arrays.asList(md, ms));
+    }
+
+    private void seedDistrictPlans() {
+        districtPlanRepo.deleteAll();
+
+        StateDisplay mdDisplay = new StateDisplay();
+        mdDisplay.setAbbr("MD");
+        mdDisplay.setName("Maryland");
+        mdDisplay.setCenter(new double[]{-76.7, 39.0});
+        mdDisplay.setZoom(7);
+
+        DistrictSummary mdDistrict1 = new DistrictSummary();
+        mdDistrict1.setDemVotePct(30.2);
+        mdDistrict1.setRepVotePct(65.1);
+        mdDistrict1.setMinorityPct(22.4);
+
+        DistrictSummary mdDistrict2 = new DistrictSummary();
+        mdDistrict2.setDemVotePct(58.8);
+        mdDistrict2.setRepVotePct(39.0);
+        mdDistrict2.setMinorityPct(41.7);
+
+        PlanData mdPlan = new PlanData();
+        mdPlan.setPlanType("current");
+        mdPlan.setPrecinctToDistrict(new HashMap<>(Map.of(
+            "240010001", 1,
+            "240010002", 1,
+            "240030014", 1,
+            "240050011", 2,
+            "240050012", 2
+        )));
+        mdPlan.setDistrictSummaries(Map.of("1", mdDistrict1, "2", mdDistrict2));
+
+        DistrictPlan md = new DistrictPlan();
+        md.setState(mdDisplay);
+        md.setPlan(mdPlan);
+
+        StateDisplay msDisplay = new StateDisplay();
+        msDisplay.setAbbr("MS");
+        msDisplay.setName("Mississippi");
+        msDisplay.setCenter(new double[]{-89.7, 32.7});
+        msDisplay.setZoom(7);
+
+        DistrictSummary msDistrict1 = new DistrictSummary();
+        msDistrict1.setDemVotePct(42.1);
+        msDistrict1.setRepVotePct(55.8);
+        msDistrict1.setMinorityPct(18.3);
+
+        DistrictSummary msDistrict2 = new DistrictSummary();
+        msDistrict2.setDemVotePct(67.4);
+        msDistrict2.setRepVotePct(30.1);
+        msDistrict2.setMinorityPct(63.5);
+
+        PlanData msPlan = new PlanData();
+        msPlan.setPlanType("current");
+        msPlan.setPrecinctToDistrict(new HashMap<>(Map.of(
+            "280010001", 1,
+            "280010002", 2
+        )));
+        msPlan.setDistrictSummaries(Map.of("1", msDistrict1, "2", msDistrict2));
+
+        DistrictPlan ms = new DistrictPlan();
+        ms.setState(msDisplay);
+        ms.setPlan(msPlan);
+
+        districtPlanRepo.saveAll(Arrays.asList(md, ms));
+    }
+
+    private void seedDemographicHeatMaps() {
+        demographicHeatMapRepo.deleteAll();
+
+        demographicHeatMapRepo.saveAll(Arrays.asList(
+            buildHeatMap(State.MD, "Black", Arrays.asList(
+                buildBin(0, 0, 9, "#f7fbff"),
+                buildBin(1, 10, 19, "#deebf7"),
+                buildBin(2, 20, 29, "#c6dbef"),
+                buildBin(3, 30, 39, "#9ecae1"),
+                buildBin(4, 40, 49, "#6baed6")
+            ), new HashMap<>(Map.of(
+                "240010001", 1,
+                "240010002", 3,
+                "240010003", 0,
+                "240010004", 4
+            ))),
+            buildHeatMap(State.MD, "Hispanic", Arrays.asList(
+                buildBin(0, 0, 9, "#fff5eb"),
+                buildBin(1, 10, 19, "#fee6ce"),
+                buildBin(2, 20, 29, "#fdd0a2")
+            ), new HashMap<>(Map.of(
+                "240010001", 0,
+                "240010002", 1,
+                "240010003", 0,
+                "240010004", 2
+            ))),
+            buildHeatMap(State.MD, "Asian", Arrays.asList(
+                buildBin(0, 0, 9, "#f7fcf5"),
+                buildBin(1, 10, 19, "#e5f5e0"),
+                buildBin(2, 20, 29, "#c7e9c0")
+            ), new HashMap<>(Map.of(
+                "240010001", 0,
+                "240010002", 0,
+                "240010003", 1,
+                "240010004", 2
+            ))),
+            buildHeatMap(State.MS, "Black", Arrays.asList(
+                buildBin(0, 0, 9, "#f7fbff"),
+                buildBin(1, 10, 19, "#deebf7"),
+                buildBin(2, 20, 29, "#c6dbef"),
+                buildBin(3, 30, 39, "#9ecae1"),
+                buildBin(4, 40, 49, "#6baed6"),
+                buildBin(5, 50, 59, "#4292c6"),
+                buildBin(6, 60, 69, "#2171b5")
+            ), new HashMap<>(Map.of(
+                "280010001", 2,
+                "280010002", 5,
+                "280010003", 6,
+                "280010004", 1
+            )))
+        ));
+    }
+
+    private DemographicHeatMap buildHeatMap(State state, String group, List<HeatMapBin> bins, Map<String, Integer> precinctBins) {
+        DemographicHeatMap hm = new DemographicHeatMap();
+        hm.setState(state);
+        hm.setGroup(group);
+        hm.setBins(bins);
+        hm.setPrecinctBins(precinctBins);
+        return hm;
+    }
+
+    private HeatMapBin buildBin(int bin, int minPct, int maxPct, String color) {
+        HeatMapBin b = new HeatMapBin();
+        b.setBin(bin);
+        b.setMinPct(minPct);
+        b.setMaxPct(maxPct);
+        b.setColor(color);
+        return b;
     }
 
     private void seedBoxWhiskers() {
