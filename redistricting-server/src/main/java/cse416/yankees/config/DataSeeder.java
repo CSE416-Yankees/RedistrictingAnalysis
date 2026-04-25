@@ -33,6 +33,9 @@ import cse416.yankees.data.ginglestable.GinglesTableRepository;
 import cse416.yankees.data.map.DemographicHeatMap;
 import cse416.yankees.data.map.DemographicHeatMapRepository;
 import cse416.yankees.data.map.HeatMapBin;
+import cse416.yankees.data.minorityeffectiveness.BoxStats;
+import cse416.yankees.data.minorityeffectiveness.MinorityEffectiveness;
+import cse416.yankees.data.minorityeffectiveness.MinorityEffectivenessRepository;
 import cse416.yankees.data.opportunitydistricts.OpportunityDistricts;
 import cse416.yankees.data.opportunitydistricts.OpportunityDistrictsRepository;
 import cse416.yankees.data.partyseatshare.PartySeatShare;
@@ -61,6 +64,7 @@ public class DataSeeder implements CommandLineRunner {
     private final StateSummaryRepository stateSummaryRepo;
     private final DistrictPlanRepository districtPlanRepo;
     private final DemographicHeatMapRepository demographicHeatMapRepo;
+    private final MinorityEffectivenessRepository minorityEffectivenessRepo;
     private final BoxWhiskerRepository boxWhiskerRepo;
     private final EICandidateResultsRepository eiCandidateRepo;
     private final EIKDEResultsRepository eiKDERepo;
@@ -76,6 +80,7 @@ public class DataSeeder implements CommandLineRunner {
     public DataSeeder(StateSummaryRepository stateSummaryRepo,
                       DistrictPlanRepository districtPlanRepo,
                       DemographicHeatMapRepository demographicHeatMapRepo,
+                      MinorityEffectivenessRepository minorityEffectivenessRepo,
                       BoxWhiskerRepository boxWhiskerRepo,
                       EICandidateResultsRepository eiCandidateRepo,
                       EIKDEResultsRepository eiKDERepo,
@@ -90,6 +95,7 @@ public class DataSeeder implements CommandLineRunner {
         this.stateSummaryRepo = stateSummaryRepo;
         this.districtPlanRepo = districtPlanRepo;
         this.demographicHeatMapRepo = demographicHeatMapRepo;
+        this.minorityEffectivenessRepo = minorityEffectivenessRepo;
         this.boxWhiskerRepo = boxWhiskerRepo;
         this.eiCandidateRepo = eiCandidateRepo;
         this.eiKDERepo = eiKDERepo;
@@ -108,6 +114,7 @@ public class DataSeeder implements CommandLineRunner {
         seedStateSummaries();
         seedDistrictPlans();
         seedDemographicHeatMaps();
+        seedMinorityEffectiveness();
         seedBoxWhiskers();
         seedEICandidateResults();
         seedEIKDEResults();
@@ -336,6 +343,53 @@ public class DataSeeder implements CommandLineRunner {
         b.setMaxPct(maxPct);
         b.setColor(color);
         return b;
+    }
+
+    private void seedMinorityEffectiveness() {
+        minorityEffectivenessRepo.deleteAll();
+
+        MinorityEffectiveness md = new MinorityEffectiveness();
+        md.setState(State.MD);
+        md.setGroups(Map.of(
+            "Black", Map.of(
+                "RB",  buildBoxStats(0, 1, 2, 3, 4, 2),
+                "VRA", buildBoxStats(1, 2, 3, 4, 5, 3)
+            ),
+            "Hispanic", Map.of(
+                "RB",  buildBoxStats(0, 0, 1, 1, 2, 1),
+                "VRA", buildBoxStats(0, 1, 1, 2, 2, 1)
+            ),
+            "Asian", Map.of(
+                "RB",  buildBoxStats(0, 0, 0, 1, 1, 0),
+                "VRA", buildBoxStats(0, 0, 1, 1, 2, 1)
+            )
+        ));
+
+        MinorityEffectiveness ms = new MinorityEffectiveness();
+        ms.setState(State.MS);
+        ms.setGroups(Map.of(
+            "Black", Map.of(
+                "RB",  buildBoxStats(0, 1, 1, 2, 2, 1),
+                "VRA", buildBoxStats(1, 1, 2, 2, 3, 2)
+            ),
+            "Hispanic", Map.of(
+                "RB",  buildBoxStats(0, 0, 0, 1, 1, 0),
+                "VRA", buildBoxStats(0, 0, 1, 1, 1, 0)
+            )
+        ));
+
+        minorityEffectivenessRepo.saveAll(Arrays.asList(md, ms));
+    }
+
+    private BoxStats buildBoxStats(double min, double q1, double median, double q3, double max, double enacted) {
+        BoxStats bs = new BoxStats();
+        bs.setMin(min);
+        bs.setQ1(q1);
+        bs.setMedian(median);
+        bs.setQ3(q3);
+        bs.setMax(max);
+        bs.setEnacted(enacted);
+        return bs;
     }
 
     private void seedBoxWhiskers() {
