@@ -20,16 +20,16 @@ export const GUI_PAYLOAD_ENDPOINTS = {
   currentPlan: (stateAbbr) => `/api/${stateAbbr}/district-plan`,
   stateSummary: (stateAbbr) => `/api/${stateAbbr}/summary`,
   heatMap: (stateAbbr) => `/api/${stateAbbr}/map/heat-map`,
-  districtDetails: (stateAbbr) => `/api/${stateAbbr}/district-details`,
-  planComparison: (stateAbbr) => `/api/${stateAbbr}/district-plan/compare`,
-  ginglesResults: (stateAbbr) => `/api/${stateAbbr}/gingles/summary`,
-  ginglesTable: (stateAbbr) => `/api/${stateAbbr}/gingles/table`,
+  districtDetails: (stateAbbr) => `/api/${stateAbbr}/representation`,
+  planComparison: (stateAbbr) => `/api/${stateAbbr}/plan-comparison`,
+  ginglesResults: (stateAbbr) => `/api/${stateAbbr}/gingles/analysis`,
+  ginglesTable: (stateAbbr) => `/api/${stateAbbr}/gingles/precinct-table`,
   eiCandidates: (stateAbbr) => `/api/${stateAbbr}/ei/candidate-results`,
   ensembleSplits: (stateAbbr) => `/api/${stateAbbr}/ensemble/splits`,
   boxWhisker: (stateAbbr) => `/api/${stateAbbr}/box-whisker`,
-  vraImpactThresholds: (stateAbbr) => `/api/${stateAbbr}/vra-impact-thresholds`,
+  vraImpactThresholds: (stateAbbr) => `/api/${stateAbbr}/vra/impact`,
   minorityEffectiveness: (stateAbbr) => `/api/${stateAbbr}/minority-effectiveness`,
-  minorityEffectivenessBox: (stateAbbr) => `/api/${stateAbbr}/minority-effectiveness/box`,
+  minorityEffectivenessBox: (stateAbbr) => `/api/${stateAbbr}/minority-effectiveness`,
   minorityEffectivenessHistogram: (stateAbbr) => `/api/${stateAbbr}/minority-effectiveness/histogram`,
 };
 
@@ -141,12 +141,13 @@ async function fetchLegacyBoxWhiskerBundle(stateAbbr) {
   const responses = await Promise.all(
     LEGACY_BOX_ENSEMBLES.flatMap((ensembleType) => GUI_GROUPS.map(async (group) => (
       getJson(GUI_PAYLOAD_ENDPOINTS.boxWhisker(stateAbbr), { ensembleType, group })
+        .then((payload) => ({ payload, ensembleType, group }))
     ))),
   );
 
   const ensembles = {};
-  responses.forEach((payload) => {
-    const normalized = normalizeLegacyBoxWhiskerResponse(payload);
+  responses.forEach(({ payload, ensembleType, group }) => {
+    const normalized = normalizeLegacyBoxWhiskerResponse(payload, { ensembleType, group });
     if (!normalized) return;
     ensembles[normalized.ensembleType] ||= { groups: {} };
     ensembles[normalized.ensembleType].groups[normalized.group] = { orderedBins: normalized.orderedBins };
@@ -277,7 +278,7 @@ function normalizeEnsembleSplitsPayload(payload, fallback) {
 
 function normalizeGinglesResultsPayload(payload, fallback) {
   if (!payload) return fallback;
-  if (payload.groups) return payload;
+  if (payload.groups) return normalizeGroupedGinglesPayload(payload, fallback);
   if (!Array.isArray(payload.dataPoints)) return fallback;
 
   const groups = {};
@@ -298,6 +299,39 @@ function normalizeGinglesResultsPayload(payload, fallback) {
   });
 
   return Object.keys(groups).length > 0 ? { groups } : fallback;
+}
+
+function normalizeGroupedGinglesPayload(payload, fallback) {
+  const groups = Object.fromEntries(Object.entries(payload.groups || {}).map(([groupKey, groupData]) => {
+    const points = (groupData?.points || []).map((point, index) => {
+      const x = normalizePercent(point.x ?? point.minorityPct ?? point.minorityPercentage);
+      const demVotePct = normalizePercent(point.demVotePct ?? point.democraticVotePct ?? point.democraticVoteShare ?? point.y);
+      const repVotePct = normalizePercent(point.repVotePct ?? point.republicanVotePct ?? point.republicanVoteShare
+        ?? (Number.isFinite(demVotePct) ? 100 - demVotePct : null));
+      return {
+        ...point,
+        precinctId: point.precinctId ?? `${groupKey}-${index + 1}`,
+        district: point.district,
+        x,
+        demVotePct,
+        repVotePct,
+      };
+    }).filter((point) => Number.isFinite(point.x) && Number.isFinite(point.demVotePct) && Number.isFinite(point.repVotePct));
+
+    return [
+      groupKey,
+      {
+        ...groupData,
+        points,
+        regression: {
+          dem: groupData?.regression?.dem || [],
+          rep: groupData?.regression?.rep || [],
+        },
+      },
+    ];
+  }));
+
+  return Object.keys(groups).length > 0 ? { ...payload, groups } : fallback;
 }
 
 function normalizeGinglesTablePayload(payload, fallback) {
@@ -362,11 +396,14 @@ function normalizeBoxWhiskerPayload(payload, fallback) {
   };
 }
 
-function normalizeLegacyBoxWhiskerResponse(payload) {
-  if (!payload?.districts || !Array.isArray(payload.districts)) return null;
-  const ensembleType = String(payload.ensembleType || DEFAULT_ENSEMBLE).toUpperCase();
-  const group = payload.group || GUI_GROUPS[0];
-  const orderedBins = payload.districts
+function normalizeLegacyBoxWhiskerResponse(payload, context = {}) {
+  const sourceRows = Array.isArray(payload?.districts)
+    ? payload.districts
+    : payload?.orderedBins;
+  if (!Array.isArray(sourceRows)) return null;
+  const ensembleType = String(payload.ensembleType || context.ensembleType || DEFAULT_ENSEMBLE).toUpperCase();
+  const group = payload.group || context.group || GUI_GROUPS[0];
+  const orderedBins = sourceRows
     .map((row, index) => ({
       order: Number(row.order ?? row.districtNumber ?? index + 1),
       min: normalizePercent(row.min ?? row.minPercent),
