@@ -12,6 +12,7 @@ export default function App() {
         <Routes>
           <Route path="/" element={<HomePage />} />
           <Route path="/state/:stateAbbr" element={<StateAnalysisPage />} />
+          <Route path="/state/:stateAbbr/gui/:guiSlug" element={<StateAnalysisPage />} />
         </Routes>
       </main>
     </div>

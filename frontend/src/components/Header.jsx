@@ -3,9 +3,8 @@ import './Header.css';
 
 export default function Header() {
   const location = useLocation();
-  const stateLabel = location.pathname.includes('/state/')
-    ? location.pathname.split('/state/')[1]?.toUpperCase()
-    : 'Overview';
+  const stateMatch = location.pathname.match(/\/state\/([^/]+)/);
+  const stateLabel = stateMatch ? stateMatch[1].toUpperCase() : 'Overview';
 
   return (
     <header className="header">

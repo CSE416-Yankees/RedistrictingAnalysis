@@ -46,18 +46,6 @@ const DIVERGING_SCALE = [
   { t: 14 / 14, color: '#002171' },
 ];
 
-const DELTA_SCALE = [
-  { t: 0 / 8, color: '#7f0000' },
-  { t: 1 / 8, color: '#b22222' },
-  { t: 2 / 8, color: '#ef9a9a' },
-  { t: 3 / 8, color: '#fbe9e7' },
-  { t: 4 / 8, color: '#f5f5f5' },
-  { t: 5 / 8, color: '#e3f2fd' },
-  { t: 6 / 8, color: '#90caf9' },
-  { t: 7 / 8, color: '#1e88e5' },
-  { t: 8 / 8, color: '#0d47a1' },
-];
-
 function interpolateColor(t, scale) {
   for (let i = scale.length - 1; i >= 0; i--) {
     if (t >= scale[i].t) {
@@ -80,6 +68,149 @@ function normalizeDistrictId(properties) {
     ?? properties?.CD116FP;
   const value = Number(raw);
   return Number.isFinite(value) ? value : null;
+}
+
+function featureIdCandidates(properties) {
+  return [
+    properties?.precinctId,
+    properties?.precinct_id,
+    properties?.geoid,
+    properties?.GEOID,
+    properties?.GEOID20,
+    properties?.vtdst,
+    properties?.VTDST20,
+    properties?.name,
+    properties?.NAME20,
+  ]
+    .filter((value) => value != null)
+    .map((value) => String(value));
+}
+
+function normalizeAssignmentMap(rawMap) {
+  if (!rawMap) return {};
+  return Object.fromEntries(
+    Object.entries(rawMap)
+      .filter(([, value]) => value != null && value !== '')
+      .map(([key, value]) => [String(key), Number(value)])
+      .filter(([, value]) => Number.isFinite(value)),
+  );
+}
+
+function districtFromMockPrecinctId(precinctId) {
+  const match = String(precinctId).match(/^\d{2}(\d{3})\d{4}$/);
+  if (!match) return null;
+  const value = Number(match[1]);
+  return Number.isFinite(value) && value > 0 ? value : null;
+}
+
+function bucketValueForFeature(properties, bucket) {
+  if (!bucket?.length) return null;
+  const seed = featureIdCandidates(properties)[0] || properties?.district || properties?.name || '';
+  return bucket[hashString(seed) % bucket.length];
+}
+
+function normalizePlanModel(payload) {
+  const plan = payload?.currentPlan || payload?.plan || payload || {};
+  const precinctToDistrict = normalizeAssignmentMap(plan.precinctToDistrict);
+
+  if (Array.isArray(plan.districts)) {
+    plan.districts.forEach((district) => {
+      const districtNumber = Number(district.districtNumber ?? district.id);
+      if (!Number.isFinite(districtNumber)) return;
+      (district.precinctIds || []).forEach((precinctId) => {
+        precinctToDistrict[String(precinctId)] = districtNumber;
+      });
+    });
+  }
+
+  return {
+    precinctToDistrict,
+  };
+}
+
+function normalizeComparisonPlan(payload, selectedPlanKey) {
+  const plans = payload?.plans || {};
+  const fallbackKey = Object.keys(plans).find((key) => key !== 'enacted');
+  const activeKey = selectedPlanKey && plans[selectedPlanKey] ? selectedPlanKey : fallbackKey;
+  const enacted = normalizeAssignmentMap(plans.enacted?.precinctToDistrict);
+  const selected = normalizeAssignmentMap(plans[activeKey]?.precinctToDistrict);
+  const selectedByCurrentDistrict = {};
+
+  Object.entries(enacted).forEach(([precinctId, currentDistrict]) => {
+    const selectedDistrict = selected[precinctId];
+    if (!Number.isFinite(currentDistrict) || !Number.isFinite(selectedDistrict)) return;
+    selectedByCurrentDistrict[currentDistrict] ||= [];
+    selectedByCurrentDistrict[currentDistrict].push(selectedDistrict);
+  });
+
+  return {
+    enacted,
+    selected,
+    selectedByCurrentDistrict,
+    selectedKey: activeKey,
+  };
+}
+
+function assignedDistrictForFeature(properties, assignmentLookup, districtFallbacks = null, fallbackDistrictId = null) {
+  const ids = featureIdCandidates(properties);
+  for (const id of ids) {
+    const assigned = assignmentLookup[id];
+    if (Number.isFinite(assigned)) return assigned;
+  }
+  if (fallbackDistrictId != null && districtFallbacks) {
+    const assigned = bucketValueForFeature(properties, districtFallbacks[fallbackDistrictId]);
+    if (Number.isFinite(assigned)) return assigned;
+  }
+  return null;
+}
+
+function normalizeHeatMapPayload(payload) {
+  if (!payload?.bins?.length || !payload?.precinctBins) return null;
+  const bins = payload.bins
+    .map((bin) => ({
+      bin: Number(bin.bin),
+      minPct: Number(bin.minPct),
+      maxPct: Number(bin.maxPct),
+      color: bin.color,
+    }))
+    .filter((bin) => Number.isFinite(bin.bin) && Number.isFinite(bin.minPct) && Number.isFinite(bin.maxPct) && bin.color);
+  const precinctBins = Object.fromEntries(
+    Object.entries(payload.precinctBins)
+      .filter(([, value]) => value != null && value !== '')
+      .map(([key, value]) => [String(key), Number(value)]),
+  );
+  if (!bins.length || !Object.keys(precinctBins).length) return null;
+  const binsByDistrict = {};
+  Object.entries(precinctBins).forEach(([precinctId, binId]) => {
+    const district = districtFromMockPrecinctId(precinctId);
+    if (district == null || !Number.isFinite(binId)) return;
+    binsByDistrict[district] ||= [];
+    binsByDistrict[district].push(binId);
+  });
+  return {
+    group: payload.group,
+    bins,
+    precinctBins,
+    binsByDistrict,
+  };
+}
+
+function heatMapBinForFeature(feature, heatMap, fallbackDistrictId = null) {
+  if (!heatMap) return null;
+  const ids = featureIdCandidates(feature.properties || {});
+  for (const id of ids) {
+    const binId = heatMap.precinctBins[id];
+    if (!Number.isFinite(binId)) continue;
+    const bin = heatMap.bins.find((entry) => entry.bin === binId);
+    if (bin) return bin;
+  }
+  if (fallbackDistrictId != null) {
+    const binId = bucketValueForFeature(feature.properties || {}, heatMap.binsByDistrict?.[fallbackDistrictId]);
+    if (Number.isFinite(binId)) {
+      return heatMap.bins.find((entry) => entry.bin === binId) || null;
+    }
+  }
+  return null;
 }
 
 function hashString(input) {
@@ -158,45 +289,90 @@ export default function StateMap({
   center,
   zoom,
   districtData,
-  comparisonDistrictData,
+  currentPlanPayload,
+  planComparisonPayload,
+  selectedComparisonPlan,
+  heatMapPayload,
   stateDemographics,
   planMode,
   highlightedDistrict,
   onDistrictSelect,
-  analysisView,
   mapMetric,
   onMapMetricChange,
   mapDemographicGroup,
   onMapDemographicGroupChange,
-  mapGeographyLevel,
-  onMapGeographyLevelChange,
   showDistrictOutlines = true,
   showOverlayControls = true,
 }) {
   const [geoData, setGeoData] = useState(null);
   const [precinctData, setPrecinctData] = useState(null);
-  const [blockData, setBlockData] = useState(null);
-  const [blockDataStateAbbr, setBlockDataStateAbbr] = useState(null);
   const [internalMetric, setInternalMetric] = useState('demographic');
-  const [internalGeographyLevel, setInternalGeographyLevel] = useState('precinct');
   const [internalDemographicGroup, setInternalDemographicGroup] = useState('overall');
 
   const metric = mapMetric ?? internalMetric;
   const setMetric = onMapMetricChange ?? setInternalMetric;
-  const geographyLevel = mapGeographyLevel ?? internalGeographyLevel;
-  const setGeographyLevel = onMapGeographyLevelChange ?? setInternalGeographyLevel;
   const demographicGroup = mapDemographicGroup ?? internalDemographicGroup;
   const setDemographicGroup = onMapDemographicGroupChange ?? setInternalDemographicGroup;
 
   const isDeltaMode = planMode === 'delta';
-  const isEiChoroplethView = analysisView === 'eiChoropleth';
-  const activeMetric = analysisView === 'eiChoropleth'
-    && !isDeltaMode
-    && metric !== 'eiCandidateA'
-    && metric !== 'eiTurnoutGap'
-    ? 'eiCandidateA'
-    : metric;
+  const activeMetric = metric;
   const isDemographicMetric = activeMetric === 'demographic';
+  const activeHeatMap = useMemo(() => normalizeHeatMapPayload(heatMapPayload), [heatMapPayload]);
+  const currentPlanModel = useMemo(() => normalizePlanModel(currentPlanPayload), [currentPlanPayload]);
+  const comparisonPlanModel = useMemo(
+    () => normalizeComparisonPlan(planComparisonPayload, selectedComparisonPlan),
+    [planComparisonPayload, selectedComparisonPlan],
+  );
+  const currentAssignmentLookup = Object.keys(comparisonPlanModel.enacted).length > 0
+    ? comparisonPlanModel.enacted
+    : currentPlanModel.precinctToDistrict;
+  const selectedAssignmentLookup = comparisonPlanModel.selected;
+  const hasAssignmentComparison = Object.keys(currentAssignmentLookup).length > 0
+    && Object.keys(selectedAssignmentLookup).length > 0;
+  const isAssignmentDeltaMode = isDeltaMode && hasAssignmentComparison;
+  const isPlanComparisonMode = (planMode === 'comparison' || planMode === 'interesting') && hasAssignmentComparison;
+
+  const resolveDistrictId = (feature, assignmentLookup = null) => {
+    if (assignmentLookup) {
+      const assigned = assignedDistrictForFeature(feature.properties || {}, assignmentLookup);
+      if (assigned != null) return assigned;
+    }
+
+    if (planMode === 'comparison' || planMode === 'interesting') {
+      const currentDistrictFallback = normalizeDistrictId(feature.properties);
+      const selectedAssigned = assignedDistrictForFeature(
+        feature.properties || {},
+        selectedAssignmentLookup,
+        comparisonPlanModel.selectedByCurrentDistrict,
+        currentDistrictFallback,
+      );
+      if (selectedAssigned != null) return selectedAssigned;
+    }
+
+    const currentAssigned = assignedDistrictForFeature(feature.properties || {}, currentPlanModel.precinctToDistrict);
+    if (currentAssigned != null) return currentAssigned;
+    return normalizeDistrictId(feature.properties);
+  };
+
+  const assignmentDeltaValue = (feature) => {
+    if (!hasAssignmentComparison) return null;
+    const properties = feature.properties || {};
+    const currentDistrictFallback = normalizeDistrictId(properties);
+    const currentAssigned = assignedDistrictForFeature(properties, currentAssignmentLookup)
+      ?? currentDistrictFallback;
+    const selectedAssigned = assignedDistrictForFeature(
+      properties,
+      selectedAssignmentLookup,
+      comparisonPlanModel.selectedByCurrentDistrict,
+      currentAssigned ?? currentDistrictFallback,
+    );
+    if (currentAssigned == null || selectedAssigned == null) return null;
+    return currentAssigned !== selectedAssigned ? 1 : 0;
+  };
+
+  const assignmentChanged = (feature) => {
+    return assignmentDeltaValue(feature) === 1;
+  };
 
   const districtDataLookup = useMemo(() => {
     const lookup = {};
@@ -205,22 +381,6 @@ export default function StateMap({
     });
     return lookup;
   }, [districtData]);
-
-  const currentPlanLookup = useMemo(() => {
-    const lookup = {};
-    districtData?.forEach((district) => {
-      lookup[district.id] = district;
-    });
-    return lookup;
-  }, [districtData]);
-
-  const comparisonLookup = useMemo(() => {
-    const lookup = {};
-    comparisonDistrictData?.forEach((district) => {
-      lookup[district.id] = district;
-    });
-    return lookup;
-  }, [comparisonDistrictData]);
 
   const districtOutlines = useMemo(() => {
     if (!geoData?.features?.length) return null;
@@ -237,15 +397,10 @@ export default function StateMap({
     };
   }, [geoData]);
 
-  const hasBlockDataForState = blockDataStateAbbr === stateAbbr && Boolean(blockData?.features?.length);
-
   const activeGeoData = useMemo(() => {
-    if (geographyLevel === 'censusBlock' && hasBlockDataForState) return blockData;
     if (precinctData?.features?.length) return precinctData;
     return geoData;
-  }, [geographyLevel, hasBlockDataForState, blockData, precinctData, geoData]);
-
-  const usingBlockFallback = geographyLevel === 'censusBlock' && !hasBlockDataForState;
+  }, [precinctData, geoData]);
 
   const demographicShareTotal = (stateDemographics?.blackPercent || 0)
     + (stateDemographics?.hispanicPercent || 0)
@@ -257,9 +412,15 @@ export default function StateMap({
   };
 
   const resolveDemographicValue = (feature, district) => {
+    const fallbackDistrictId = district?.id ?? normalizeDistrictId(feature.properties);
+    const heatBin = demographicGroup !== 'overall'
+      ? heatMapBinForFeature(feature, activeHeatMap, fallbackDistrictId)
+      : null;
+    if (heatBin) return (heatBin.minPct + heatBin.maxPct) / 2;
+
     const properties = feature.properties || {};
-    const minorityPct = findNumericProperty(properties, ['minorityPct', 'minority_pct', 'MINORITY_PCT'])
-      ?? district?.minorityPct
+    const minorityPct = district?.minorityPct
+      ?? findNumericProperty(properties, ['minorityPct', 'minority_pct', 'MINORITY_PCT'])
       ?? null;
     if (minorityPct == null) return null;
     if (demographicGroup === 'overall') return minorityPct;
@@ -280,37 +441,17 @@ export default function StateMap({
   };
 
   const valueForFeature = (feature) => {
-    const districtId = normalizeDistrictId(feature.properties);
+    const districtId = resolveDistrictId(feature);
     const district = districtId != null ? districtDataLookup[districtId] : null;
     if (planMode === 'delta') {
-      if (districtId == null) return null;
-      const currentDistrict = currentPlanLookup[districtId];
-      const comparisonDistrict = comparisonLookup[districtId];
-      if (!currentDistrict || !comparisonDistrict) return null;
-      return comparisonDistrict.minorityPct - currentDistrict.minorityPct;
+      return assignmentDeltaValue(feature);
     }
     if (isDemographicMetric) {
       return resolveDemographicValue(feature, district);
     }
     if (activeMetric === 'partisan') {
-      const demPct = feature.properties?.demPct;
-      if (demPct != null) return demPct;
-      if (!district) return null;
-      return district.dem * 100;
-    }
-    if (activeMetric === 'eiCandidateA') {
-      const minorityPct = feature.properties?.minorityPct ?? district?.minorityPct;
-      const demPct = feature.properties?.demPct ?? (district ? district.dem * 100 : null);
-      if (minorityPct == null || demPct == null) return null;
-      const supportPct = 16 + minorityPct * 0.5 + demPct * 0.24;
-      return Math.max(0, Math.min(100, supportPct));
-    }
-    if (activeMetric === 'eiTurnoutGap') {
-      const minorityPct = feature.properties?.minorityPct ?? district?.minorityPct;
-      if (minorityPct == null) return null;
-      const minorityTurnout = 31 + minorityPct * 0.43;
-      const whiteTurnout = 39 + (100 - minorityPct) * 0.31;
-      return minorityTurnout - whiteTurnout;
+      if (district) return district.dem * 100;
+      return feature.properties?.demPct ?? null;
     }
     const overallMinority = feature.properties?.minorityPct;
     if (overallMinority != null) return overallMinority;
@@ -318,17 +459,8 @@ export default function StateMap({
   };
 
   const { minVal, maxVal } = (() => {
-    if (planMode === 'delta') {
-      const values = Object.keys(currentPlanLookup)
-        .map((key) => {
-          const currentDistrict = currentPlanLookup[key];
-          const comparisonDistrict = comparisonLookup[key];
-          if (!currentDistrict || !comparisonDistrict) return null;
-          return comparisonDistrict.minorityPct - currentDistrict.minorityPct;
-        })
-        .filter((value) => value != null);
-      const maxAbs = values.length ? Math.max(...values.map((value) => Math.abs(value))) : 10;
-      return { minVal: -maxAbs, maxVal: maxAbs };
+    if (isAssignmentDeltaMode) {
+      return { minVal: 0, maxVal: 1 };
     }
 
     let min = Infinity;
@@ -350,14 +482,6 @@ export default function StateMap({
           }
         }
         if (activeMetric === 'partisan') value = district.dem * 100;
-        if (activeMetric === 'eiCandidateA') {
-          value = Math.max(0, Math.min(100, 16 + district.minorityPct * 0.5 + district.dem * 100 * 0.24));
-        }
-        if (activeMetric === 'eiTurnoutGap') {
-          const minorityTurnout = 31 + district.minorityPct * 0.43;
-          const whiteTurnout = 39 + (100 - district.minorityPct) * 0.31;
-          value = minorityTurnout - whiteTurnout;
-        }
         min = Math.min(min, value);
         max = Math.max(max, value);
       });
@@ -370,6 +494,18 @@ export default function StateMap({
 
   const demographicBins = (() => {
     if (!isDemographicMetric) return [];
+    if (activeHeatMap && demographicGroup !== 'overall') {
+      const usedBinIds = new Set(Object.values(activeHeatMap.precinctBins).map((value) => Number(value)));
+      return activeHeatMap.bins
+        .filter((bin) => usedBinIds.has(bin.bin))
+        .map((bin) => ({
+          start: bin.minPct,
+          end: bin.maxPct,
+          color: bin.color,
+          count: Object.values(activeHeatMap.precinctBins).filter((value) => Number(value) === bin.bin).length,
+        }));
+    }
+
     const values = [];
     activeGeoData?.features?.forEach((feature) => {
       const value = valueForFeature(feature);
@@ -410,10 +546,8 @@ export default function StateMap({
 
   const createColor = (value) => {
     if (value == null) return '#d1d5db';
-    if (planMode === 'delta') {
-      if (minVal === maxVal) return DELTA_SCALE[4].color;
-      const t = (value - minVal) / (maxVal - minVal);
-      return interpolateColor(Math.max(0, Math.min(1, t)), DELTA_SCALE);
+    if (isDeltaMode && (value === 0 || value === 1)) {
+      return value === 1 ? '#f97316' : '#e5e7eb';
     }
     if (isDemographicMetric) {
       if (!demographicBins.length) return DEMOGRAPHIC_SCALE[2];
@@ -426,62 +560,56 @@ export default function StateMap({
       const t = Math.max(0, Math.min(1, value / 100));
       return interpolateColor(t, DIVERGING_SCALE);
     }
-    if (activeMetric === 'eiTurnoutGap') {
-      if (minVal === maxVal) return DELTA_SCALE[4].color;
-      const t = (value - minVal) / (maxVal - minVal);
-      return interpolateColor(Math.max(0, Math.min(1, t)), DELTA_SCALE);
-    }
     if (minVal === maxVal) return HEAT_SCALE[4].color;
     const t = (value - minVal) / (maxVal - minVal);
     return interpolateColor(Math.max(0, Math.min(1, t)), HEAT_SCALE);
   };
 
   const createFeatureStyle = (feature) => {
-    const districtId = normalizeDistrictId(feature.properties);
-    const isHighlighted = highlightedDistrict != null && districtId === highlightedDistrict;
+    const districtId = resolveDistrictId(feature);
+    const isHighlighted = highlightedDistrict != null && districtId != null
+      && Number(districtId) === Number(highlightedDistrict);
     const value = valueForFeature(feature);
     const color = createColor(value);
+    const isChanged = isPlanComparisonMode && assignmentChanged(feature);
     return {
       fillColor: color,
-      weight: isHighlighted ? 1.4 : 0,
+      weight: isHighlighted ? 1.4 : isChanged ? 1 : 0,
       opacity: 1,
-      color: isHighlighted ? '#111827' : color,
-      fillOpacity: isHighlighted ? 0.92 : 0.72,
+      color: isHighlighted ? '#1f6f78' : isChanged ? '#f97316' : color,
+      fillOpacity: isHighlighted ? 0.92 : isChanged ? 0.86 : 0.72,
     };
   };
 
   const createPopupText = (feature) => {
-    const districtId = normalizeDistrictId(feature.properties);
+    const districtId = resolveDistrictId(feature);
     const district = districtId != null ? districtDataLookup[districtId] : null;
     const name = feature.properties?.name || feature.properties?.geoid || `District ${districtId ?? 'N/A'}`;
 
     let detailLine;
     if (planMode === 'delta') {
-      const currentDistrict = districtId != null ? currentPlanLookup[districtId] : null;
-      const comparisonDistrict = districtId != null ? comparisonLookup[districtId] : null;
-      const delta = currentDistrict && comparisonDistrict
-        ? (comparisonDistrict.minorityPct - currentDistrict.minorityPct).toFixed(1)
-        : '—';
-      detailLine = `Minority % change: ${delta}%`;
+      const delta = assignmentDeltaValue(feature);
+      detailLine = delta == null
+        ? 'Plan assignment: unavailable'
+        : `Plan assignment: ${delta === 1 ? 'changed' : 'same district'}`;
     } else if (isDemographicMetric) {
       const demographicValue = valueForFeature(feature);
+      const heatBin = demographicGroup !== 'overall'
+        ? heatMapBinForFeature(feature, activeHeatMap, district?.id ?? normalizeDistrictId(feature.properties))
+        : null;
       const labels = {
         overall: 'Minority',
         black: 'Black',
         hispanic: 'Hispanic',
         asian: 'Asian',
       };
-      detailLine = `${labels[demographicGroup] || 'Minority'}: ${demographicValue != null ? demographicValue.toFixed(1) : '—'}%`;
+      detailLine = heatBin
+        ? `${labels[demographicGroup] || 'Minority'}: ${heatBin.minPct}% - ${heatBin.maxPct}%`
+        : `${labels[demographicGroup] || 'Minority'}: ${demographicValue != null ? demographicValue.toFixed(1) : '—'}%`;
     } else if (activeMetric === 'partisan') {
-      const demPct = feature.properties?.demPct ?? (district ? district.dem * 100 : null);
+      const demPct = district ? district.dem * 100 : feature.properties?.demPct;
       const repPct = demPct != null ? 100 - demPct : null;
       detailLine = `Dem: ${demPct != null ? demPct.toFixed(1) : '—'}% · Rep: ${repPct != null ? repPct.toFixed(1) : '—'}%`;
-    } else if (activeMetric === 'eiCandidateA') {
-      const eiSupport = valueForFeature(feature);
-      detailLine = `EI Candidate A support: ${eiSupport != null ? eiSupport.toFixed(1) : '—'}%`;
-    } else if (activeMetric === 'eiTurnoutGap') {
-      const turnoutGap = valueForFeature(feature);
-      detailLine = `EI turnout gap (minority-white): ${turnoutGap != null ? turnoutGap.toFixed(1) : '—'} pts`;
     } else {
       const minorityPct = feature.properties?.minorityPct ?? district?.minorityPct;
       detailLine = `Minority: ${minorityPct != null ? Number(minorityPct).toFixed(1) : '—'}%`;
@@ -497,11 +625,11 @@ export default function StateMap({
     layer.bindPopup(createPopupText(feature));
     layer.on({
       click: () => {
-        const districtId = normalizeDistrictId(feature.properties);
+        const districtId = resolveDistrictId(feature);
         if (districtId != null) onDistrictSelect(districtId);
       },
       mouseover: (event) => {
-        event.target.setStyle({ fillOpacity: 0.94, weight: 1.5, color: '#111827' });
+        event.target.setStyle({ fillOpacity: 0.94, weight: 1.5, color: '#1f6f78' });
       },
       mouseout: (event) => {
         event.target.setStyle(createFeatureStyle(feature));
@@ -532,22 +660,7 @@ export default function StateMap({
     return () => controller.abort();
   }, [stateAbbr]);
 
-  useEffect(() => {
-    if (geographyLevel !== 'censusBlock') return undefined;
-    if (blockDataStateAbbr === stateAbbr) return undefined;
-
-    const controller = new AbortController();
-    const base = import.meta.env.BASE_URL;
-    fetchGeoJson(`${base}data/${stateAbbr}-blocks.json`, controller.signal)
-      .then((blocks) => {
-        setBlockData(blocks);
-        setBlockDataStateAbbr(stateAbbr);
-      });
-    return () => controller.abort();
-  }, [stateAbbr, geographyLevel, blockDataStateAbbr]);
-
-  const isLoading = !geoData && !precinctData && !blockData;
-  const isEiGapMetric = activeMetric === 'eiTurnoutGap';
+  const isLoading = !geoData && !precinctData;
   const demographicGroupLabel = {
     overall: 'All Minority',
     black: 'Black',
@@ -555,25 +668,31 @@ export default function StateMap({
     asian: 'Asian',
   }[demographicGroup] || 'All Minority';
   const legendScale = isDeltaMode
-    ? DELTA_SCALE
+    ? []
     : isDemographicMetric
       ? []
       : activeMetric === 'partisan'
       ? DIVERGING_SCALE
-      : isEiGapMetric
-        ? DELTA_SCALE
-        : HEAT_SCALE;
+      : HEAT_SCALE;
   const legendTitle = isDeltaMode
-    ? 'Minority % Delta (Comparison - Current)'
+    ? 'Plan Difference (Selected - Enacted)'
     : isDemographicMetric
       ? `${demographicGroupLabel} Population % (Precinct Bins)`
     : activeMetric === 'partisan'
       ? 'Democrat ↔ Republican %'
-      : activeMetric === 'eiCandidateA'
-        ? 'EI Candidate A Support %'
-        : activeMetric === 'eiTurnoutGap'
-          ? 'EI Turnout Gap (Minority - White)'
-          : 'Minority Population %';
+      : 'Minority Population %';
+  const activeGeoJsonKey = [
+    stateAbbr,
+    planMode,
+    activeMetric,
+    demographicGroup,
+    selectedComparisonPlan || 'none',
+    highlightedDistrict ?? 'none',
+    Object.keys(currentPlanModel.precinctToDistrict).length,
+    Object.keys(selectedAssignmentLookup).length,
+    activeHeatMap?.group || 'none',
+    Object.keys(activeHeatMap?.precinctBins || {}).length,
+  ].join('-');
 
   return (
     <div className="state-map">
@@ -593,7 +712,7 @@ export default function StateMap({
         <FlyTo center={center} zoom={zoom} />
         {activeGeoData?.features?.length > 0 && (
           <GeoJSON
-            key={`${stateAbbr}-${planMode}-${activeMetric}-${demographicGroup}-${geographyLevel}`}
+            key={activeGeoJsonKey}
             data={activeGeoData}
             style={createFeatureStyle}
             onEachFeature={onEachFeature}
@@ -605,12 +724,14 @@ export default function StateMap({
             data={districtOutlines}
             style={(feature) => {
               const districtId = normalizeDistrictId(feature.properties);
+              const isOutlineHighlight = highlightedDistrict != null && districtId != null
+                && Number(highlightedDistrict) === Number(districtId);
               return {
                 fillColor: 'none',
                 fillOpacity: 0,
-                weight: highlightedDistrict === districtId ? 4 : 2.5,
-                color: highlightedDistrict === districtId ? '#111827' : '#1f2937',
-                opacity: highlightedDistrict === districtId ? 1 : 0.7,
+                weight: isOutlineHighlight ? 4 : 2.5,
+                color: isOutlineHighlight ? '#1f6f78' : '#3d5c63',
+                opacity: isOutlineHighlight ? 1 : 0.7,
               };
             }}
             onEachFeature={onEachOutline}
@@ -621,9 +742,20 @@ export default function StateMap({
       {isLoading && <div className="state-map__loading">Loading...</div>}
 
       {(activeGeoData || districtData) && (
-        <div className="choropleth-legend">
+          <div className="choropleth-legend">
           <div className="choropleth-legend__title">{legendTitle}</div>
-          {isDemographicMetric ? (
+          {isAssignmentDeltaMode ? (
+            <div className="choropleth-legend__bins">
+              <div className="choropleth-legend__bin-row">
+                <span className="choropleth-legend__bin-swatch" style={{ background: '#e5e7eb' }} />
+                <span className="choropleth-legend__bin-range">Same district</span>
+              </div>
+              <div className="choropleth-legend__bin-row">
+                <span className="choropleth-legend__bin-swatch" style={{ background: '#f97316' }} />
+                <span className="choropleth-legend__bin-range">Changed district</span>
+              </div>
+            </div>
+          ) : isDemographicMetric ? (
             <div className="choropleth-legend__bins">
               {demographicBins.length > 0 ? (
                 demographicBins.map((bin) => (
@@ -677,19 +809,8 @@ export default function StateMap({
               disabled={isDeltaMode}
               onChange={(event) => setMetric(event.target.value)}
             >
-              {isEiChoroplethView ? (
-                <>
-                  <option value="eiCandidateA">EI: Candidate A Support</option>
-                  <option value="eiTurnoutGap">EI: Turnout Gap</option>
-                </>
-              ) : (
-                <>
-                  <option value="demographic">Demographic Heat Map</option>
-                  <option value="partisan">Democrat ↔ Republican</option>
-                  <option value="eiCandidateA">EI: Candidate A Support</option>
-                  <option value="eiTurnoutGap">EI: Turnout Gap</option>
-                </>
-              )}
+              <option value="demographic">Demographic Heat Map</option>
+              <option value="partisan">Democrat ↔ Republican</option>
             </select>
           </div>
           {isDemographicMetric && (
@@ -705,22 +826,6 @@ export default function StateMap({
                 <option value="hispanic">Hispanic</option>
                 <option value="asian">Asian</option>
               </select>
-            </div>
-          )}
-          <div className="choropleth-metric">
-            <label htmlFor="geography-select">Geography:</label>
-            <select
-              id="geography-select"
-              value={geographyLevel}
-              onChange={(event) => setGeographyLevel(event.target.value)}
-            >
-              <option value="precinct">Precinct</option>
-              <option value="censusBlock">Census Block</option>
-            </select>
-          </div>
-          {usingBlockFallback && (
-            <div className="choropleth-note">
-              Census block data unavailable for this state; showing precincts.
             </div>
           )}
           {planMode === 'interesting' && (
