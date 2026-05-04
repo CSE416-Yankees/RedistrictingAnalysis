@@ -320,7 +320,7 @@ export default function StateAnalysisPage() {
 
                   <button
                     type="button"
-                    className="state-analysis__dark-action"
+                    className="state-analysis__action"
                     onClick={() => goToGui('gui-8')}
                     title="Show enacted vs selected plan on the map (GUI-8)"
                   >
@@ -329,7 +329,7 @@ export default function StateAnalysisPage() {
 
                   <button
                     type="button"
-                    className={`state-analysis__dark-action ${analysisView === 'districtDetails' ? 'state-analysis__dark-action--active' : ''}`}
+                    className={`state-analysis__action ${analysisView === 'districtDetails' ? 'state-analysis__action--active' : ''}`}
                     onClick={() => goToGui('gui-6')}
                   >
                     District Detail

@@ -49,10 +49,10 @@ export default function HomePage() {
                   <span className="state-card__name">{s.name}</span>
                   <span className="state-card__meta">
                     {states[s.abbr].numDistricts} districts
-                    {states[s.abbr].preclearance ? ' • preclearance context' : ' • standard review'}
+                    {states[s.abbr].preclearance ? ' - preclearance context' : ' - standard review'}
                   </span>
                 </span>
-                <span className="state-card__arrow">→</span>
+                <span className="state-card__arrow">View</span>
               </button>
             ))}
           </div>

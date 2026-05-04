@@ -9,7 +9,8 @@ export const REMOTE_GUI_DATA_SOURCES = new Set(['api', 'old']);
 export const USE_API_GUI_PAYLOADS = REMOTE_GUI_DATA_SOURCES.has(GUI_DATA_SOURCE)
   || import.meta.env.VITE_USE_API_PAYLOADS === 'true';
 
-export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
+/** Empty string = browser-relative `/api/...` (Vite dev proxy -> backend). Set `VITE_API_BASE_URL` for prod. */
+export const API_BASE_URL = String(import.meta.env.VITE_API_BASE_URL ?? '').replace(/\/$/, '');
 
 export const GUI_GROUPS = ['Black', 'Hispanic', 'Asian'];
 const DEFAULT_ENSEMBLE = 'RB';
@@ -509,7 +510,8 @@ function candidateLabel(candidateKey) {
 
 async function getJson(path, params) {
   try {
-    const response = await axios.get(`${API_BASE_URL}${path}`, { params, timeout: 2500 });
+    const url = `${API_BASE_URL}${path}`;
+    const response = await axios.get(url, { params, timeout: 2500 });
     return response.data;
   } catch {
     return null;

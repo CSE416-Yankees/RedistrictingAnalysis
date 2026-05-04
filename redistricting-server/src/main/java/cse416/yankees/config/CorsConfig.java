@@ -18,8 +18,7 @@ public class CorsConfig {
     /**
      * Configure CORS mappings for all API endpoints.
      *
-     * We allow the local Vite dev server and the GitHub Pages deployment
-     * to make cross-origin requests to this backend.
+     * Local Vite may run on any localhost port; GitHub Pages uses a fixed HTTPS origin.
      *
      * @return a {@link WebMvcConfigurer} with CORS rules applied
      */
@@ -29,8 +28,8 @@ public class CorsConfig {
             @Override
             public void addCorsMappings(CorsRegistry registry) {
                 registry.addMapping("/**")
-                        .allowedOrigins(
-                                "http://localhost:5173",
+                        .allowedOriginPatterns(
+                                "http://localhost:*",
                                 "https://cse416-yankees.github.io"
                         )
                         // Allow common HTTP methods for REST APIs.

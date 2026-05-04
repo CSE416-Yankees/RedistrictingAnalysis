@@ -26,6 +26,10 @@
   --radius-md: 14px;
   --radius-lg: 20px;
   --header-height: 64px;
+
+  --chrome-float-bg: rgba(255, 253, 249, 0.94);
+  --chrome-float-border: rgba(190, 173, 152, 0.52);
+  --chrome-muted-text: var(--color-text-secondary);
 }
 
 *,
@@ -45,10 +49,7 @@ body,
 
 body {
   font-family: var(--font-body);
-  background:
-    radial-gradient(circle at 8% -10%, rgba(244, 215, 191, 0.5) 0%, transparent 30%),
-    radial-gradient(circle at 95% 5%, rgba(205, 230, 219, 0.45) 0%, transparent 26%),
-    var(--color-bg);
+  background: linear-gradient(180deg, #f8f3eb 0%, var(--color-bg) 46%, var(--color-bg-alt) 100%);
   color: var(--color-text);
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;

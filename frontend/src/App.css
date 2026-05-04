@@ -8,5 +8,6 @@
 
 .app__main {
   flex: 1;
-  overflow: hidden;
+  min-height: 0;
+  overflow: auto;
 }

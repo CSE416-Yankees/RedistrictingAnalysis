@@ -9,7 +9,7 @@ const createIcon = (color) =>
   L.divIcon({
     className: 'custom-marker',
     html: `<div style="
-      background: linear-gradient(145deg, ${color} 0%, #245b79 100%);
+      background: linear-gradient(145deg, ${color} 0%, #154e54 100%);
       width: 38px;
       height: 38px;
       border-radius: 14px;
@@ -47,7 +47,7 @@ export default function USMap() {
         <Marker
           key={state.abbr}
           position={state.position}
-          icon={createIcon('#1a73e8')}
+          icon={createIcon('#1f6f78')}
           eventHandlers={{
             click: () => navigate(`/state/${state.abbr}`),
           }}
@@ -72,7 +72,7 @@ export default function USMap() {
                   fontWeight: 700,
                 }}
               >
-                Explore →
+                Explore
               </button>
             </div>
           </Popup>

@@ -2,7 +2,7 @@
   position: relative;
   display: inline-flex;
   align-items: center;
-  gap: 5px;
+  gap: 6px;
 }
 
 .pill-dropdown__label {
@@ -19,11 +19,11 @@
   border-radius: 999px;
   background: #fffefb;
   color: #2a3e45;
-  font-size: 0.75rem;
+  font-size: 0.8rem;
   font-weight: 700;
-  padding: 2px 8px;
+  padding: 5px 10px;
   min-width: var(--pill-dropdown-trigger-width, 118px);
-  min-height: 22px;
+  min-height: 32px;
   display: inline-flex;
   align-items: center;
   justify-content: space-between;
@@ -80,11 +80,12 @@
   border-radius: 7px;
   background: transparent;
   color: #2a3e45;
-  font-size: 0.76rem;
+  font-size: 0.8rem;
   font-weight: 700;
   text-align: left;
-  padding: 7px 9px;
-  white-space: nowrap;
+  padding: 8px 10px;
+  display: grid;
+  gap: 2px;
 }
 
 .pill-dropdown__option:hover {
@@ -96,4 +97,17 @@
   background: rgba(233, 248, 250, 0.9);
   border-color: rgba(44, 115, 124, 0.35);
   color: #1a5a64;
+}
+
+.pill-dropdown__option-label {
+  white-space: nowrap;
+}
+
+.pill-dropdown__option-description {
+  max-width: 280px;
+  color: var(--color-text-secondary);
+  font-size: 0.68rem;
+  font-weight: 600;
+  line-height: 1.25;
+  white-space: normal;
 }

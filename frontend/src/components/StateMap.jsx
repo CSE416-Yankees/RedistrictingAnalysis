@@ -1,6 +1,7 @@
 import { MapContainer, TileLayer, GeoJSON, useMap } from 'react-leaflet';
 import { useEffect, useMemo, useState } from 'react';
 import 'leaflet/dist/leaflet.css';
+import { mapGeoEndpoints } from '../geo/mapGeoUrls';
 import './StateMap.css';
 
 const HEAT_SCALE = [
@@ -271,17 +272,23 @@ function SyncMapSize() {
   return null;
 }
 
-async function fetchGeoJson(url, signal) {
+async function fetchGeoJson(url, signal, { quiet = false } = {}) {
   try {
     const response = await fetch(url, { signal });
     if (!response.ok) return null;
     return await response.json();
   } catch (err) {
-    if (err.name !== 'AbortError') {
+    if (!quiet && err.name !== 'AbortError') {
       console.error(`Failed to load ${url}`, err);
     }
     return null;
   }
+}
+
+async function fetchGeoJsonWithFallback(primaryUrl, fallbackUrl, signal) {
+  const primary = await fetchGeoJson(primaryUrl, signal, { quiet: true });
+  if (primary?.features?.length) return primary;
+  return fallbackUrl ? fetchGeoJson(fallbackUrl, signal) : null;
 }
 
 export default function StateMap({
@@ -605,19 +612,19 @@ export default function StateMap({
       };
       detailLine = heatBin
         ? `${labels[demographicGroup] || 'Minority'}: ${heatBin.minPct}% - ${heatBin.maxPct}%`
-        : `${labels[demographicGroup] || 'Minority'}: ${demographicValue != null ? demographicValue.toFixed(1) : '—'}%`;
+        : `${labels[demographicGroup] || 'Minority'}: ${demographicValue != null ? demographicValue.toFixed(1) : 'N/A'}%`;
     } else if (activeMetric === 'partisan') {
       const demPct = district ? district.dem * 100 : feature.properties?.demPct;
       const repPct = demPct != null ? 100 - demPct : null;
-      detailLine = `Dem: ${demPct != null ? demPct.toFixed(1) : '—'}% · Rep: ${repPct != null ? repPct.toFixed(1) : '—'}%`;
+      detailLine = `Dem: ${demPct != null ? demPct.toFixed(1) : 'N/A'}% / Rep: ${repPct != null ? repPct.toFixed(1) : 'N/A'}%`;
     } else {
       const minorityPct = feature.properties?.minorityPct ?? district?.minorityPct;
-      detailLine = `Minority: ${minorityPct != null ? Number(minorityPct).toFixed(1) : '—'}%`;
+      detailLine = `Minority: ${minorityPct != null ? Number(minorityPct).toFixed(1) : 'N/A'}%`;
     }
 
     return `<div style="text-align:center;padding:6px;">
       <strong>${name}</strong><br/>
-      <span style="font-size:12px;color:#666;">${detailLine}</span>
+      <span style="font-size:12px;color:rgb(85 98 109);">${detailLine}</span>
     </div>`;
   };
 
@@ -649,15 +656,22 @@ export default function StateMap({
 
   useEffect(() => {
     const controller = new AbortController();
+    let isActive = true;
     const base = import.meta.env.BASE_URL;
+    const urls = mapGeoEndpoints(stateAbbr, base);
+
     Promise.all([
-      fetchGeoJson(`${base}data/${stateAbbr}.json`, controller.signal),
-      fetchGeoJson(`${base}data/${stateAbbr}-precincts.json`, controller.signal),
+      fetchGeoJsonWithFallback(urls.districtPrimary, urls.districtFallback, controller.signal),
+      fetchGeoJsonWithFallback(urls.precinctPrimary, urls.precinctFallback, controller.signal),
     ]).then(([districts, precincts]) => {
+      if (!isActive) return;
       setGeoData(districts);
       setPrecinctData(precincts);
     });
-    return () => controller.abort();
+    return () => {
+      isActive = false;
+      controller.abort();
+    };
   }, [stateAbbr]);
 
   const isLoading = !geoData && !precinctData;
@@ -667,19 +681,19 @@ export default function StateMap({
     hispanic: 'Hispanic',
     asian: 'Asian',
   }[demographicGroup] || 'All Minority';
-  const legendScale = isDeltaMode
+  const legendScale = isDemographicMetric
     ? []
-    : isDemographicMetric
-      ? []
-      : activeMetric === 'partisan'
+    : activeMetric === 'partisan'
       ? DIVERGING_SCALE
       : HEAT_SCALE;
   const legendTitle = isDeltaMode
-    ? 'Plan Difference (Selected - Enacted)'
+    ? (hasAssignmentComparison
+      ? 'Plan difference (same vs changed assignment)'
+      : 'Plan difference - pick Comparison or Interesting plan')
     : isDemographicMetric
       ? `${demographicGroupLabel} Population % (Precinct Bins)`
     : activeMetric === 'partisan'
-      ? 'Democrat ↔ Republican %'
+      ? 'Democrat vs Republican %'
       : 'Minority Population %';
   const activeGeoJsonKey = [
     stateAbbr,
@@ -744,17 +758,27 @@ export default function StateMap({
       {(activeGeoData || districtData) && (
           <div className="choropleth-legend">
           <div className="choropleth-legend__title">{legendTitle}</div>
-          {isAssignmentDeltaMode ? (
-            <div className="choropleth-legend__bins">
-              <div className="choropleth-legend__bin-row">
-                <span className="choropleth-legend__bin-swatch" style={{ background: '#e5e7eb' }} />
-                <span className="choropleth-legend__bin-range">Same district</span>
+          {isDeltaMode ? (
+            isAssignmentDeltaMode ? (
+              <div className="choropleth-legend__bins">
+                <div className="choropleth-legend__bin-row">
+                  <span className="choropleth-legend__bin-swatch" style={{ background: '#e5e7eb' }} />
+                  <span className="choropleth-legend__bin-range">Same district</span>
+                </div>
+                <div className="choropleth-legend__bin-row">
+                  <span className="choropleth-legend__bin-swatch" style={{ background: '#f97316' }} />
+                  <span className="choropleth-legend__bin-range">Changed district</span>
+                </div>
               </div>
-              <div className="choropleth-legend__bin-row">
-                <span className="choropleth-legend__bin-swatch" style={{ background: '#f97316' }} />
-                <span className="choropleth-legend__bin-range">Changed district</span>
+            ) : (
+              <div className="choropleth-legend__bins">
+                <div className="choropleth-legend__bin-row">
+                  <span className="choropleth-legend__bin-range">
+                    Map is neutral until a comparison plan with precinct assignments is available.
+                  </span>
+                </div>
               </div>
-            </div>
+            )
           ) : isDemographicMetric ? (
             <div className="choropleth-legend__bins">
               {demographicBins.length > 0 ? (
@@ -773,24 +797,28 @@ export default function StateMap({
           ) : (
             <>
               <div className="choropleth-legend__scale">
-                {legendScale.map((step, index) => (
+                {legendScale.length > 0 ? legendScale.map((step, index) => (
                   <div
                     key={index}
                     className="choropleth-legend__swatch"
                     style={{ background: step.color }}
                   />
-                ))}
+                )) : (
+                  <div className="choropleth-legend__bin-row">
+                    <span className="choropleth-legend__bin-range">No scale available</span>
+                  </div>
+                )}
               </div>
               <div className="choropleth-legend__labels">
-                {activeMetric === 'partisan' && !isDeltaMode ? (
+                {activeMetric === 'partisan' ? (
                   <>
                     <span>Rep</span>
                     <span>Dem</span>
                   </>
                 ) : (
                   <>
-                    <span>{minVal.toFixed(0)}%</span>
-                    <span>{maxVal.toFixed(0)}%</span>
+                    <span>{Number(minVal).toFixed(0)}%</span>
+                    <span>{Number(maxVal).toFixed(0)}%</span>
                   </>
                 )}
               </div>
@@ -810,7 +838,7 @@ export default function StateMap({
               onChange={(event) => setMetric(event.target.value)}
             >
               <option value="demographic">Demographic Heat Map</option>
-              <option value="partisan">Democrat ↔ Republican</option>
+              <option value="partisan">Democrat vs Republican</option>
             </select>
           </div>
           {isDemographicMetric && (

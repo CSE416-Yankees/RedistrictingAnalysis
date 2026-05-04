@@ -49,6 +49,13 @@
   background: rgba(235, 248, 249, 0.7);
 }
 
+.gui-quick-nav__link--active {
+  border-color: rgba(31, 111, 120, 0.56);
+  background: rgba(229, 246, 247, 0.88);
+  color: var(--color-primary-dark, #174e56);
+  box-shadow: 0 0 0 2px rgba(31, 111, 120, 0.08);
+}
+
 .gui-quick-nav__link--home {
   font-weight: 600;
   display: inline-flex;

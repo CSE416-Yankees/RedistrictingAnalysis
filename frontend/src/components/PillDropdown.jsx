@@ -58,8 +58,8 @@ export default function PillDropdown({
         disabled={!hasOptions}
         onClick={() => hasOptions && setIsOpen((prev) => !prev)}
       >
-        <span className="pill-dropdown__value">{selected?.label ?? value ?? '—'}</span>
-        <span className="pill-dropdown__caret">▾</span>
+        <span className="pill-dropdown__value">{selected?.label ?? value ?? 'N/A'}</span>
+        <span className="pill-dropdown__caret">v</span>
       </button>
 
       {menuOpen && (
@@ -74,7 +74,10 @@ export default function PillDropdown({
                 setIsOpen(false);
               }}
             >
-              {option.label}
+              <span className="pill-dropdown__option-label">{option.label}</span>
+              {option.description && (
+                <span className="pill-dropdown__option-description">{option.description}</span>
+              )}
             </button>
           ))}
         </div>

@@ -14,7 +14,7 @@ public class MinorityEffectiveness {
 
     private State state;
 
-    // group name ("Black", "Hispanic", "Asian") → ensemble type string ("RB", "VRA") → box stats
+    // group name ("Black", "Hispanic", "Asian") -> ensemble type string ("RB", "VRA") -> box stats
     private Map<String, Map<String, BoxStats>> groups;
 
     public MinorityEffectiveness() {}

@@ -22,7 +22,7 @@ const EMPTY_LIST = [];
 
 function eiPayloadRevision(payload) {
   const results = payload?.candidateResults;
-  if (!results || typeof results !== 'object') return '∅';
+  if (!results || typeof results !== 'object') return 'empty';
   return Object.keys(results).sort().join('|');
 }
 
@@ -394,9 +394,17 @@ function EnsembleSplitsChart({ payload, summaryPayload, selectedEnsembleType }) 
 }
 
 function VraImpactThresholdTable({ payload }) {
-  const rows = payload?.rows || EMPTY_LIST;
+  const rows = useMemo(() => payload?.rows || EMPTY_LIST, [payload?.rows]);
   const [selectedGroup, setSelectedGroup] = useState(rows[0]?.group || 'Black');
-  const activeRow = rows.find((row) => row.group === selectedGroup) || rows[0];
+
+  const effectiveGroup =
+    rows.length === 0
+      ? selectedGroup
+      : rows.some((row) => row.group === selectedGroup)
+        ? selectedGroup
+        : rows[0].group;
+
+  const activeRow = rows.find((row) => row.group === effectiveGroup) || rows[0];
   const metricRows = activeRow
     ? [
       ['Enacted effective-district threshold', activeRow.enactedThreshold],
@@ -411,7 +419,7 @@ function VraImpactThresholdTable({ payload }) {
         <SelectControl
           id="vra-impact-group-select"
           label="Feasible Race"
-          value={activeRow?.group || ''}
+          value={effectiveGroup || ''}
           options={rows.map((row) => ({ value: row.group, label: row.group }))}
           onChange={setSelectedGroup}
         />
@@ -480,9 +488,15 @@ function MinorityEffectivenessBoxChart({ payload }) {
 }
 
 function MinorityEffectivenessHistogram({ payload }) {
-  const groupNames = Object.keys(payload?.groupHistograms || {});
+  const groupNames = useMemo(() => Object.keys(payload?.groupHistograms || {}), [payload?.groupHistograms]);
   const [selectedGroup, setSelectedGroup] = useState(groupNames[0] || 'Black');
-  const activeGroup = groupNames.includes(selectedGroup) ? selectedGroup : groupNames[0];
+
+  const activeGroup =
+    groupNames.length === 0
+      ? selectedGroup
+      : groupNames.includes(selectedGroup)
+        ? selectedGroup
+        : groupNames[0];
   const bins = payload?.groupHistograms?.[activeGroup]?.bins || EMPTY_LIST;
 
   return (
@@ -663,9 +677,9 @@ function GinglesTable({
             </tr>
           </thead>
           <tbody>
-            {rows.map((row) => (
+            {rows.map((row, index) => (
               <tr
-                key={row.precinctId}
+                key={`${String(row.precinctId)}:${index}`}
                 className={String(row.precinctId) === String(highlightedPrecinct) ? 'analysis-table__row--active' : ''}
               >
                 <td>{row.precinctId}</td>
@@ -692,9 +706,12 @@ function EICandidateResults({ payload }) {
   const candidateOptions = normalized.candidates;
   const groupOptions = normalized.groups;
   const [selectedCandidate, setSelectedCandidate] = useState(candidateOptions[0]?.key || '');
-  const [selectedGroups, setSelectedGroups] = useState(groupOptions.slice(0, 3).map((group) => group.key));
-  const activeCandidate = candidateOptions.find((candidate) => candidate.key === selectedCandidate) || candidateOptions[0];
-  const activeCandidateKey = activeCandidate?.key || '';
+  const [selectedGroups, setSelectedGroups] = useState(() => groupOptions.slice(0, 3).map((group) => group.key));
+
+  const activeCandidateKey =
+    candidateOptions.length > 0 && candidateOptions.some((c) => c.key === selectedCandidate)
+      ? selectedCandidate
+      : (candidateOptions[0]?.key || '');
   const activeSeries = normalized.series[activeCandidateKey] || EMPTY_LIST;
   const visibleGroupKeys = selectedGroups.filter((key) => groupOptions.some((group) => group.key === key));
   const fallbackGroupKeys = groupOptions[0] ? [groupOptions[0].key] : EMPTY_LIST;
@@ -709,6 +726,35 @@ function EICandidateResults({ payload }) {
       return [...current, key];
     });
   };
+
+  if (candidateOptions.length === 0) {
+    return (
+      <ChartCard title="EI Candidate Results" subtitle="Candidate-specific probability curves by racial/ethnic group">
+        <p className="analysis-note">EI candidate results are not available for this state.</p>
+        <div className="analysis-table-wrap">
+          <table className="analysis-table analysis-table--compact">
+            <thead>
+              <tr>
+                <th>Candidate</th>
+                <th>Group Pair</th>
+                <th>Curve Overlap</th>
+              </tr>
+            </thead>
+            <tbody>
+              {normalized.overlapRows.map((row) => (
+                <tr key={`${row.candidate}-${row.groupPair}`}>
+                  <td>{row.candidate}</td>
+                  <td>{row.groupPair}</td>
+                  <td>{formatPct(row.overlapPct, 1)}</td>
+                </tr>
+              ))}
+              {normalized.overlapRows.length === 0 && <EmptyTableRow colSpan={3} label="EI overlap rows are not available." />}
+            </tbody>
+          </table>
+        </div>
+      </ChartCard>
+    );
+  }
 
   return (
     <ChartCard title="EI Candidate Results" subtitle="Candidate-specific probability curves by racial/ethnic group">
@@ -760,7 +806,7 @@ function EICandidateResults({ payload }) {
               labelFormatter={(value) => `Support: ${value}%`}
               formatter={(value, name) => {
                 const v = Number(value);
-                const text = Number.isFinite(v) ? v.toFixed(2) : '—';
+                const text = Number.isFinite(v) ? v.toFixed(2) : 'N/A';
                 return [text, `${name} density`];
               }}
             />
@@ -840,26 +886,29 @@ function normalizeStateSummary(payload, stateData) {
 }
 
 function normalizeDistrictBoxRows(rows = EMPTY_LIST) {
-  return rows.map((row) => {
-    const min = Number(row.min);
-    const q1 = Number(row.q1);
-    const median = Number(row.median);
-    const q3 = Number(row.q3);
-    const max = Number(row.max);
-    return {
-      district: `D${row.order ?? '?'}`,
-      min,
-      q1,
-      median,
-      q3,
-      max,
-      enacted: Number(row.enactedDot),
-      proposed: row.proposedDot,
-      iqrBase: q1,
-      iqrHeight: q3 - q1,
-      whisker: [median - min, max - median],
-    };
-  });
+  return rows
+    .map((row) => {
+      const min = Number(row.min);
+      const q1 = Number(row.q1);
+      const median = Number(row.median);
+      const q3 = Number(row.q3);
+      const max = Number(row.max);
+      return {
+        district: `D${row.order ?? '?'}`,
+        min,
+        q1,
+        median,
+        q3,
+        max,
+        enacted: Number(row.enactedDot),
+        proposed: row.proposedDot,
+        iqrBase: q1,
+        iqrHeight: q3 - q1,
+        whisker: [median - min, max - median],
+      };
+    })
+    .filter((row) => Number.isFinite(row.iqrHeight) && Number.isFinite(row.median)
+      && Number.isFinite(row.min) && Number.isFinite(row.max));
 }
 
 function normalizeMinorityEffectivenessBoxes(payload) {
@@ -974,9 +1023,9 @@ function SelectControl({ id, label, value, options, onChange }) {
 }
 
 function fmtPct1(n) {
-  if (n == null || n === '') return '—';
+  if (n == null || n === '') return 'N/A';
   const v = Number(n);
-  return Number.isFinite(v) ? `${v.toFixed(1)}%` : '—';
+  return Number.isFinite(v) ? `${v.toFixed(1)}%` : 'N/A';
 }
 
 function BoxWhiskerTooltip({ active, payload, groupLabel }) {
