@@ -26,6 +26,18 @@
   box-shadow: 0 1px 6px rgba(21, 35, 43, 0.05);
 }
 
+.chart-card--nested {
+  margin-top: 12px;
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.56);
+  box-shadow: none;
+}
+
+.chart-card--nested .chart-title {
+  margin-bottom: 8px;
+  font-size: 0.92rem;
+}
+
 .chart-title {
   font-size: 1.01rem;
   letter-spacing: -0.15px;
@@ -42,33 +54,23 @@
   color: #6a5a47;
 }
 
-.comparison-stats {
-  display: flex;
-  gap: 24px;
-  margin-top: 16px;
-  padding-top: 16px;
-  border-top: 1px solid rgba(194, 176, 153, 0.5);
-}
-
-.comparison-stat {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.comparison-stat__label {
-  font-size: 0.73rem;
-  color: var(--color-text-secondary);
-}
-
-.comparison-stat__value {
-  font-size: 1.22rem;
-  font-weight: 800;
-}
-
 .analysis-table-wrap {
   overflow-x: auto;
   margin-top: 10px;
+}
+
+.analysis-table-wrap--scroll {
+  max-height: 260px;
+  overflow: auto;
+  border: 1px solid rgba(232, 220, 204, 0.74);
+  border-radius: 8px;
+}
+
+.analysis-table-wrap--scroll .analysis-table th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: #fffaf2;
 }
 
 .analysis-table {
@@ -354,8 +356,4 @@
     grid-template-columns: 1fr;
   }
 
-  .comparison-stats {
-    flex-direction: column;
-    gap: 9px;
-  }
 }

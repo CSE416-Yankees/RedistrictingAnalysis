@@ -12,13 +12,17 @@ export default function PillDropdown({
   const rootRef = useRef(null);
   const [isOpen, setIsOpen] = useState(false);
 
+  const hasOptions = options.length > 0;
+
   const selected = useMemo(
-    () => options.find((option) => option.value === value) || options[0],
-    [options, value],
+    () => (hasOptions ? (options.find((option) => option.value === value) ?? options[0]) : null),
+    [hasOptions, options, value],
   );
 
+  const menuOpen = hasOptions && isOpen;
+
   useEffect(() => {
-    if (!isOpen) return undefined;
+    if (!menuOpen) return undefined;
 
     const handlePointerDown = (event) => {
       if (!rootRef.current?.contains(event.target)) {
@@ -38,7 +42,7 @@ export default function PillDropdown({
       document.removeEventListener('mousedown', handlePointerDown);
       document.removeEventListener('keydown', handleEscape);
     };
-  }, [isOpen]);
+  }, [menuOpen]);
 
   return (
     <div
@@ -50,14 +54,15 @@ export default function PillDropdown({
         type="button"
         className="pill-dropdown__trigger"
         aria-haspopup="listbox"
-        aria-expanded={isOpen}
-        onClick={() => setIsOpen((prev) => !prev)}
+        aria-expanded={menuOpen}
+        disabled={!hasOptions}
+        onClick={() => hasOptions && setIsOpen((prev) => !prev)}
       >
-        <span className="pill-dropdown__value">{selected?.label ?? value}</span>
+        <span className="pill-dropdown__value">{selected?.label ?? value ?? '—'}</span>
         <span className="pill-dropdown__caret">▾</span>
       </button>
 
-      {isOpen && (
+      {menuOpen && (
         <div className="pill-dropdown__menu" role="listbox" aria-label={label}>
           {options.map((option) => (
             <button

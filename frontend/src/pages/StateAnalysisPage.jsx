@@ -1,26 +1,22 @@
 import { useCallback, useEffect, useState } from 'react';
-import { useParams, Navigate } from 'react-router-dom';
-import axios from 'axios';
+import { useNavigate, useParams, Navigate } from 'react-router-dom';
 import StateMap from '../components/StateMap';
 import AnalysisPanel from '../components/AnalysisPanel';
 import PillDropdown from '../components/PillDropdown';
+import GuiQuickNav from '../components/GuiQuickNav';
 import { states } from '../data/mockData';
+import { guiMockPayloads } from '../data/guiMockPayloads';
+import {
+  fetchGuiPayloadBundle,
+  USE_API_GUI_PAYLOADS,
+} from '../api/guiDataClient';
+import {
+  ALL_GUI_SLUGS,
+  ANALYSIS_OPTIONS,
+  resolveGuiUiConfig,
+  routeSlugForAnalysisView,
+} from '../gui/guiRouteConfig';
 import './StateAnalysisPage.css';
-
-const ANALYSIS_OPTIONS = [
-  { value: 'stateSummary', label: 'State Data Summary' },
-  { value: 'boxWhisker', label: 'Box & Whisker Data' },
-  { value: 'ensembleSplits', label: 'Ensemble Splits (Bar)' },
-  { value: 'voteSeatCurve', label: 'Vote Share vs Seat Share' },
-  { value: 'gingles', label: 'Gingles Summary' },
-  { value: 'ginglesTable', label: 'Gingles 2/3 Table' },
-  { value: 'eiCandidates', label: 'EI Candidate Results' },
-  { value: 'eiPrecinctBar', label: 'EI Precinct Bar' },
-  { value: 'eiKde', label: 'EI KDE' },
-  { value: 'seatShare', label: 'Seat Share Distribution' },
-  { value: 'opportunity', label: 'Opportunity Districts' },
-  { value: 'comparison', label: 'Ensemble Comparison' },
-];
 
 const ENSEMBLE_OPTIONS = [
   { value: 'raceBlind', label: 'Race-Blind' },
@@ -37,8 +33,6 @@ const PLAN_OPTIONS = [
 const MAP_METRIC_OPTIONS = [
   { value: 'demographic', label: 'Demographic' },
   { value: 'partisan', label: 'Partisan' },
-  { value: 'eiCandidateA', label: 'EI Candidate A' },
-  { value: 'eiTurnoutGap', label: 'EI Turnout Gap' },
 ];
 
 const DEMOGRAPHIC_GROUP_OPTIONS = [
@@ -48,233 +42,458 @@ const DEMOGRAPHIC_GROUP_OPTIONS = [
   { value: 'asian', label: 'Asian' },
 ];
 
-const GEOGRAPHY_OPTIONS = [
-  { value: 'precinct', label: 'Precinct' },
-  { value: 'censusBlock', label: 'Census Block' },
-];
+const STATE_OPTIONS = Object.values(states).map((state) => ({
+  value: state.abbr,
+  label: state.name,
+}));
+
+const ANALYSIS_TAB_VIEWS = new Set([
+  'gingles',
+  'ginglesTable',
+  'eiCandidates',
+  'boxWhisker',
+  'ensembleSplits',
+  'vraImpact',
+  'minorityEffectivenessBox',
+  'minorityEffectivenessHistogram',
+]);
+
+const ANALYSIS_TAB_OPTIONS = ANALYSIS_OPTIONS.filter((option) => ANALYSIS_TAB_VIEWS.has(option.value));
+
+function matchGuiSlug(slug) {
+  if (slug == null || slug === '') return undefined;
+  const normalized = String(slug).trim().toLowerCase();
+  return ALL_GUI_SLUGS.find((s) => s.toLowerCase() === normalized);
+}
 
 export default function StateAnalysisPage() {
-  const { stateAbbr } = useParams();
-  const stateData = states[stateAbbr];
+  const navigate = useNavigate();
+  const { stateAbbr, guiSlug } = useParams();
+  const guiSlugCanonical = matchGuiSlug(guiSlug);
+  const stateKey = stateAbbr && String(stateAbbr).trim()
+    ? String(stateAbbr).trim().toUpperCase()
+    : undefined;
+  const stateData = stateKey ? states[stateKey] : undefined;
+  const fallbackGuiPayloads = stateKey ? guiMockPayloads[stateKey] : null;
 
-  // Local state for the server-backed state summary endpoint.
-  const [serverSummary, setServerSummary] = useState(null);
-  const [isSummaryLoading, setIsSummaryLoading] = useState(false);
-  const [summaryError, setSummaryError] = useState(null);
+  const [guiPayloads, setGuiPayloads] = useState(fallbackGuiPayloads);
+  const [isGuiDataLoading, setIsGuiDataLoading] = useState(false);
+  const [guiDataError, setGuiDataError] = useState(null);
 
   const [ensembleType, setEnsembleType] = useState('raceBlind');
-  const [analysisView, setAnalysisView] = useState('stateSummary');
+  const [analysisView, setAnalysisView] = useState(() => resolveGuiUiConfig(matchGuiSlug(guiSlug)).analysisView);
   const [selectedDistrictId, setSelectedDistrictId] = useState(null);
-  const [mapPlanMode, setMapPlanMode] = useState('current');
-  const [isAnalysisOpen, setIsAnalysisOpen] = useState(false);
+  const [mapPlanMode, setMapPlanMode] = useState(() => resolveGuiUiConfig(matchGuiSlug(guiSlug)).mapPlanMode);
+  const [selectedInterestingPlan, setSelectedInterestingPlan] = useState('interestingMax');
 
-  const [mapMetric, setMapMetric] = useState('demographic');
-  const [mapDemographicGroup, setMapDemographicGroup] = useState('overall');
-  const [mapGeographyLevel, setMapGeographyLevel] = useState('precinct');
+  const [mapMetric, setMapMetric] = useState(() => resolveGuiUiConfig(matchGuiSlug(guiSlug)).mapMetric);
+  const [mapDemographicGroup, setMapDemographicGroup] = useState(() => resolveGuiUiConfig(matchGuiSlug(guiSlug)).mapDemographicGroup);
   const [showDistrictOutlines, setShowDistrictOutlines] = useState(true);
+
+  useEffect(() => {
+    const cfg = resolveGuiUiConfig(guiSlugCanonical);
+    setAnalysisView(cfg.analysisView);
+    setMapPlanMode(cfg.mapPlanMode);
+    setMapMetric(cfg.mapMetric);
+    setMapDemographicGroup(cfg.mapDemographicGroup);
+    setSelectedDistrictId(null);
+  }, [stateKey, guiSlugCanonical]);
 
   const handleReset = useCallback(() => {
     setEnsembleType('raceBlind');
-    setAnalysisView('stateSummary');
+    const overview = resolveGuiUiConfig(undefined);
+    setAnalysisView(overview.analysisView);
     setSelectedDistrictId(null);
-    setMapPlanMode('current');
-    setIsAnalysisOpen(false);
-    setMapMetric('demographic');
-    setMapDemographicGroup('overall');
-    setMapGeographyLevel('precinct');
+    setMapPlanMode(overview.mapPlanMode);
+    setSelectedInterestingPlan('interestingMax');
+    setMapMetric(overview.mapMetric);
+    setMapDemographicGroup(overview.mapDemographicGroup);
     setShowDistrictOutlines(true);
-  }, []);
+    navigate('/');
+  }, [navigate]);
 
-  // When the route changes to a new state, fetch the backend summary for that state.
   useEffect(() => {
     let isCancelled = false;
+    const fallback = stateKey ? guiMockPayloads[stateKey] : undefined;
 
-    const loadSummary = async () => {
-      setIsSummaryLoading(true);
-      setSummaryError(null);
+    if (!fallback) {
+      setGuiPayloads(null);
+      setIsGuiDataLoading(false);
+      setGuiDataError(null);
+      return undefined;
+    }
+
+    if (!USE_API_GUI_PAYLOADS) {
+      setGuiPayloads(fallback);
+      setIsGuiDataLoading(false);
+      setGuiDataError(null);
+      return undefined;
+    }
+
+    const loadGuiPayloads = async () => {
+      setGuiPayloads(fallback);
+      setIsGuiDataLoading(true);
+      setGuiDataError(null);
 
       try {
-        const response = await axios.get(
-          `http://localhost:8080/api/states/${stateAbbr}/summary`,
-        );
+        const nextPayloads = await fetchGuiPayloadBundle(stateKey, fallback);
         if (!isCancelled) {
-          setServerSummary(response.data);
+          setGuiPayloads(nextPayloads);
         }
-      } catch (error) {
-        // Keep the rest of the page usable even if the server call fails.
-        // The summary card will show an unavailable/error state instead of mock data.
+      } catch {
         if (!isCancelled) {
-          console.error('Failed to load server-backed state summary:', error);
-          setServerSummary(null);
-          setSummaryError('Unable to load state summary from server.');
+          setGuiPayloads(fallback);
+          setGuiDataError('Using local sample GUI payloads because the API is unavailable.');
         }
       } finally {
         if (!isCancelled) {
-          setIsSummaryLoading(false);
+          setIsGuiDataLoading(false);
         }
       }
     };
 
-    loadSummary();
+    if (stateKey) {
+      loadGuiPayloads();
+    }
 
     return () => {
       isCancelled = true;
     };
-  }, [stateAbbr]);
+  }, [stateKey]);
+
+  useEffect(() => {
+    setSelectedInterestingPlan('interestingMax');
+  }, [stateKey]);
+
+  const goToGui = useCallback((slug) => {
+    if (!stateKey) return;
+    navigate(`/state/${stateKey}/gui/${slug}`);
+  }, [navigate, stateKey]);
+
+  const handleStateChange = useCallback((nextState) => {
+    navigate(`/state/${nextState}`);
+  }, [navigate]);
+
+  const handleAnalysisMenuChange = useCallback((nextValue) => {
+    if (!stateKey) return;
+    const slug = routeSlugForAnalysisView(nextValue);
+    setAnalysisView(nextValue);
+    navigate(`/state/${stateKey}/gui/${slug}`);
+  }, [navigate, stateKey]);
+
+  const handleWorkbenchTabChange = useCallback((nextTab) => {
+    if (!stateKey) return;
+    if (nextTab === 'analysis') {
+      navigate(`/state/${stateKey}/gui/gui-9`);
+      return;
+    }
+    navigate(`/state/${stateKey}`);
+  }, [navigate, stateKey]);
 
   if (!stateData) {
     return <Navigate to="/" replace />;
   }
 
-  let activeDistricts = stateData.currentPlanDistricts;
-  if (mapPlanMode === 'comparison') {
-    activeDistricts = stateData.comparisonPlanDistricts || stateData.currentPlanDistricts;
+  if (stateAbbr !== stateKey) {
+    const suffix = guiSlugCanonical ? `/gui/${guiSlugCanonical}` : '';
+    return <Navigate to={`/state/${stateKey}${suffix}`} replace />;
   }
-  if (mapPlanMode === 'interesting') {
-    activeDistricts = stateData.interestingPlanDistricts || stateData.currentPlanDistricts;
+
+  if (guiSlug && !guiSlugCanonical) {
+    return <Navigate to={`/state/${stateKey}`} replace />;
   }
+
+  if (guiSlug && guiSlugCanonical !== guiSlug) {
+    return <Navigate to={`/state/${stateKey}/gui/${guiSlugCanonical}`} replace />;
+  }
+
+  const currentPlanDistricts = districtsFromPlanPayload(guiPayloads?.currentPlan, stateData.currentPlanDistricts);
+  const comparisonPlanOptions = interestingPlanOptions(guiPayloads?.planComparison);
+  const selectedComparisonPlan = comparisonPlanOptions.find((option) => option.value === selectedInterestingPlan)
+    ? selectedInterestingPlan
+    : comparisonPlanOptions[0]?.value || 'interestingMax';
+
+  const mapCenter = leafletCenterFromGuiState(guiPayloads?.currentPlan?.state, stateData.center);
+  const mapZoom = guiPayloads?.currentPlan?.state?.zoom ?? stateData.zoom;
+  const activeHeatMapPayload = heatMapPayloadForGroup(guiPayloads?.heatMaps, mapDemographicGroup);
+  const activeWorkbenchTab = ANALYSIS_TAB_VIEWS.has(analysisView) ? 'analysis' : 'plans';
+  const planSideAnalysisView = analysisView === 'districtDetails' ? 'districtDetails' : 'stateSummary';
 
   return (
     <div className="state-analysis">
       <div className="state-analysis__main">
         <div className="state-analysis__map">
-          <div className="state-analysis__map-header">
-            <div className="state-analysis__title-group">
-              <h2 className="state-analysis__title">{stateData.name}</h2>
-              <span className="state-analysis__subtitle">Redistricting Analysis Workspace</span>
-            </div>
+          <div className="state-analysis__topbar">
+            <PillDropdown
+              className="state-analysis__state-menu"
+              label="State"
+              value={stateKey}
+              options={STATE_OPTIONS}
+              onChange={handleStateChange}
+            />
 
-            <div className="state-analysis__header-actions">
-              <PillDropdown
-                className="state-analysis__analysis-menu"
-                label="Analysis View"
-                value={analysisView}
-                options={ANALYSIS_OPTIONS}
-                align="right"
-                onChange={(nextValue) => {
-                  setAnalysisView(nextValue);
-                  setIsAnalysisOpen(true);
-                }}
-              />
-
-              <PillDropdown
-                className="state-analysis__control-field"
-                label="Plan"
-                value={mapPlanMode}
-                options={PLAN_OPTIONS}
-                onChange={setMapPlanMode}
-              />
-
-              <PillDropdown
-                className="state-analysis__control-field"
-                label="Color"
-                value={mapMetric}
-                options={MAP_METRIC_OPTIONS}
-                onChange={setMapMetric}
-              />
-
-              <PillDropdown
-                className="state-analysis__control-field"
-                label="Ensemble"
-                value={ensembleType}
-                options={ENSEMBLE_OPTIONS}
-                onChange={setEnsembleType}
-              />
-
-              {mapMetric === 'demographic' && (
-                <PillDropdown
-                  className="state-analysis__control-field"
-                  label="Group"
-                  value={mapDemographicGroup}
-                  options={DEMOGRAPHIC_GROUP_OPTIONS}
-                  onChange={setMapDemographicGroup}
-                />
-              )}
-
-              <PillDropdown
-                className="state-analysis__control-field"
-                label="Geography"
-                value={mapGeographyLevel}
-                options={GEOGRAPHY_OPTIONS}
-                onChange={setMapGeographyLevel}
-              />
-
-              <label className="state-analysis__check-pill">
-                <input
-                  type="checkbox"
-                  checked={showDistrictOutlines}
-                  onChange={(event) => setShowDistrictOutlines(event.target.checked)}
-                />
-                <span>Boundaries</span>
-              </label>
-
+            <div className="state-analysis__tabs" role="tablist" aria-label="Workspace sections">
               <button
                 type="button"
-                className="state-analysis__panel-toggle"
-                onClick={handleReset}
+                role="tab"
+                aria-selected={activeWorkbenchTab === 'plans'}
+                className={`state-analysis__tab ${activeWorkbenchTab === 'plans' ? 'state-analysis__tab--active' : ''}`}
+                onClick={() => handleWorkbenchTabChange('plans')}
               >
-                Reset
+                Plan Explorer
               </button>
-
               <button
                 type="button"
-                className="state-analysis__panel-toggle"
-                onClick={() => setIsAnalysisOpen((prev) => !prev)}
-                aria-expanded={isAnalysisOpen}
+                role="tab"
+                aria-selected={activeWorkbenchTab === 'analysis'}
+                className={`state-analysis__tab ${activeWorkbenchTab === 'analysis' ? 'state-analysis__tab--active' : ''}`}
+                onClick={() => handleWorkbenchTabChange('analysis')}
               >
-                {isAnalysisOpen ? 'Hide Analysis' : 'Show Analysis'}
-                <span className="state-analysis__panel-toggle-icon">{isAnalysisOpen ? '▾' : '▸'}</span>
+                Analysis
               </button>
             </div>
+
+            <button
+              type="button"
+              className="state-analysis__reset"
+              onClick={handleReset}
+            >
+              Reset
+            </button>
           </div>
 
-          <div className={`state-analysis__workspace ${isAnalysisOpen ? 'state-analysis__workspace--split' : ''}`}>
-            <div className="state-analysis__map-container">
-              <StateMap
-                key={stateAbbr}
-                stateAbbr={stateAbbr}
-                center={stateData.center}
-                zoom={stateData.zoom}
-                districtData={activeDistricts}
-                comparisonDistrictData={stateData.comparisonPlanDistricts}
-                stateDemographics={{
-                  blackPercent: stateData.blackPercent,
-                  hispanicPercent: stateData.hispanicPercent,
-                  asianPercent: stateData.asianPercent,
-                }}
-                planMode={mapPlanMode}
-                highlightedDistrict={selectedDistrictId}
-                onDistrictSelect={setSelectedDistrictId}
-                analysisView={analysisView}
-                mapMetric={mapMetric}
-                onMapMetricChange={setMapMetric}
-                mapDemographicGroup={mapDemographicGroup}
-                onMapDemographicGroupChange={setMapDemographicGroup}
-                mapGeographyLevel={mapGeographyLevel}
-                onMapGeographyLevelChange={setMapGeographyLevel}
-                showDistrictOutlines={showDistrictOutlines}
-                showOverlayControls={false}
-              />
-            </div>
+          <div className="state-analysis__state-title">
+            <h2>{activeWorkbenchTab === 'plans' ? 'Congressional Districts' : 'Analysis'}</h2>
+            <span>{stateData.name}</span>
+          </div>
 
-            {isAnalysisOpen && (
-              <div className="state-analysis__charts">
+          {activeWorkbenchTab === 'plans' ? (
+            <div className="state-analysis__plan-shell">
+              <section className="state-analysis__map-panel" aria-label={`${stateData.name} district map`}>
+                <div className="state-analysis__map-container">
+                  <StateMap
+                    key={stateKey}
+                    stateAbbr={stateKey}
+                    center={mapCenter}
+                    zoom={mapZoom}
+                    districtData={currentPlanDistricts}
+                    currentPlanPayload={guiPayloads?.currentPlan}
+                    planComparisonPayload={guiPayloads?.planComparison}
+                    selectedComparisonPlan={selectedComparisonPlan}
+                    heatMapPayload={activeHeatMapPayload}
+                    stateDemographics={{
+                      blackPercent: stateData.blackPercent,
+                      hispanicPercent: stateData.hispanicPercent,
+                      asianPercent: stateData.asianPercent,
+                    }}
+                    planMode={mapPlanMode}
+                    highlightedDistrict={selectedDistrictId}
+                    onDistrictSelect={setSelectedDistrictId}
+                    mapMetric={mapMetric}
+                    onMapMetricChange={setMapMetric}
+                    mapDemographicGroup={mapDemographicGroup}
+                    onMapDemographicGroupChange={setMapDemographicGroup}
+                    showDistrictOutlines={showDistrictOutlines}
+                    showOverlayControls={false}
+                  />
+                </div>
+
+                <div className="state-analysis__plan-controls">
+                  <PillDropdown
+                    className="state-analysis__control-field"
+                    label="Plan"
+                    value={mapPlanMode}
+                    options={PLAN_OPTIONS}
+                    onChange={setMapPlanMode}
+                  />
+
+                  {(mapPlanMode === 'comparison' || mapPlanMode === 'delta' || mapPlanMode === 'interesting')
+                    && comparisonPlanOptions.length > 0 && (
+                    <PillDropdown
+                      className="state-analysis__control-field state-analysis__control-field--wide"
+                      label={mapPlanMode === 'interesting' ? 'Interesting' : 'Compare'}
+                      value={selectedComparisonPlan}
+                      options={comparisonPlanOptions}
+                      onChange={setSelectedInterestingPlan}
+                    />
+                  )}
+
+                  <button
+                    type="button"
+                    className="state-analysis__dark-action"
+                    onClick={() => goToGui('gui-8')}
+                    title="Show enacted vs selected plan on the map (GUI-8)"
+                  >
+                    Compare with enacted
+                  </button>
+
+                  <button
+                    type="button"
+                    className={`state-analysis__dark-action ${analysisView === 'districtDetails' ? 'state-analysis__dark-action--active' : ''}`}
+                    onClick={() => goToGui('gui-6')}
+                  >
+                    District Detail
+                  </button>
+
+                  <PillDropdown
+                    className="state-analysis__control-field"
+                    label="Color"
+                    value={mapMetric}
+                    options={MAP_METRIC_OPTIONS}
+                    onChange={setMapMetric}
+                  />
+
+                  {mapMetric === 'demographic' && (
+                    <PillDropdown
+                      className="state-analysis__control-field"
+                      label="Group"
+                      value={mapDemographicGroup}
+                      options={DEMOGRAPHIC_GROUP_OPTIONS}
+                      onChange={setMapDemographicGroup}
+                    />
+                  )}
+
+                  <label className="state-analysis__check-pill">
+                    <input
+                      type="checkbox"
+                      checked={showDistrictOutlines}
+                      onChange={(event) => setShowDistrictOutlines(event.target.checked)}
+                    />
+                    <span>Boundaries</span>
+                  </label>
+                </div>
+              </section>
+
+              <aside className="state-analysis__overview-panel" aria-label="State overview">
                 <AnalysisPanel
-                  stateAbbr={stateAbbr}
+                  ensembleType={ensembleType}
+                  analysisView={planSideAnalysisView}
+                  stateData={stateData}
+                  guiPayloads={guiPayloads}
+                  isSummaryLoading={isGuiDataLoading}
+                  summaryError={guiDataError}
+                  highlightedDistrict={selectedDistrictId}
+                  onHighlightDistrict={setSelectedDistrictId}
+                />
+              </aside>
+            </div>
+          ) : (
+            <div className="state-analysis__analysis-shell">
+              <div className="state-analysis__analysis-toolbar">
+                <PillDropdown
+                  className="state-analysis__analysis-menu"
+                  label="Analysis View"
+                  value={analysisView}
+                  options={ANALYSIS_TAB_OPTIONS}
+                  onChange={handleAnalysisMenuChange}
+                />
+                <PillDropdown
+                  className="state-analysis__control-field"
+                  label="Ensemble"
+                  value={ensembleType}
+                  options={ENSEMBLE_OPTIONS}
+                  onChange={setEnsembleType}
+                />
+              </div>
+
+              <div className="state-analysis__analysis-board">
+                <AnalysisPanel
                   ensembleType={ensembleType}
                   analysisView={analysisView}
                   stateData={stateData}
-                  serverSummary={serverSummary}
-                  isSummaryLoading={isSummaryLoading}
-                  summaryError={summaryError}
+                  guiPayloads={guiPayloads}
+                  isSummaryLoading={isGuiDataLoading}
+                  summaryError={guiDataError}
                   highlightedDistrict={selectedDistrictId}
                   onHighlightDistrict={setSelectedDistrictId}
                 />
               </div>
-            )}
-          </div>
+            </div>
+          )}
+
+          <GuiQuickNav stateAbbr={stateKey} />
         </div>
       </div>
     </div>
   );
+}
+
+function districtsFromPlanPayload(payload, fallbackDistricts) {
+  const plan = payload?.currentPlan || payload?.plan || payload;
+
+  if (plan?.precinctToDistrict && typeof plan.precinctToDistrict === 'object'
+    && !Array.isArray(plan?.districts) && !plan?.districtSummaries) {
+    return fallbackDistricts;
+  }
+
+  if (Array.isArray(plan?.districts) && plan.districts.length > 0) {
+    return plan.districts.map((district) => ({
+      id: district.districtNumber ?? district.id,
+      dem: normalizePctToFraction(district.demVotePct ?? district.demPct ?? district.dem),
+      rep: normalizePctToFraction(district.repVotePct ?? district.repPct ?? district.rep),
+      minorityPct: Number(district.minorityPct ?? district.minorityPercent ?? 0),
+      precinctIds: district.precinctIds || [],
+    }));
+  }
+
+  if (plan?.districtSummaries && Object.keys(plan.districtSummaries).length > 0) {
+    return Object.entries(plan.districtSummaries)
+      .map(([districtNumber, district]) => ({
+        id: Number(districtNumber),
+        dem: normalizePctToFraction(district.demVotePct ?? district.demPct),
+        rep: normalizePctToFraction(district.repVotePct ?? district.repPct),
+        minorityPct: Number(district.minorityPct ?? district.minorityPercent ?? 0),
+      }))
+      .sort((left, right) => left.id - right.id);
+  }
+
+  return fallbackDistricts;
+}
+
+function normalizePctToFraction(value) {
+  const numeric = Number(value);
+  if (!Number.isFinite(numeric)) return 0;
+  return numeric > 1 ? numeric / 100 : numeric;
+}
+
+function leafletCenterFromGuiState(guiState, fallbackCenter) {
+  const center = guiState?.center;
+  if (!Array.isArray(center) || center.length < 2) return fallbackCenter;
+
+  const first = Number(center[0]);
+  const second = Number(center[1]);
+  if (!Number.isFinite(first) || !Number.isFinite(second)) return fallbackCenter;
+
+  if (Math.abs(first) > 50 && Math.abs(second) <= 50) {
+    return [second, first];
+  }
+  return [first, second];
+}
+
+function heatMapPayloadForGroup(heatMaps, groupValue) {
+  const labelByValue = {
+    black: 'Black',
+    hispanic: 'Hispanic',
+    asian: 'Asian',
+  };
+  return heatMaps?.[labelByValue[groupValue]] || null;
+}
+
+function interestingPlanOptions(planComparisonPayload) {
+  const plans = planComparisonPayload?.plans || {};
+  const metadata = planComparisonPayload?.planMetadata || {};
+  return Object.keys(plans)
+    .filter((key) => key !== 'enacted')
+    .map((key) => ({
+      value: key,
+      label: metadata[key]?.label || titleCasePlanKey(key),
+      description: metadata[key]?.characteristics,
+    }));
+}
+
+function titleCasePlanKey(key) {
+  return String(key)
+    .replace(/([a-z])([A-Z])/g, '$1 $2')
+    .replace(/[-_]/g, ' ')
+    .replace(/\b\w/g, (char) => char.toUpperCase());
 }

@@ -36,6 +36,11 @@
   box-shadow: 0 0 0 3px rgba(191, 163, 127, 0.3);
 }
 
+.pill-dropdown__trigger:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
 .pill-dropdown__value {
   overflow: hidden;
   text-overflow: ellipsis;

@@ -1,0 +1,84 @@
+.gui-quick-nav {
+  padding: 10px 12px;
+  border: 1px solid rgba(178, 159, 138, 0.42);
+  border-radius: var(--radius-md, 8px);
+  background: rgba(255, 252, 247, 0.78);
+  font-size: 0.78rem;
+  color: var(--color-text-secondary, #5c4d3c);
+  box-shadow: 0 1px 5px rgba(31, 43, 51, 0.04);
+}
+
+.gui-quick-nav__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.gui-quick-nav__title {
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  color: #5c4d3c;
+  text-transform: uppercase;
+}
+
+.gui-quick-nav__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(178px, 1fr));
+  gap: 6px;
+}
+
+.gui-quick-nav__link {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 6px;
+  color: #23404a;
+  text-decoration: none;
+  border: 1px solid rgba(191, 174, 153, 0.42);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.62);
+  padding: 5px 8px;
+}
+
+.gui-quick-nav__link:hover {
+  border-color: rgba(44, 115, 124, 0.42);
+  background: rgba(235, 248, 249, 0.7);
+}
+
+.gui-quick-nav__link--home {
+  font-weight: 600;
+  display: inline-flex;
+  border-color: rgba(44, 115, 124, 0.38);
+  color: #1a5a64;
+  padding-inline: 12px;
+}
+
+.gui-quick-nav__slug {
+  font-size: 0.68rem;
+  font-weight: 800;
+  color: #1f6f78;
+}
+
+.gui-quick-nav__label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.gui-quick-nav__badge {
+  border-radius: 999px;
+  padding: 2px 6px;
+  background: #f7efe3;
+  color: #6c573e;
+  font-size: 0.62rem;
+  font-weight: 800;
+}
+
+.gui-quick-nav__badge--required {
+  background: #e4f2f3;
+  color: #1f6f78;
+}

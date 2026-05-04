@@ -1,424 +1,356 @@
 import { useMemo, useState } from 'react';
 import {
-  BarChart,
-  Bar,
-  AreaChart,
   Area,
-  XAxis,
-  YAxis,
+  AreaChart,
+  Bar,
+  BarChart,
   CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
   Cell,
   ComposedChart,
-  Line,
-  LineChart,
-  ScatterChart,
-  Scatter,
   ErrorBar,
+  Legend,
+  ResponsiveContainer,
+  Scatter,
+  ScatterChart,
+  Tooltip,
+  XAxis,
+  YAxis,
 } from 'recharts';
-import { ensembleData } from '../data/mockData';
 import './AnalysisPanel.css';
 
 const EMPTY_LIST = [];
 
+function eiPayloadRevision(payload) {
+  const results = payload?.candidateResults;
+  if (!results || typeof results !== 'object') return '∅';
+  return Object.keys(results).sort().join('|');
+}
+
+const ENSEMBLE_LABELS = {
+  raceBlind: 'Race-Blind',
+  vra: 'VRA Constrained',
+  RB: 'Race-Blind',
+  VRA: 'VRA Constrained',
+};
+
 export default function AnalysisPanel({
-  stateAbbr,
   ensembleType,
   analysisView,
   stateData,
-  serverSummary,
+  guiPayloads,
   isSummaryLoading,
   summaryError,
   highlightedDistrict,
   onHighlightDistrict,
 }) {
-  const data = ensembleData[stateAbbr];
-  if (!data) return <div className="analysis-panel"><div className="analysis-panel__empty">No analysis data is available for this state yet.</div></div>;
+  const [highlightedGinglesPrecinct, setHighlightedGinglesPrecinct] = useState(null);
 
-  const current = data[ensembleType];
+  if (!guiPayloads) {
+    return (
+      <div className="analysis-panel">
+        <div className="analysis-panel__empty">No GUI payload data is available for this state yet.</div>
+      </div>
+    );
+  }
+
+  const MAP_ONLY_VIEWS = new Set(['currentPlanMap', 'demographicHeatMap', 'planComparisonMap', 'interestingPlanMap']);
+  if (MAP_ONLY_VIEWS.has(analysisView)) {
+    return (
+      <div className="analysis-panel">
+        <div className="analysis-panel__empty">
+          This route is map-focused. Adjust plan, color, and group controls above the map, or choose another analysis view.
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="analysis-panel">
       {analysisView === 'stateSummary' && (
         <StateSummaryCard
+          payload={guiPayloads.stateSummary}
           stateData={stateData}
-          serverSummary={serverSummary}
-          isSummaryLoading={isSummaryLoading}
-          summaryError={summaryError}
+          isLoading={isSummaryLoading}
+          error={summaryError}
         />
       )}
-      {analysisView === 'boxWhisker' && (
-        <BoxWhiskerChart data={current.boxWhisker} ensembleType={ensembleType} />
-      )}
-      {analysisView === 'ensembleSplits' && (
-        <EnsembleSplitsChart
-          data={current.ensembleSplits}
-          ensembleCatalog={data}
-          selectedEnsembleType={ensembleType}
-        />
-      )}
-      {analysisView === 'voteSeatCurve' && (
-        <VoteSeatCurveChart data={current.voteSeatCurve} ensembleType={ensembleType} />
-      )}
-      {analysisView === 'gingles' && (
-        <GinglesSummary summary={current.gingles.summary} scatterData={current.gingles.scatter} />
-      )}
-      {analysisView === 'ginglesTable' && (
-        <GinglesTable
-          rows={current.gingles.rows}
+      {analysisView === 'districtDetails' && (
+        <DistrictRepresentationTable
+          payload={guiPayloads.districtDetails}
           highlightedDistrict={highlightedDistrict}
           onHighlightDistrict={onHighlightDistrict}
         />
       )}
+      {analysisView === 'boxWhisker' && (
+        <BoxWhiskerChart payload={guiPayloads.boxWhisker} ensembleType={ensembleType} />
+      )}
+      {analysisView === 'ensembleSplits' && (
+        <EnsembleSplitsChart
+          payload={guiPayloads.ensembleSplits}
+          summaryPayload={guiPayloads.stateSummary}
+          selectedEnsembleType={ensembleType}
+        />
+      )}
+      {analysisView === 'vraImpact' && (
+        <VraImpactThresholdTable payload={guiPayloads.vraImpactThresholds} />
+      )}
+      {analysisView === 'minorityEffectivenessBox' && (
+        <MinorityEffectivenessBoxChart payload={guiPayloads.minorityEffectivenessBox} />
+      )}
+      {analysisView === 'minorityEffectivenessHistogram' && (
+        <MinorityEffectivenessHistogram payload={guiPayloads.minorityEffectivenessHistogram} />
+      )}
+      {analysisView === 'gingles' && (
+        <GinglesSummary
+          payload={guiPayloads.ginglesResults}
+          tablePayload={guiPayloads.ginglesTable}
+          highlightedPrecinct={highlightedGinglesPrecinct}
+          onSelectPrecinct={setHighlightedGinglesPrecinct}
+        />
+      )}
+      {analysisView === 'ginglesTable' && (
+        <GinglesTable payload={guiPayloads.ginglesTable} highlightedPrecinct={highlightedGinglesPrecinct} />
+      )}
       {analysisView === 'eiCandidates' && (
-        <EICandidateResults data={current.ei.candidateSupport} density={current.ei.candidateDensity} />
-      )}
-      {analysisView === 'eiPrecinctBar' && (
-        <EIPrecinctBarChart data={current.ei.precinctBar} />
-      )}
-      {analysisView === 'eiKde' && (
-        <EIKdeChart data={current.ei.kde} />
-      )}
-      {analysisView === 'seatShare' && (
-        <SeatShareChart data={current.seatShare} />
-      )}
-      {analysisView === 'opportunity' && (
-        <OpportunityChart data={current.opportunityDistricts} />
-      )}
-      {analysisView === 'comparison' && (
-        <ComparisonChart data={data} />
+        <EICandidateResults
+          key={`${stateData.abbr}-${eiPayloadRevision(guiPayloads.eiCandidates)}`}
+          payload={guiPayloads.eiCandidates}
+        />
       )}
     </div>
   );
 }
 
-function StateSummaryCard({ stateData, serverSummary, isSummaryLoading, summaryError }) {
-  // 1. Loading state: show a clear loading message instead of mock values.
-  if (isSummaryLoading) {
+function StateSummaryCard({ payload, stateData, isLoading, error }) {
+  if (isLoading) {
     return (
-      <div className="chart-card">
-        <h3 className="chart-title">
-          State Data Summary
-          <span className="chart-subtitle">
-            Population, demographics, party control, statewide vote, and enacted-plan representation
-          </span>
-        </h3>
-        <p className="analysis-note">Loading server-backed state summary&hellip;</p>
-      </div>
+      <ChartCard title="State Data Summary" subtitle="Population, demographics, party control, statewide vote, and representation">
+        <p className="analysis-note">Loading state summary...</p>
+      </ChartCard>
     );
   }
 
-  // 2. Error or missing data: show an error/unavailable state.
-  if (!serverSummary) {
+  if (!payload) {
     return (
-      <div className="chart-card">
-        <h3 className="chart-title">
-          State Data Summary
-          <span className="chart-subtitle">
-            Population, demographics, party control, statewide vote, and enacted-plan representation
-          </span>
-        </h3>
-        <p className="analysis-note">
-          {summaryError || 'State summary is currently unavailable from the server.'}
-        </p>
-      </div>
+      <ChartCard title="State Data Summary" subtitle="Population, demographics, party control, statewide vote, and representation">
+        <p className="analysis-note">{error || 'State summary is currently unavailable.'}</p>
+      </ChartCard>
     );
   }
 
-  // 3. Success: drive the entire card from serverSummary only.
-
-  // Population
-  const populationValue = Number.isFinite(serverSummary.population)
-    ? serverSummary.population.toLocaleString()
-    : 'N/A';
-
-  // Congressional districts
-  const congressionalDistricts = Number.isFinite(serverSummary.congressionalDistricts)
-    ? serverSummary.congressionalDistricts
-    : 'N/A';
-
-  // Avg Minority %
-  const avgMinority = Number.isFinite(serverSummary.avgMinorityPct)
-    ? serverSummary.avgMinorityPct
-    : null;
-
-  // Avg Dem Vote %
-  const avgDem = Number.isFinite(serverSummary.avgDemVotePct)
-    ? serverSummary.avgDemVotePct
-    : null;
-
-  // Opportunity Districts
-  const opportunityDistricts = Number.isFinite(serverSummary.opportunityDistricts)
-    ? serverSummary.opportunityDistricts
-    : 'N/A';
-
-  // Preclearance
-  const preclearance = typeof serverSummary.preclearance === 'boolean'
-    ? serverSummary.preclearance
-    : null;
-
-  // Congressional representation by party
-  const serverDemSeats = serverSummary.representativeSummary?.democrats;
-  const serverRepSeats = serverSummary.representativeSummary?.republicans;
-  const representativesByParty = {
-    Dem: Number.isFinite(serverDemSeats) ? serverDemSeats : 'N/A',
-    Rep: Number.isFinite(serverRepSeats) ? serverRepSeats : 'N/A',
-  };
-
-  // Statewide vote (fractions on backend, percentages in UI)
-  let statewideVote = { dem: 0, rep: 0 };
-  if (serverSummary.statewideVote) {
-    const demPct = serverSummary.statewideVote.democraticPct * 100;
-    const repPct = serverSummary.statewideVote.republicanPct * 100;
-    if (Number.isFinite(demPct) && Number.isFinite(repPct)) {
-      const total = demPct + repPct;
-      const normDem = total > 0 ? (demPct / total) * 100 : demPct;
-      const normRep = total > 0 ? (repPct / total) * 100 : repPct;
-      statewideVote = {
-        dem: Number(normDem.toFixed(1)),
-        rep: Number(normRep.toFixed(1)),
-      };
-    }
-  }
-
-  // Party control text
-  const redistrictingControl = serverSummary.redistrictingControl || 'N/A';
-  const congressionalRows = serverSummary.congressionalRepresentation || stateData?.congressionalRepresentation || EMPTY_LIST;
+  const summary = normalizeStateSummary(payload, stateData);
 
   return (
-    <div className="chart-card">
-      <h3 className="chart-title">
-        State Data Summary
-        <span className="chart-subtitle">
-          Population, demographics, party control, statewide vote, and enacted-plan representation
-        </span>
-      </h3>
+    <ChartCard title="State Data Summary" subtitle="Population, demographics, party control, statewide vote, and ensemble availability">
       <div className="analysis-kpi-grid">
-        <Kpi label="Population" value={populationValue} />
-        <Kpi label="Congressional Districts" value={congressionalDistricts} />
-        <Kpi label="Avg Minority %" value={avgMinority != null ? `${avgMinority.toFixed(1)}%` : 'N/A'} />
-        <Kpi label="Avg Dem Vote %" value={avgDem != null ? `${avgDem.toFixed(1)}%` : 'N/A'} />
-        <Kpi label="Opportunity Districts" value={opportunityDistricts} />
-        <Kpi label="Preclearance" value={preclearance != null ? (preclearance ? 'Yes' : 'No') : 'N/A'} />
+        <Kpi label="Population" value={formatNumber(summary.population)} />
+        <Kpi label="Congressional Districts" value={summary.congressionalDistricts} />
+        <Kpi label="Democratic Vote" value={formatPct(summary.demVotePct, 1)} />
+        <Kpi label="Republican Vote" value={formatPct(summary.repVotePct, 1)} />
+        <Kpi label="Democratic Seats" value={summary.demSeats} />
+        <Kpi label="Republican Seats" value={summary.repSeats} />
       </div>
+
       <div className="analysis-summary-grid">
         <div className="analysis-summary-card">
           <span className="analysis-summary-card__label">Congressional Representatives by Party</span>
-          <span className="analysis-summary-card__value">
-            Dem: {representativesByParty.Dem} • Rep: {representativesByParty.Rep}
-          </span>
+          <span className="analysis-summary-card__value">Dem: {summary.demSeats} - Rep: {summary.repSeats}</span>
         </div>
         <div className="analysis-summary-card">
           <span className="analysis-summary-card__label">Party Control of Redistricting Process</span>
-          <span className="analysis-summary-card__value">{redistrictingControl}</span>
+          <span className="analysis-summary-card__value">{summary.redistrictingControl}</span>
         </div>
       </div>
+
       <div className="analysis-voter-dist">
-        <span className="analysis-voter-dist__label">
-          State Voter Distribution (Dem vs Rep, estimated statewide vote)
-        </span>
+        <span className="analysis-voter-dist__label">State Voter Distribution (2024 Presidential estimate)</span>
         <div className="analysis-voter-dist__bar">
-          <div
-            className="analysis-voter-dist__segment analysis-voter-dist__segment--dem"
-            style={{ width: `${statewideVote.dem}%` }}
-          />
-          <div
-            className="analysis-voter-dist__segment analysis-voter-dist__segment--rep"
-            style={{ width: `${statewideVote.rep}%` }}
-          />
+          <div className="analysis-voter-dist__segment analysis-voter-dist__segment--dem" style={{ width: `${summary.demVotePct}%` }} />
+          <div className="analysis-voter-dist__segment analysis-voter-dist__segment--rep" style={{ width: `${summary.repVotePct}%` }} />
         </div>
         <div className="analysis-voter-dist__values">
-          <span>Dem {statewideVote.dem.toFixed(1)}%</span>
-          <span>Rep {statewideVote.rep.toFixed(1)}%</span>
+          <span>Dem {summary.demVotePct.toFixed(1)}%</span>
+          <span>Rep {summary.repVotePct.toFixed(1)}%</span>
         </div>
       </div>
+
       <div className="analysis-table-wrap">
-        <table className="analysis-table">
+        <table className="analysis-table analysis-table--compact">
+          <thead>
+            <tr>
+              <th>Group</th>
+              <th>Population %</th>
+              <th>CVAP %</th>
+            </tr>
+          </thead>
+          <tbody>
+            {summary.demographicRows.map((row) => (
+              <tr key={row.group}>
+                <td>{row.group}</td>
+                <td>{formatPct(row.populationPct, 1)}</td>
+                <td>{formatPct(row.cvapPct, 1)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      <div className="analysis-table-wrap">
+        <table className="analysis-table analysis-table--compact">
+          <thead>
+            <tr>
+              <th>Ensemble</th>
+              <th>District Plans</th>
+              <th>Pop. Equality Threshold</th>
+              <th>Black Rough Prop.</th>
+              <th>Hispanic Rough Prop.</th>
+              <th>Asian Rough Prop.</th>
+            </tr>
+          </thead>
+          <tbody>
+            {summary.ensembleRows.map((row) => (
+              <tr key={row.name}>
+                <td>{row.name}</td>
+                <td>{formatNumber(row.planCount)}</td>
+                <td>{formatPct(row.populationEqualityThresholdPct, 1, { alreadyPercent: true })}</td>
+                <td>{formatRatio(row.roughProportionality.Black)}</td>
+                <td>{formatRatio(row.roughProportionality.Hispanic)}</td>
+                <td>{formatRatio(row.roughProportionality.Asian)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </ChartCard>
+  );
+}
+
+function DistrictRepresentationTable({ payload, highlightedDistrict, onHighlightDistrict }) {
+  const rows = payload?.districtRows || EMPTY_LIST;
+
+  return (
+    <ChartCard title="Congressional Representation" subtitle="Enacted-plan district details and effectiveness scores">
+      <div className="analysis-table-wrap">
+        <table className="analysis-table analysis-table--clickable">
           <thead>
             <tr>
               <th>District #</th>
               <th>Representative</th>
               <th>Party</th>
-              <th>Rep Racial/Ethnic Group</th>
+              <th>Rep. Group</th>
               <th>Vote Margin %</th>
-              <th>Dem Vote %</th>
-              <th>Rep Vote %</th>
+              <th>Effectiveness</th>
+              <th>Calibrated</th>
             </tr>
           </thead>
           <tbody>
-            {congressionalRows.length > 0 ? congressionalRows.map((row) => (
-              <tr key={row.district}>
+            {rows.map((row) => {
+              const districtNum = Number(row.districtNumber);
+              return (
+              <tr
+                key={row.districtNumber}
+                className={Number(highlightedDistrict) === districtNum ? 'analysis-table__row--active' : ''}
+                onClick={() => onHighlightDistrict(Number.isFinite(districtNum) ? districtNum : row.districtNumber)}
+              >
                 <td>{row.districtNumber}</td>
                 <td>{row.representative}</td>
                 <td>{row.party}</td>
-                <td>{row.representativeRaceEthnicity}</td>
-                <td>{Number(row.voteMarginPct).toFixed(1)}%</td>
-                <td>{Number(row.demVotePct).toFixed(1)}%</td>
-                <td>{Number(row.repVotePct).toFixed(1)}%</td>
+                <td>{row.representativeGroup}</td>
+                <td>{formatPct(row.voteMarginPct, 1, { alreadyPercent: true })}</td>
+                <td>{formatRatio(row.effectivenessScore)}</td>
+                <td>{formatRatio(row.calibratedEffectivenessScore)}</td>
               </tr>
-            )) : (
-              <tr>
-                <td colSpan="7">Congressional representation rows are not available.</td>
-              </tr>
-            )}
+              );
+            })}
+            {rows.length === 0 && <EmptyTableRow colSpan={7} label="District representation rows are not available." />}
           </tbody>
         </table>
       </div>
-      <p className="analysis-note">
-        Representative rows now belong to the state summary payload and no longer have a separate analysis view.
-      </p>
-    </div>
+    </ChartCard>
   );
 }
 
-function BoxWhiskerChart({ data, ensembleType }) {
-  const label = ensembleType === 'vra' ? 'VRA Constrained' : 'Race-Blind';
-  const groups = data?.groups || EMPTY_LIST;
-  const [selectedGroup, setSelectedGroup] = useState(groups[0]?.key || 'minorityPct');
-  const activeGroup = useMemo(
-    () => groups.find((group) => group.key === selectedGroup) || groups[0],
-    [groups, selectedGroup],
+function BoxWhiskerChart({ payload, ensembleType }) {
+  const ensembleKey = ensembleType === 'vra' ? 'VRA' : 'RB';
+  const groups = Object.keys(payload?.ensembles?.[ensembleKey]?.groups || {});
+  const [selectedGroup, setSelectedGroup] = useState(groups[0] || 'Black');
+  const activeGroup = groups.includes(selectedGroup) ? selectedGroup : groups[0];
+  const rows = useMemo(
+    () => normalizeDistrictBoxRows(payload?.ensembles?.[ensembleKey]?.groups?.[activeGroup]?.orderedBins),
+    [payload, ensembleKey, activeGroup],
   );
-  const groupRows = useMemo(
-    () => data?.byGroup?.[activeGroup?.key] || EMPTY_LIST,
-    [data, activeGroup],
-  );
-  const boxColor = activeGroup?.color || '#4f7f9a';
+  const boxColor = groupColor(activeGroup);
 
   return (
-    <div className="chart-card">
-      <h3 className="chart-title">
-        District Distribution (Box & Whisker)
-        <span className="chart-subtitle">
-          {label} ensemble, ordered by enacted-plan percentage for selected group
-        </span>
-      </h3>
+    <ChartCard
+      title="District Distribution (Box & Whisker)"
+      subtitle={`${ENSEMBLE_LABELS[ensembleKey]} ensemble, ordered by enacted-plan percentage for selected group`}
+    >
       {groups.length > 0 && (
-        <div className="gingles-controls">
-          <label htmlFor="box-whisker-group-select">Group</label>
-          <select
-            id="box-whisker-group-select"
-            value={activeGroup?.key || ''}
-            onChange={(event) => setSelectedGroup(event.target.value)}
-          >
-            {groups.map((group) => (
-              <option key={group.key} value={group.key}>{group.label}</option>
-            ))}
-          </select>
-        </div>
+        <SelectControl
+          id="box-whisker-group-select"
+          label="Group"
+          value={activeGroup || ''}
+          options={groups.map((group) => ({ value: group, label: group }))}
+          onChange={setSelectedGroup}
+        />
       )}
-      <ResponsiveContainer width="100%" height={350}>
-        <ComposedChart data={groupRows} margin={{ top: 10, right: 20, bottom: 10, left: 10 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke="#eee" />
-          <XAxis dataKey="district" tick={{ fontSize: 12 }} />
-          <YAxis
-            label={{ value: `${activeGroup?.label || 'Minority'} in District (%)`, angle: -90, position: 'insideLeft', fontSize: 12 }}
-            tick={{ fontSize: 11 }}
-            domain={[0, 100]}
-          />
-          <Tooltip content={(props) => <BoxWhiskerTooltip {...props} groupLabel={activeGroup?.label || 'Minority %'} />} />
-          <Legend wrapperStyle={{ fontSize: 11 }} />
-          <Bar dataKey="iqrBase" stackId="iqr" fill="transparent" legendType="none" />
-          <Bar
-            dataKey="iqrHeight"
-            stackId="iqr"
-            name="IQR (Q1-Q3)"
-            fill={boxColor}
-            fillOpacity={0.28}
-            stroke={boxColor}
-            strokeWidth={1.4}
-            radius={[4, 4, 0, 0]}
-          />
-          <Scatter
-            dataKey="median"
-            name="Median + Whiskers (Min/Max)"
-            fill={boxColor}
-            shape="diamond"
-            isAnimationActive={false}
-          >
-            <ErrorBar dataKey="whisker" direction="y" width={8} stroke={boxColor} strokeWidth={1.5} />
-          </Scatter>
-          <Scatter
-            dataKey="enacted"
-            name="Enacted Plan Dot"
-            fill="#111827"
-            shape="circle"
-            isAnimationActive={false}
-          />
-          <Scatter
-            dataKey="proposed"
-            name="Proposed Plan Dot"
-            fill="#d97706"
-            shape="triangle"
-            isAnimationActive={false}
-          />
-        </ComposedChart>
-      </ResponsiveContainer>
-      <p className="analysis-note">
-        Enacted and proposed dots use current and comparison district plans. Data is mock until ensemble outputs are connected.
-      </p>
-    </div>
+      {rows.length > 0 ? (
+        <ResponsiveContainer width="100%" height={350}>
+          <ComposedChart data={rows} margin={{ top: 10, right: 20, bottom: 10, left: 10 }}>
+            <CartesianGrid strokeDasharray="3 3" stroke="#eee" />
+            <XAxis dataKey="district" tick={{ fontSize: 12 }} />
+            <YAxis
+              label={{ value: `${activeGroup || 'Group'} in District (%)`, angle: -90, position: 'insideLeft', fontSize: 12 }}
+              tick={{ fontSize: 11 }}
+              domain={[0, 100]}
+            />
+            <Tooltip content={(props) => <BoxWhiskerTooltip {...props} groupLabel={`${activeGroup || 'Group'} %`} />} />
+            <Legend wrapperStyle={{ fontSize: 11 }} />
+            <Bar dataKey="iqrBase" stackId="iqr" fill="transparent" legendType="none" />
+            <Bar
+              dataKey="iqrHeight"
+              stackId="iqr"
+              name="IQR (Q1-Q3)"
+              fill={boxColor}
+              fillOpacity={0.28}
+              stroke={boxColor}
+              strokeWidth={1.4}
+              radius={[4, 4, 0, 0]}
+            />
+            <Scatter dataKey="median" name="Median + Whiskers" fill={boxColor} shape="diamond" isAnimationActive={false}>
+              <ErrorBar dataKey="whisker" direction="y" width={8} stroke={boxColor} strokeWidth={1.5} />
+            </Scatter>
+            <Scatter dataKey="enacted" name="Enacted Plan Dot" fill="#1f6f78" shape="circle" isAnimationActive={false} />
+            <Scatter dataKey="proposed" name="Proposed Plan Dot" fill="#d97706" shape="triangle" isAnimationActive={false} />
+          </ComposedChart>
+        </ResponsiveContainer>
+      ) : (
+        <p className="analysis-note">Box and whisker data is not available.</p>
+      )}
+    </ChartCard>
   );
 }
 
-function VoteSeatCurveChart({ data, ensembleType }) {
-  return (
-    <div className="chart-card">
-      <h3 className="chart-title">
-        Vote Share vs Seat Share Curve
-        <span className="chart-subtitle">
-          {ensembleType === 'vra' ? 'VRA Constrained' : 'Race-Blind'} responsiveness curve
-        </span>
-      </h3>
-      <ResponsiveContainer width="100%" height={320}>
-        <LineChart data={data} margin={{ top: 10, right: 20, bottom: 10, left: 10 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke="#eee" />
-          <XAxis
-            dataKey="voteShare"
-            tick={{ fontSize: 11 }}
-            label={{ value: 'Vote Share %', position: 'insideBottom', offset: -5, fontSize: 12 }}
-          />
-          <YAxis
-            tick={{ fontSize: 11 }}
-            label={{ value: 'Seat Share %', angle: -90, position: 'insideLeft', fontSize: 12 }}
-            domain={[0, 100]}
-          />
-          <Tooltip contentStyle={{ fontSize: 12, borderRadius: 6 }} />
-          <Legend wrapperStyle={{ fontSize: 11 }} />
-          <Line type="monotone" dataKey="seatShare" name="Observed Seat Share" stroke="#1e88e5" strokeWidth={2.5} dot={{ r: 2 }} />
-          <Line type="monotone" dataKey="proportional" name="Proportional Baseline" stroke="#6b7280" strokeDasharray="4 4" dot={false} />
-        </LineChart>
-      </ResponsiveContainer>
-    </div>
-  );
-}
-
-function EnsembleSplitsChart({ data, ensembleCatalog, selectedEnsembleType }) {
-  const availableRows = [
-    { key: 'raceBlind', label: 'Race-Blind', details: ensembleCatalog?.raceBlind || {} },
-    { key: 'vra', label: 'VRA Constrained', details: ensembleCatalog?.vra || {} },
-  ];
-  const selectedRow = availableRows.find((row) => row.key === selectedEnsembleType) || availableRows[0];
+function EnsembleSplitsChart({ payload, summaryPayload, selectedEnsembleType }) {
+  const rows = (payload?.splits || EMPTY_LIST).map((row) => ({
+    ...row,
+    splitLabel: `${row.repWins}R/${row.demWins}D`,
+  }));
+  const selectedKey = selectedEnsembleType === 'vra' ? 'VRA' : 'RB';
+  const selectedSummary = summaryPayload?.ensembleSummaries?.[selectedKey];
 
   return (
-    <div className="chart-card">
-      <h3 className="chart-title">
-        Ensemble Splits
-        <span className="chart-subtitle">Distribution of simulated seat outcomes</span>
-      </h3>
+    <ChartCard title="Ensemble Splits" subtitle="Race-Blind and VRA constrained simulated election split frequencies">
       <div className="analysis-summary-grid">
         <div className="analysis-summary-card">
-          <span className="analysis-summary-card__label">Selected Ensemble</span>
-          <span className="analysis-summary-card__value">{selectedRow?.label || 'N/A'}</span>
+          <span className="analysis-summary-card__label">Comparison</span>
+          <span className="analysis-summary-card__value">Race-Blind vs VRA Constrained</span>
         </div>
         <div className="analysis-summary-card">
-          <span className="analysis-summary-card__label">Population Equality Threshold</span>
+          <span className="analysis-summary-card__label">Selected Ensemble Metadata</span>
           <span className="analysis-summary-card__value">
-            {selectedRow?.details?.populationEqualityThresholdPct != null
-              ? `${selectedRow.details.populationEqualityThresholdPct}%`
-              : 'TBD'}
+            {ENSEMBLE_LABELS[selectedKey]} / {formatPct(selectedSummary?.populationEqualityThresholdPct, 1, { alreadyPercent: true })}
           </span>
         </div>
       </div>
@@ -432,109 +364,203 @@ function EnsembleSplitsChart({ data, ensembleCatalog, selectedEnsembleType }) {
             </tr>
           </thead>
           <tbody>
-            {availableRows.map((row) => (
-              <tr key={row.key} className={row.key === selectedEnsembleType ? 'analysis-table__row--active' : ''}>
-                <td>{row.label}</td>
-                <td>{row.details.totalPlans ?? 'TBD'}</td>
-                <td>{row.details.populationEqualityThresholdPct != null ? `${row.details.populationEqualityThresholdPct}%` : 'TBD'}</td>
+            {Object.entries(summaryPayload?.ensembleSummaries || {}).map(([key, row]) => (
+              <tr key={key} className={key === selectedKey ? 'analysis-table__row--active' : ''}>
+                <td>{ENSEMBLE_LABELS[key] || key}</td>
+                <td>{formatNumber(row.planCount)}</td>
+                <td>{formatPct(row.populationEqualityThresholdPct, 1, { alreadyPercent: true })}</td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
-      <p className="analysis-note">
-        MCMC threshold and plan counts are mock placeholders until final ensemble metadata is connected.
-      </p>
-      <ResponsiveContainer width="100%" height={320}>
-        <BarChart data={data || EMPTY_LIST} margin={{ top: 10, right: 20, bottom: 10, left: 10 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke="#eee" />
-          <XAxis dataKey="seatsWonByRep" tick={{ fontSize: 11 }} />
-          <YAxis
-            label={{ value: 'Plans', angle: -90, position: 'insideLeft', fontSize: 12 }}
-            tick={{ fontSize: 11 }}
-          />
-          <Tooltip contentStyle={{ fontSize: 12, borderRadius: 6 }} />
-          <Bar dataKey="plans" name="Plans" radius={[4, 4, 0, 0]}>
-            {(data || EMPTY_LIST).map((row, i) => (
-              <Cell key={i} fill={row.seatsWonByRep > row.seatsWonByDem ? '#e53935' : '#1e88e5'} />
-            ))}
-          </Bar>
-        </BarChart>
-      </ResponsiveContainer>
-    </div>
+      {rows.length > 0 ? (
+        <ResponsiveContainer width="100%" height={320}>
+          <BarChart data={rows} margin={{ top: 10, right: 20, bottom: 10, left: 10 }}>
+            <CartesianGrid strokeDasharray="3 3" stroke="#eee" />
+            <XAxis dataKey="splitLabel" tick={{ fontSize: 11 }} />
+            <YAxis label={{ value: 'Plans in Ensemble', angle: -90, position: 'insideLeft', fontSize: 12 }} tick={{ fontSize: 11 }} />
+            <Tooltip contentStyle={{ fontSize: 12, borderRadius: 6 }} />
+            <Legend wrapperStyle={{ fontSize: 11 }} />
+            <Bar dataKey="rbFrequency" name="Race-Blind" fill="#64b5f6" fillOpacity={0.82} radius={[4, 4, 0, 0]} />
+            <Bar dataKey="vraFrequency" name="VRA Constrained" fill="#7b1fa2" fillOpacity={0.74} radius={[4, 4, 0, 0]} />
+          </BarChart>
+        </ResponsiveContainer>
+      ) : (
+        <p className="analysis-note">Ensemble split data is not available.</p>
+      )}
+    </ChartCard>
   );
 }
 
-function GinglesSummary({ summary, scatterData }) {
-  const groups = scatterData?.groups || EMPTY_LIST;
-  const points = scatterData?.points || EMPTY_LIST;
-  const [selectedGroup, setSelectedGroup] = useState(groups[0]?.key || 'blackPct');
-  const activeGroup = useMemo(
-    () => groups.find((group) => group.key === selectedGroup) || groups[0],
-    [groups, selectedGroup],
-  );
-  const groupKey = activeGroup?.key || 'blackPct';
-  const groupLabel = activeGroup?.label || 'Minority';
-  const demPoints = useMemo(
-    () => points
-      .map((point) => ({
-        x: Number(point[groupKey]),
-        y: Number(point.demVoteShare),
-        precinctId: point.precinctId,
-        district: point.district,
-        party: 'Democratic',
-        otherPartyLabel: 'Republican',
-        otherPartyShare: Number(point.repVoteShare),
-      }))
-      .filter((point) => Number.isFinite(point.x) && Number.isFinite(point.y)),
-    [points, groupKey],
-  );
-  const repPoints = useMemo(
-    () => points
-      .map((point) => ({
-        x: Number(point[groupKey]),
-        y: Number(point.repVoteShare),
-        precinctId: point.precinctId,
-        district: point.district,
-        party: 'Republican',
-        otherPartyLabel: 'Democratic',
-        otherPartyShare: Number(point.demVoteShare),
-      }))
-      .filter((point) => Number.isFinite(point.x) && Number.isFinite(point.y)),
-    [points, groupKey],
-  );
-  const demTrend = useMemo(
-    () => buildQuadraticTrend(points, groupKey, 'demVoteShare'),
-    [points, groupKey],
-  );
-  const repTrend = useMemo(
-    () => buildQuadraticTrend(points, groupKey, 'repVoteShare'),
-    [points, groupKey],
-  );
-  const statusText = summary.likelyVraViolation ? 'Potential VRA issue flagged' : 'No immediate VRA issue flagged';
-  const statusClass = summary.likelyVraViolation ? 'analysis-kpi__value--warn' : 'analysis-kpi__value--ok';
+function VraImpactThresholdTable({ payload }) {
+  const rows = payload?.rows || EMPTY_LIST;
+  const [selectedGroup, setSelectedGroup] = useState(rows[0]?.group || 'Black');
+  const activeRow = rows.find((row) => row.group === selectedGroup) || rows[0];
+  const metricRows = activeRow
+    ? [
+      ['Enacted effective-district threshold', activeRow.enactedThreshold],
+      ['Rough proportionality threshold', activeRow.roughProportionality],
+      ['Joint threshold', activeRow.jointThreshold],
+    ]
+    : EMPTY_LIST;
 
   return (
-    <div className="chart-card">
-      <h3 className="chart-title">
-        Gingles Analysis Results
-        <span className="chart-subtitle">
-          2024 precinct-level vote share by selected racial/ethnic group
-        </span>
-      </h3>
-      {groups.length > 0 && (
-        <div className="gingles-controls">
-          <label htmlFor="gingles-group-select">Race/Ethnic Group</label>
-          <select
-            id="gingles-group-select"
-            value={groupKey}
-            onChange={(event) => setSelectedGroup(event.target.value)}
-          >
-            {groups.map((group) => (
-              <option key={group.key} value={group.key}>{group.label}</option>
+    <ChartCard title="VRA Impact Thresholds" subtitle="Legal threshold percentages compared side-by-side by ensemble">
+      {rows.length > 0 && (
+        <SelectControl
+          id="vra-impact-group-select"
+          label="Feasible Race"
+          value={activeRow?.group || ''}
+          options={rows.map((row) => ({ value: row.group, label: row.group }))}
+          onChange={setSelectedGroup}
+        />
+      )}
+      <div className="analysis-table-wrap">
+        <table className="analysis-table">
+          <thead>
+            <tr>
+              <th>Group</th>
+              <th>Metric</th>
+              <th>Race-Blind</th>
+              <th>VRA Constrained</th>
+            </tr>
+          </thead>
+          <tbody>
+            {metricRows.map(([metric, values]) => (
+              <tr key={metric}>
+                <td>{activeRow?.group}</td>
+                <td>{metric}</td>
+                <td>{formatPct(values?.rbPct, 1)}</td>
+                <td>{formatPct(values?.vraPct, 1)}</td>
+              </tr>
             ))}
-          </select>
-        </div>
+            {metricRows.length === 0 && <EmptyTableRow colSpan={4} label="No VRA impact threshold rows are available." />}
+          </tbody>
+        </table>
+      </div>
+    </ChartCard>
+  );
+}
+
+function MinorityEffectivenessBoxChart({ payload }) {
+  const rows = normalizeMinorityEffectivenessBoxes(payload);
+
+  return (
+    <ChartCard title="Minority Effectiveness Box & Whisker" subtitle="Effective districts by feasible group across RB and VRA ensembles">
+      {rows.length > 0 ? (
+        <ResponsiveContainer width="100%" height={360}>
+          <ComposedChart data={rows} margin={{ top: 10, right: 20, bottom: 10, left: 10 }}>
+            <CartesianGrid strokeDasharray="3 3" stroke="#eee" />
+            <XAxis dataKey="label" tick={{ fontSize: 11 }} interval={0} />
+            <YAxis
+              domain={[0, payload?.districtCount || 'auto']}
+              tick={{ fontSize: 11 }}
+              label={{ value: 'Effective Districts', angle: -90, position: 'insideLeft', fontSize: 12 }}
+            />
+            <Tooltip content={(props) => <MinorityEffectivenessTooltip {...props} />} />
+            <Legend wrapperStyle={{ fontSize: 11 }} />
+            <Bar dataKey="iqrBase" stackId="box" fill="transparent" legendType="none" />
+            <Bar dataKey="iqrHeight" stackId="box" name="IQR (Q1-Q3)" radius={[4, 4, 0, 0]}>
+              {rows.map((row) => (
+                <Cell key={row.label} fill={row.ensemble === 'RB' ? '#64b5f6' : '#7b1fa2'} fillOpacity={0.34} />
+              ))}
+            </Bar>
+            <Scatter dataKey="median" name="Median + Whiskers" fill="#1f2937" shape="diamond" isAnimationActive={false}>
+              <ErrorBar dataKey="whisker" direction="y" width={8} stroke="#1f2937" strokeWidth={1.5} />
+            </Scatter>
+            <Scatter dataKey="enacted" name="Enacted Plan" fill="#d97706" shape="circle" isAnimationActive={false} />
+          </ComposedChart>
+        </ResponsiveContainer>
+      ) : (
+        <p className="analysis-note">Minority effectiveness box data is not available.</p>
+      )}
+    </ChartCard>
+  );
+}
+
+function MinorityEffectivenessHistogram({ payload }) {
+  const groupNames = Object.keys(payload?.groupHistograms || {});
+  const [selectedGroup, setSelectedGroup] = useState(groupNames[0] || 'Black');
+  const activeGroup = groupNames.includes(selectedGroup) ? selectedGroup : groupNames[0];
+  const bins = payload?.groupHistograms?.[activeGroup]?.bins || EMPTY_LIST;
+
+  return (
+    <ChartCard title="Minority Effectiveness Histogram" subtitle="Distribution overlap of minority-effective district counts">
+      {groupNames.length > 0 && (
+        <SelectControl
+          id="minority-histogram-group-select"
+          label="Group"
+          value={activeGroup || ''}
+          options={groupNames.map((group) => ({ value: group, label: group }))}
+          onChange={setSelectedGroup}
+        />
+      )}
+      {bins.length > 0 ? (
+        <ResponsiveContainer width="100%" height={330}>
+          <BarChart data={bins} margin={{ top: 10, right: 20, bottom: 10, left: 10 }}>
+            <CartesianGrid strokeDasharray="3 3" stroke="#eee" />
+            <XAxis
+              dataKey="effectiveDistricts"
+              tick={{ fontSize: 11 }}
+              label={{ value: 'Minority-Effective Districts', position: 'insideBottom', offset: -5, fontSize: 12 }}
+            />
+            <YAxis tick={{ fontSize: 11 }} label={{ value: 'Plans', angle: -90, position: 'insideLeft', fontSize: 12 }} />
+            <Tooltip contentStyle={{ fontSize: 12, borderRadius: 6 }} />
+            <Legend wrapperStyle={{ fontSize: 11 }} />
+            <Bar dataKey="rbFrequency" name="Race-Blind" fill="#64b5f6" fillOpacity={0.64} radius={[4, 4, 0, 0]} />
+            <Bar dataKey="vraFrequency" name="VRA Constrained" fill="#7b1fa2" fillOpacity={0.54} radius={[4, 4, 0, 0]} />
+          </BarChart>
+        </ResponsiveContainer>
+      ) : (
+        <p className="analysis-note">Minority effectiveness histogram data is not available.</p>
+      )}
+    </ChartCard>
+  );
+}
+
+function GinglesSummary({
+  payload,
+  tablePayload,
+  highlightedPrecinct,
+  onSelectPrecinct,
+}) {
+  const groups = Object.keys(payload?.groups || {});
+  const [selectedGroup, setSelectedGroup] = useState(groups[0] || 'Black');
+  const activeGroup = groups.includes(selectedGroup) ? selectedGroup : groups[0];
+  const groupData = payload?.groups?.[activeGroup];
+  const points = groupData?.points || EMPTY_LIST;
+  const demPoints = points.map((point) => ({
+    x: valueToPercent(point.x),
+    y: valueToPercent(point.demVotePct),
+    precinctId: point.precinctId,
+    district: point.district,
+    party: 'Democratic',
+    otherPartyLabel: 'Republican',
+    otherPartyShare: valueToPercent(point.repVotePct),
+  }));
+  const repPoints = points.map((point) => ({
+    x: valueToPercent(point.x),
+    y: valueToPercent(point.repVotePct),
+    precinctId: point.precinctId,
+    district: point.district,
+    party: 'Republican',
+    otherPartyLabel: 'Democratic',
+    otherPartyShare: valueToPercent(point.demVotePct),
+  }));
+  const demTrend = normalizeRegressionLine(groupData?.regression?.dem);
+  const repTrend = normalizeRegressionLine(groupData?.regression?.rep);
+
+  return (
+    <ChartCard title="Gingles Analysis Results" subtitle="2024 precinct-level vote share by selected racial/ethnic group">
+      {groups.length > 0 && (
+        <SelectControl
+          id="gingles-group-select"
+          label="Race/Ethnic Group"
+          value={activeGroup || ''}
+          options={groups.map((group) => ({ value: group, label: group }))}
+          onChange={setSelectedGroup}
+        />
       )}
       {points.length > 0 ? (
         <ResponsiveContainer width="100%" height={350}>
@@ -546,12 +572,7 @@ function GinglesSummary({ summary, scatterData }) {
               domain={[0, 100]}
               tick={{ fontSize: 11 }}
               tickFormatter={(value) => `${value}%`}
-              label={{
-                value: `${groupLabel} Share in Precinct (%)`,
-                position: 'insideBottom',
-                offset: -6,
-                fontSize: 12,
-              }}
+              label={{ value: `${activeGroup || 'Group'} Share in Precinct (%)`, position: 'insideBottom', offset: -6, fontSize: 12 }}
             />
             <YAxis
               dataKey="y"
@@ -559,22 +580,26 @@ function GinglesSummary({ summary, scatterData }) {
               domain={[0, 100]}
               tick={{ fontSize: 11 }}
               tickFormatter={(value) => `${value}%`}
-              label={{
-                value: 'Party Vote Share (%)',
-                angle: -90,
-                position: 'insideLeft',
-                fontSize: 12,
-              }}
+              label={{ value: 'Party Vote Share (%)', angle: -90, position: 'insideLeft', fontSize: 12 }}
             />
-            <Tooltip
-              content={(props) => <GinglesScatterTooltip {...props} groupLabel={groupLabel} />}
-              cursor={{ strokeDasharray: '4 4', stroke: '#cab79f' }}
-            />
+            <Tooltip content={(props) => <GinglesScatterTooltip {...props} groupLabel={activeGroup || 'Group'} />} />
             <Legend wrapperStyle={{ fontSize: 11 }} />
-            <Scatter name="Democratic Vote" data={demPoints} fill="#1e88e5" fillOpacity={0.34} />
-            <Scatter name="Republican Vote" data={repPoints} fill="#e53935" fillOpacity={0.34} />
             <Scatter
-              name="Democratic Trend (Quadratic)"
+              name="Democratic Vote"
+              data={demPoints}
+              fill="#1e88e5"
+              fillOpacity={0.34}
+              onClick={(point) => onSelectPrecinct?.(point?.payload?.precinctId)}
+            />
+            <Scatter
+              name="Republican Vote"
+              data={repPoints}
+              fill="#e53935"
+              fillOpacity={0.34}
+              onClick={(point) => onSelectPrecinct?.(point?.payload?.precinctId)}
+            />
+            <Scatter
+              name="Democratic Trend"
               data={demTrend}
               fill="transparent"
               line={{ stroke: '#1565c0', strokeWidth: 2.2 }}
@@ -584,7 +609,7 @@ function GinglesSummary({ summary, scatterData }) {
               isAnimationActive={false}
             />
             <Scatter
-              name="Republican Trend (Quadratic)"
+              name="Republican Trend"
               data={repTrend}
               fill="transparent"
               line={{ stroke: '#b71c1c', strokeWidth: 2.2 }}
@@ -596,124 +621,103 @@ function GinglesSummary({ summary, scatterData }) {
           </ScatterChart>
         </ResponsiveContainer>
       ) : (
-        <p className="analysis-note">Precinct-level Gingles chart data is not available for this state.</p>
+        <p className="analysis-note">Precinct-level Gingles chart data is not available.</p>
       )}
-      <p className="analysis-note">
-        Points and trend lines are placeholders until final precinct-level 2024 election records are connected.
-      </p>
-      <div className="analysis-kpi-grid">
-        <Kpi label="Precondition 1 (MM Districts)" value={summary.precondition1MajorityMinorityDistricts} />
-        <Kpi label="Precondition 2 (Cohesion)" value={summary.precondition2PoliticalCohesion.toFixed(2)} />
-        <Kpi label="Precondition 3 (Bloc Voting)" value={summary.precondition3BlocVoting.toFixed(2)} />
-        <Kpi label="Compactness" value={summary.compactnessScore.toFixed(2)} />
-      </div>
-      <div className={`analysis-kpi__value ${statusClass}`}>{statusText}</div>
-    </div>
+      <GinglesTable
+        payload={tablePayload}
+        highlightedPrecinct={highlightedPrecinct}
+        maxRows={28}
+        title="Gingles 2/3 Precinct Inputs"
+        subtitle={highlightedPrecinct ? `Selected precinct: ${highlightedPrecinct}` : 'Click a scatter point to highlight its precinct row'}
+        nested
+      />
+    </ChartCard>
   );
 }
 
-function GinglesTable({ rows, highlightedDistrict, onHighlightDistrict }) {
+function GinglesTable({
+  payload,
+  highlightedPrecinct,
+  maxRows,
+  title = 'Gingles 2/3 Data Table',
+  subtitle = 'Precinct-level population and 2024 vote inputs',
+  nested = false,
+}) {
+  const sourceRows = payload?.rows || EMPTY_LIST;
+  const rows = maxRows
+    ? prioritizeHighlightedRow(sourceRows, highlightedPrecinct).slice(0, maxRows)
+    : sourceRows;
+
   return (
-    <div className="chart-card">
-      <h3 className="chart-title">
-        Gingles 2/3 Data Table
-        <span className="chart-subtitle">Click a row to highlight district on map</span>
-      </h3>
-      <div className="analysis-table-wrap">
+    <ChartCard title={title} subtitle={subtitle} nested={nested}>
+      <div className={`analysis-table-wrap ${maxRows ? 'analysis-table-wrap--scroll' : ''}`}>
         <table className="analysis-table">
           <thead>
             <tr>
-              <th>District</th>
-              <th>Minority %</th>
-              <th>Cohesion</th>
-              <th>Bloc Voting</th>
-              <th>Crossover</th>
-              <th>Threshold</th>
+              <th>Precinct ID</th>
+              <th>Precinct Name</th>
+              <th>Total Pop.</th>
+              <th>Minority Pop.</th>
+              <th>Rep Votes</th>
+              <th>Dem Votes</th>
             </tr>
           </thead>
           <tbody>
-            {rows.map((row) => {
-              const districtId = districtLabelToId(row.district);
-              return (
-                <tr
-                  key={row.district}
-                  className={districtId === highlightedDistrict ? 'analysis-table__row--active' : ''}
-                  onClick={() => districtId != null && onHighlightDistrict(districtId)}
-                >
-                  <td>{row.district}</td>
-                  <td>{row.minorityPct}%</td>
-                  <td>{row.cohesion.toFixed(2)}</td>
-                  <td>{row.blocVoting.toFixed(2)}</td>
-                  <td>{row.crossoverSupport.toFixed(2)}</td>
-                  <td>{row.thresholdMet ? 'Yes' : 'No'}</td>
-                </tr>
-              );
-            })}
+            {rows.map((row) => (
+              <tr
+                key={row.precinctId}
+                className={String(row.precinctId) === String(highlightedPrecinct) ? 'analysis-table__row--active' : ''}
+              >
+                <td>{row.precinctId}</td>
+                <td>{row.precinctName}</td>
+                <td>{formatNumber(row.totalPopulation)}</td>
+                <td>{formatNumber(row.minorityPopulation)}</td>
+                <td>{formatNumber(row.republicanVotes)}</td>
+                <td>{formatNumber(row.democraticVotes)}</td>
+              </tr>
+            ))}
+            {rows.length === 0 && <EmptyTableRow colSpan={6} label="Gingles table rows are not available." />}
           </tbody>
         </table>
       </div>
-    </div>
+      {maxRows && sourceRows.length > rows.length && (
+        <p className="analysis-note">Showing {rows.length} of {sourceRows.length} precinct rows.</p>
+      )}
+    </ChartCard>
   );
 }
 
-function EICandidateResults({ data, density }) {
-  const candidateOptions = density?.candidates || EMPTY_LIST;
-  const groupOptions = density?.groups || EMPTY_LIST;
+function EICandidateResults({ payload }) {
+  const normalized = useMemo(() => normalizeEiCandidateData(payload), [payload]);
+  const candidateOptions = normalized.candidates;
+  const groupOptions = normalized.groups;
   const [selectedCandidate, setSelectedCandidate] = useState(candidateOptions[0]?.key || '');
-  const [selectedGroups, setSelectedGroups] = useState(
-    groupOptions.slice(0, Math.min(3, groupOptions.length)).map((group) => group.key),
-  );
-
-  const activeCandidate = useMemo(
-    () => candidateOptions.find((candidate) => candidate.key === selectedCandidate) || candidateOptions[0],
-    [candidateOptions, selectedCandidate],
-  );
+  const [selectedGroups, setSelectedGroups] = useState(groupOptions.slice(0, 3).map((group) => group.key));
+  const activeCandidate = candidateOptions.find((candidate) => candidate.key === selectedCandidate) || candidateOptions[0];
   const activeCandidateKey = activeCandidate?.key || '';
-  const activeSeries = useMemo(
-    () => density?.series?.[activeCandidateKey] || EMPTY_LIST,
-    [density, activeCandidateKey],
-  );
-  const visibleGroupKeys = useMemo(() => {
-    const allowedKeys = new Set(groupOptions.map((group) => group.key));
-    const filtered = selectedGroups.filter((key) => allowedKeys.has(key));
-    if (filtered.length > 0) return filtered;
-    return groupOptions[0] ? [groupOptions[0].key] : EMPTY_LIST;
-  }, [groupOptions, selectedGroups]);
-  const visibleGroups = useMemo(
-    () => groupOptions.filter((group) => visibleGroupKeys.includes(group.key)),
-    [groupOptions, visibleGroupKeys],
-  );
+  const activeSeries = normalized.series[activeCandidateKey] || EMPTY_LIST;
+  const visibleGroupKeys = selectedGroups.filter((key) => groupOptions.some((group) => group.key === key));
+  const fallbackGroupKeys = groupOptions[0] ? [groupOptions[0].key] : EMPTY_LIST;
+  const selectedGroupKeys = visibleGroupKeys.length > 0 ? visibleGroupKeys : fallbackGroupKeys;
+  const visibleGroups = groupOptions.filter((group) => selectedGroupKeys.includes(group.key));
 
   const toggleGroup = (key) => {
     setSelectedGroups((current) => {
       if (current.includes(key)) {
-        if (current.length === 1) return current;
-        return current.filter((entry) => entry !== key);
+        return current.length === 1 ? current : current.filter((entry) => entry !== key);
       }
       return [...current, key];
     });
   };
 
   return (
-    <div className="chart-card">
-      <h3 className="chart-title">
-        EI Candidate Results
-        <span className="chart-subtitle">
-          Candidate-specific probability curves by racial/ethnic group
-        </span>
-      </h3>
+    <ChartCard title="EI Candidate Results" subtitle="Candidate-specific probability curves by racial/ethnic group">
       <div className="ei-controls">
         <div className="ei-controls__item">
           <label htmlFor="ei-candidate-select">Candidate</label>
-          <select
-            id="ei-candidate-select"
-            value={activeCandidateKey}
-            onChange={(event) => setSelectedCandidate(event.target.value)}
-          >
+          <select id="ei-candidate-select" value={activeCandidateKey} onChange={(event) => setSelectedCandidate(event.target.value)}>
             {candidateOptions.map((candidate) => (
-              <option key={candidate.key} value={candidate.key}>
-                {candidate.label}
-              </option>
+              <option key={candidate.key} value={candidate.key}>{candidate.label}</option>
             ))}
           </select>
         </div>
@@ -721,7 +725,7 @@ function EICandidateResults({ data, density }) {
           <span className="ei-controls__label">Groups to Compare</span>
           <div className="ei-group-toggle">
             {groupOptions.map((group) => {
-              const selected = visibleGroupKeys.includes(group.key);
+              const selected = selectedGroupKeys.includes(group.key);
               return (
                 <button
                   key={group.key}
@@ -737,6 +741,7 @@ function EICandidateResults({ data, density }) {
           </div>
         </div>
       </div>
+
       {activeSeries.length > 0 ? (
         <ResponsiveContainer width="100%" height={320}>
           <AreaChart data={activeSeries} margin={{ top: 10, right: 20, bottom: 10, left: 10 }}>
@@ -749,14 +754,15 @@ function EICandidateResults({ data, density }) {
               tickFormatter={(value) => `${value}%`}
               label={{ value: 'Group Vote for Candidate (%)', position: 'insideBottom', offset: -5, fontSize: 12 }}
             />
-            <YAxis
-              tick={{ fontSize: 11 }}
-              label={{ value: 'Probability', angle: -90, position: 'insideLeft', fontSize: 12 }}
-            />
+            <YAxis tick={{ fontSize: 11 }} label={{ value: 'Probability', angle: -90, position: 'insideLeft', fontSize: 12 }} />
             <Tooltip
               contentStyle={{ fontSize: 12, borderRadius: 6 }}
               labelFormatter={(value) => `Support: ${value}%`}
-              formatter={(value, name) => [Number(value).toFixed(2), `${name} density`]}
+              formatter={(value, name) => {
+                const v = Number(value);
+                const text = Number.isFinite(v) ? v.toFixed(2) : '—';
+                return [text, `${name} density`];
+              }}
             />
             <Legend wrapperStyle={{ fontSize: 11 }} />
             {visibleGroups.map((group) => (
@@ -776,205 +782,201 @@ function EICandidateResults({ data, density }) {
           </AreaChart>
         </ResponsiveContainer>
       ) : (
-        <p className="analysis-note">EI candidate distribution data is not available for this state.</p>
+        <p className="analysis-note">EI candidate distribution data is not available.</p>
       )}
+
       <div className="analysis-table-wrap">
         <table className="analysis-table analysis-table--compact">
           <thead>
             <tr>
-              <th>District</th>
-              {candidateOptions.map((candidate) => (
-                <th key={candidate.key}>{candidate.label}</th>
-              ))}
+              <th>Candidate</th>
+              <th>Group Pair</th>
+              <th>Curve Overlap</th>
             </tr>
           </thead>
           <tbody>
-            {data.map((row) => {
-              const valuesByKey = row.values.reduce((acc, candidate) => {
-                acc[toCandidateKey(candidate.candidate)] = candidate.supportPct;
-                return acc;
-              }, {});
-              return (
-                <tr key={row.district}>
-                  <td>{row.district}</td>
-                  {candidateOptions.map((candidate) => (
-                    <td key={candidate.key}>
-                      {Number(valuesByKey[candidate.key] || 0).toFixed(1)}%
-                    </td>
-                  ))}
-                </tr>
-              );
-            })}
+            {normalized.overlapRows.map((row) => (
+              <tr key={`${row.candidate}-${row.groupPair}`}>
+                <td>{row.candidate}</td>
+                <td>{row.groupPair}</td>
+                <td>{formatPct(row.overlapPct, 1)}</td>
+              </tr>
+            ))}
+            {normalized.overlapRows.length === 0 && <EmptyTableRow colSpan={3} label="EI overlap rows are not available." />}
           </tbody>
         </table>
       </div>
-      <p className="analysis-note">
-        Density curves are mock placeholders until full EI posterior distributions are connected.
-      </p>
-    </div>
+    </ChartCard>
   );
 }
 
-function EIPrecinctBarChart({ data }) {
-  return (
-    <div className="chart-card">
-      <h3 className="chart-title">
-        EI Precinct Results (Bar Chart)
-        <span className="chart-subtitle">Turnout estimates by precinct cohort</span>
-      </h3>
-      <ResponsiveContainer width="100%" height={320}>
-        <BarChart data={data} margin={{ top: 10, right: 20, bottom: 10, left: 10 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke="#eee" />
-          <XAxis dataKey="precinct" tick={{ fontSize: 11 }} />
-          <YAxis
-            label={{ value: 'Turnout %', angle: -90, position: 'insideLeft', fontSize: 12 }}
-            tick={{ fontSize: 11 }}
-          />
-          <Tooltip contentStyle={{ fontSize: 12, borderRadius: 6 }} />
-          <Legend wrapperStyle={{ fontSize: 11 }} />
-          <Bar dataKey="minorityTurnoutPct" name="Minority turnout %" fill="#7b1fa2" radius={[4, 4, 0, 0]} />
-          <Bar dataKey="whiteTurnoutPct" name="White turnout %" fill="#78909c" radius={[4, 4, 0, 0]} />
-        </BarChart>
-      </ResponsiveContainer>
-    </div>
-  );
-}
-
-function EIKdeChart({ data }) {
-  return (
-    <div className="chart-card">
-      <h3 className="chart-title">
-        EI KDE Results
-        <span className="chart-subtitle">Kernel density estimate score by district</span>
-      </h3>
-      <ResponsiveContainer width="100%" height={300}>
-        <LineChart data={data} margin={{ top: 10, right: 20, bottom: 10, left: 10 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke="#eee" />
-          <XAxis dataKey="district" tick={{ fontSize: 11 }} />
-          <YAxis tick={{ fontSize: 11 }} />
-          <Tooltip contentStyle={{ fontSize: 12, borderRadius: 6 }} />
-          <Line type="monotone" dataKey="score" name="KDE score" stroke="#00897b" strokeWidth={2} dot={{ r: 3 }} />
-        </LineChart>
-      </ResponsiveContainer>
-    </div>
-  );
-}
-
-function SeatShareChart({ data }) {
-  return (
-    <div className="chart-card">
-      <h3 className="chart-title">
-        Republican/Democrat Seat Share
-        <span className="chart-subtitle">Distribution across ensemble plans</span>
-      </h3>
-      <ResponsiveContainer width="100%" height={320}>
-        <BarChart data={data} margin={{ top: 10, right: 20, bottom: 10, left: 10 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke="#eee" />
-          <XAxis dataKey="split" tick={{ fontSize: 11 }} />
-          <YAxis
-            label={{ value: 'Plans', angle: -90, position: 'insideLeft', fontSize: 12 }}
-            tick={{ fontSize: 11 }}
-          />
-          <Tooltip contentStyle={{ fontSize: 12, borderRadius: 6 }} />
-          <Bar dataKey="frequency" name="Plans" radius={[4, 4, 0, 0]}>
-            {data.map((entry, i) => {
-              const mid = Math.floor(data.length / 2);
-              const color = i < mid ? '#1e88e5' : i > mid ? '#e53935' : '#9e9e9e';
-              return <Cell key={i} fill={color} />;
-            })}
-          </Bar>
-        </BarChart>
-      </ResponsiveContainer>
-    </div>
-  );
-}
-
-function OpportunityChart({ data }) {
-  return (
-    <div className="chart-card">
-      <h3 className="chart-title">
-        Number of Opportunity Districts
-        <span className="chart-subtitle">Districts with &ge;37% minority voting-age population</span>
-      </h3>
-      <ResponsiveContainer width="100%" height={320}>
-        <BarChart data={data} margin={{ top: 10, right: 20, bottom: 10, left: 10 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke="#eee" />
-          <XAxis
-            dataKey="opportunityDistricts"
-            label={{ value: 'Opportunity Districts', position: 'insideBottom', offset: -5, fontSize: 12 }}
-            tick={{ fontSize: 12 }}
-          />
-          <YAxis
-            label={{ value: 'Plans', angle: -90, position: 'insideLeft', fontSize: 12 }}
-            tick={{ fontSize: 11 }}
-          />
-          <Tooltip contentStyle={{ fontSize: 12, borderRadius: 6 }} />
-          <Bar dataKey="plans" name="Plans" fill="#ff9800" radius={[4, 4, 0, 0]} />
-        </BarChart>
-      </ResponsiveContainer>
-    </div>
-  );
-}
-
-function ComparisonChart({ data }) {
-  const raceBlind = data.raceBlind.opportunityDistricts;
-  const vra = data.vra.opportunityDistricts;
-  const maxLen = Math.max(raceBlind.length, vra.length);
-  const merged = [];
-  for (let i = 0; i < maxLen; i++) {
-    merged.push({
-      opportunityDistricts: i,
-      raceBlind: raceBlind[i]?.plans || 0,
-      vra: vra[i]?.plans || 0,
-    });
+function normalizeStateSummary(payload, stateData) {
+  const demVotePct = valueToPercent(payload.statewideVote?.demPct);
+  const repVotePct = valueToPercent(payload.statewideVote?.repPct ?? (demVotePct == null ? null : 100 - demVotePct));
+  const demSeatsRaw = payload.representationSummary?.demSeats;
+  let repSeatsRaw = payload.representationSummary?.repSeats;
+  const districtCount = stateData?.numDistricts;
+  if (repSeatsRaw == null && Number.isFinite(Number(demSeatsRaw)) && Number.isFinite(Number(districtCount))) {
+    const dc = Number(districtCount);
+    const ds = Number(demSeatsRaw);
+    repSeatsRaw = Math.max(0, Math.min(dc, dc - ds));
   }
+  return {
+    population: payload.population,
+    congressionalDistricts: stateData?.numDistricts ?? 'N/A',
+    demVotePct: demVotePct ?? 0,
+    repVotePct: repVotePct ?? 0,
+    demographicRows: payload.demographicSummaries || EMPTY_LIST,
+    redistrictingControl: payload.redistrictingControl || 'N/A',
+    demSeats: demSeatsRaw ?? 'N/A',
+    repSeats: repSeatsRaw ?? 'N/A',
+    ensembleRows: Object.entries(payload.ensembleSummaries || {}).map(([name, row]) => ({
+      name,
+      planCount: row.planCount,
+      populationEqualityThresholdPct: row.populationEqualityThresholdPct,
+      roughProportionality: row.roughProportionality || {},
+    })),
+  };
+}
 
+function normalizeDistrictBoxRows(rows = EMPTY_LIST) {
+  return rows.map((row) => {
+    const min = Number(row.min);
+    const q1 = Number(row.q1);
+    const median = Number(row.median);
+    const q3 = Number(row.q3);
+    const max = Number(row.max);
+    return {
+      district: `D${row.order ?? '?'}`,
+      min,
+      q1,
+      median,
+      q3,
+      max,
+      enacted: Number(row.enactedDot),
+      proposed: row.proposedDot,
+      iqrBase: q1,
+      iqrHeight: q3 - q1,
+      whisker: [median - min, max - median],
+    };
+  });
+}
+
+function normalizeMinorityEffectivenessBoxes(payload) {
+  return Object.entries(payload?.groups || {}).flatMap(([group, ensembles]) => (
+    ['RB', 'VRA'].map((ensemble) => {
+      const stats = ensembles?.[ensemble];
+      if (!stats) return null;
+      const min = Number(stats.min);
+      const q1 = Number(stats.q1);
+      const median = Number(stats.median);
+      const q3 = Number(stats.q3);
+      const max = Number(stats.max);
+      return {
+        label: `${group} ${ensemble}`,
+        group,
+        ensemble,
+        min,
+        q1,
+        median,
+        q3,
+        max,
+        enacted: Number(stats.enacted),
+        iqrBase: q1,
+        iqrHeight: q3 - q1,
+        whisker: [median - min, max - median],
+      };
+    }).filter(Boolean)
+  ));
+}
+
+function normalizeEiCandidateData(payload) {
+  const candidateEntries = Object.entries(payload?.candidateResults || {});
+  const groupNames = [...new Set(candidateEntries.flatMap(([, candidate]) => Object.keys(candidate.curves || {})))];
+  const groups = groupNames.map((group) => ({ key: group, label: group, color: groupColor(group) }));
+  const candidates = candidateEntries.map(([key, candidate]) => ({ key, label: candidate.label || key }));
+  const series = Object.fromEntries(candidateEntries.map(([candidateKey, candidate]) => {
+    const rowMap = new Map();
+    Object.entries(candidate.curves || {}).forEach(([group, curve]) => {
+      curve.forEach((point) => {
+        const supportPct = valueToPercent(point.x);
+        const row = rowMap.get(supportPct) || { supportPct };
+        row[group] = Number(point.y);
+        rowMap.set(supportPct, row);
+      });
+    });
+    return [candidateKey, [...rowMap.values()].sort((left, right) => left.supportPct - right.supportPct)];
+  }));
+  const overlapRows = candidateEntries.flatMap(([candidateKey, candidate]) => {
+    const seen = new Set();
+    return Object.entries(candidate.overlapPct || {}).flatMap(([leftGroup, values]) => (
+      Object.entries(values || {}).map(([rightGroup, overlapPct]) => {
+        const pairKey = [leftGroup, rightGroup].sort().join('-');
+        if (seen.has(pairKey)) return null;
+        seen.add(pairKey);
+        return {
+          candidate: candidate.label || candidateKey,
+          groupPair: `${leftGroup} / ${rightGroup}`,
+          overlapPct,
+        };
+      }).filter(Boolean)
+    ));
+  });
+  return { candidates, groups, series, overlapRows };
+}
+
+function normalizeRegressionLine(points) {
+  if (!Array.isArray(points)) return EMPTY_LIST;
+  return points
+    .map((point) => ({ x: valueToPercent(point.x), y: valueToPercent(point.y) }))
+    .filter((point) => Number.isFinite(point.x) && Number.isFinite(point.y));
+}
+
+function ChartCard({ title, subtitle, children, nested = false }) {
   return (
-    <div className="chart-card">
+    <div className={`chart-card ${nested ? 'chart-card--nested' : ''}`}>
       <h3 className="chart-title">
-        Ensemble Comparison: Race-Blind vs VRA
-        <span className="chart-subtitle">Opportunity district distribution overlay</span>
+        {title}
+        <span className="chart-subtitle">{subtitle}</span>
       </h3>
-      <ResponsiveContainer width="100%" height={320}>
-        <ComposedChart data={merged} margin={{ top: 10, right: 20, bottom: 10, left: 10 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke="#eee" />
-          <XAxis
-            dataKey="opportunityDistricts"
-            label={{ value: 'Opportunity Districts', position: 'insideBottom', offset: -5, fontSize: 12 }}
-            tick={{ fontSize: 12 }}
-          />
-          <YAxis
-            label={{ value: 'Plans', angle: -90, position: 'insideLeft', fontSize: 12 }}
-            tick={{ fontSize: 11 }}
-          />
-          <Tooltip contentStyle={{ fontSize: 12, borderRadius: 6 }} />
-          <Legend wrapperStyle={{ fontSize: 12 }} />
-          <Bar dataKey="raceBlind" name="Race-Blind" fill="#64b5f6" opacity={0.7} radius={[4, 4, 0, 0]} />
-          <Bar dataKey="vra" name="VRA Constrained" fill="#7b1fa2" opacity={0.7} radius={[4, 4, 0, 0]} />
-          <Line dataKey="raceBlind" name="Race-Blind Trend" stroke="#1565c0" strokeWidth={2} dot={false} />
-          <Line dataKey="vra" name="VRA Trend" stroke="#4a148c" strokeWidth={2} dot={false} />
-        </ComposedChart>
-      </ResponsiveContainer>
-      <div className="comparison-stats">
-        <div className="comparison-stat">
-          <span className="comparison-stat__label">Race-Blind Avg Opportunity Districts</span>
-          <span className="comparison-stat__value" style={{ color: '#1565c0' }}>
-            {data.raceBlind.avgOpportunityDistricts}
-          </span>
-        </div>
-        <div className="comparison-stat">
-          <span className="comparison-stat__label">VRA Avg Opportunity Districts</span>
-          <span className="comparison-stat__value" style={{ color: '#7b1fa2' }}>
-            {data.vra.avgOpportunityDistricts}
-          </span>
-        </div>
-        <div className="comparison-stat">
-          <span className="comparison-stat__label">Total Plans (each)</span>
-          <span className="comparison-stat__value">5,000</span>
-        </div>
-      </div>
+      {children}
     </div>
   );
+}
+
+function prioritizeHighlightedRow(rows, highlightedPrecinct) {
+  if (!highlightedPrecinct) return rows;
+  const selected = rows.find((row) => String(row.precinctId) === String(highlightedPrecinct));
+  if (!selected) return rows;
+  return [selected, ...rows.filter((row) => String(row.precinctId) !== String(highlightedPrecinct))];
+}
+
+function SelectControl({ id, label, value, options, onChange }) {
+  const safeOptions = options?.length ? options : [];
+  const safeValue = safeOptions.some((option) => option.value === value)
+    ? value
+    : (safeOptions[0]?.value ?? '');
+
+  return (
+    <div className="gingles-controls">
+      <label htmlFor={id}>{label}</label>
+      {safeOptions.length === 0 ? (
+        <span className="analysis-note">No options available.</span>
+      ) : (
+        <select id={id} value={safeValue} onChange={(event) => onChange(event.target.value)}>
+          {safeOptions.map((option) => (
+            <option key={option.value} value={option.value}>{option.label}</option>
+          ))}
+        </select>
+      )}
+    </div>
+  );
+}
+
+function fmtPct1(n) {
+  if (n == null || n === '') return '—';
+  const v = Number(n);
+  return Number.isFinite(v) ? `${v.toFixed(1)}%` : '—';
 }
 
 function BoxWhiskerTooltip({ active, payload, groupLabel }) {
@@ -985,20 +987,34 @@ function BoxWhiskerTooltip({ active, payload, groupLabel }) {
   return (
     <div className="analysis-tooltip">
       <div className="analysis-tooltip__title">{row.district}</div>
-      <div>{groupLabel} range: {row.min.toFixed(1)}% to {row.max.toFixed(1)}%</div>
-      <div>Q1/Q3: {row.q1.toFixed(1)}% / {row.q3.toFixed(1)}%</div>
-      <div>Median: {row.median.toFixed(1)}%</div>
-      <div>Enacted: {row.enacted.toFixed(1)}%</div>
-      {row.proposed != null && <div>Proposed: {row.proposed.toFixed(1)}%</div>}
+      <div>{groupLabel} range: {fmtPct1(row.min)} to {fmtPct1(row.max)}</div>
+      <div>Q1/Q3: {fmtPct1(row.q1)} / {fmtPct1(row.q3)}</div>
+      <div>Median: {fmtPct1(row.median)}</div>
+      <div>Enacted: {fmtPct1(row.enacted)}</div>
+      {row.proposed != null && Number.isFinite(Number(row.proposed)) && (
+        <div>Proposed: {Number(row.proposed).toFixed(1)}%</div>
+      )}
     </div>
   );
 }
 
-function GinglesScatterTooltip({
-  active,
-  payload,
-  groupLabel,
-}) {
+function MinorityEffectivenessTooltip({ active, payload }) {
+  if (!active || !payload || payload.length === 0) return null;
+  const row = payload[0]?.payload;
+  if (!row) return null;
+
+  return (
+    <div className="analysis-tooltip">
+      <div className="analysis-tooltip__title">{row.group} - {row.ensemble}</div>
+      <div>Range: {row.min} to {row.max}</div>
+      <div>Q1/Q3: {row.q1} / {row.q3}</div>
+      <div>Median: {row.median}</div>
+      <div>Enacted: {row.enacted}</div>
+    </div>
+  );
+}
+
+function GinglesScatterTooltip({ active, payload, groupLabel }) {
   if (!active || !payload || payload.length === 0) return null;
   const row = payload[0]?.payload;
   if (!row) return null;
@@ -1006,9 +1022,9 @@ function GinglesScatterTooltip({
   return (
     <div className="analysis-tooltip">
       <div className="analysis-tooltip__title">{row.precinctId} ({row.district})</div>
-      <div>{groupLabel}: {row.x.toFixed(1)}%</div>
-      <div>{row.party} vote: {row.y.toFixed(1)}%</div>
-      <div>{row.otherPartyLabel} vote: {row.otherPartyShare.toFixed(1)}%</div>
+      <div>{groupLabel}: {fmtPct1(row.x)}</div>
+      <div>{row.party} vote: {fmtPct1(row.y)}</div>
+      <div>{row.otherPartyLabel} vote: {fmtPct1(row.otherPartyShare)}</div>
     </div>
   );
 }
@@ -1017,102 +1033,12 @@ function HiddenScatterPoint() {
   return null;
 }
 
-function clampPct(value) {
-  return Math.max(0, Math.min(100, value));
-}
-
-function buildQuadraticTrend(points, xKey, yKey) {
-  const coeffs = fitQuadraticCoefficients(points, xKey, yKey);
-  if (!coeffs) return [];
-  const trend = [];
-  for (let x = 0; x <= 100; x += 2) {
-    const y = clampPct(coeffs.a * x * x + coeffs.b * x + coeffs.c);
-    trend.push({ x, y: Number(y.toFixed(2)) });
-  }
-  return trend;
-}
-
-function fitQuadraticCoefficients(points, xKey, yKey) {
-  const rows = points
-    .map((point) => ({
-      x: Number(point[xKey]),
-      y: Number(point[yKey]),
-    }))
-    .filter((point) => Number.isFinite(point.x) && Number.isFinite(point.y));
-
-  if (rows.length < 3) return null;
-
-  let sumX = 0;
-  let sumX2 = 0;
-  let sumX3 = 0;
-  let sumX4 = 0;
-  let sumY = 0;
-  let sumXY = 0;
-  let sumX2Y = 0;
-
-  rows.forEach((point) => {
-    const x = point.x;
-    const x2 = x * x;
-    sumX += x;
-    sumX2 += x2;
-    sumX3 += x2 * x;
-    sumX4 += x2 * x2;
-    sumY += point.y;
-    sumXY += x * point.y;
-    sumX2Y += x2 * point.y;
-  });
-
-  const matrix = [
-    [rows.length, sumX, sumX2],
-    [sumX, sumX2, sumX3],
-    [sumX2, sumX3, sumX4],
-  ];
-  const rhs = [sumY, sumXY, sumX2Y];
-  const solution = solve3x3(matrix, rhs);
-  if (!solution) return null;
-
-  return {
-    c: solution[0],
-    b: solution[1],
-    a: solution[2],
-  };
-}
-
-function solve3x3(matrix, rhs) {
-  const augmented = matrix.map((row, index) => [...row, rhs[index]]);
-  const size = 3;
-
-  for (let pivot = 0; pivot < size; pivot += 1) {
-    let maxRow = pivot;
-    for (let row = pivot + 1; row < size; row += 1) {
-      if (Math.abs(augmented[row][pivot]) > Math.abs(augmented[maxRow][pivot])) {
-        maxRow = row;
-      }
-    }
-
-    if (Math.abs(augmented[maxRow][pivot]) < 1e-10) {
-      return null;
-    }
-
-    if (maxRow !== pivot) {
-      [augmented[pivot], augmented[maxRow]] = [augmented[maxRow], augmented[pivot]];
-    }
-
-    const pivotVal = augmented[pivot][pivot];
-    for (let col = pivot; col <= size; col += 1) {
-      augmented[pivot][col] /= pivotVal;
-    }
-
-    for (let row = 0; row < size; row += 1) {
-      if (row === pivot) continue;
-      const factor = augmented[row][pivot];
-      for (let col = pivot; col <= size; col += 1) {
-        augmented[row][col] -= factor * augmented[pivot][col];
-      }
-    }
-  }
-
-  return [augmented[0][3], augmented[1][3], augmented[2][3]];
+function EmptyTableRow({ colSpan, label }) {
+  return (
+    <tr>
+      <td colSpan={colSpan}>{label}</td>
+    </tr>
+  );
 }
 
 function Kpi({ label, value }) {
@@ -1124,11 +1050,37 @@ function Kpi({ label, value }) {
   );
 }
 
-function districtLabelToId(label) {
-  const match = String(label).match(/\d+/);
-  return match ? Number(match[0]) : null;
+function valueToPercent(value, options = {}) {
+  if (value == null || value === '') return null;
+  const numeric = Number(value);
+  if (!Number.isFinite(numeric)) return null;
+  if (options.alreadyPercent) return numeric;
+  return Math.abs(numeric) <= 1 ? numeric * 100 : numeric;
 }
 
-function toCandidateKey(candidate) {
-  return candidate.replace(/[^A-Za-z]/g, '').toLowerCase();
+function formatNumber(value) {
+  if (value == null || value === '') return 'N/A';
+  const numeric = Number(value);
+  return Number.isFinite(numeric) ? numeric.toLocaleString() : 'N/A';
+}
+
+function formatPct(value, digits = 1, options = {}) {
+  const percent = valueToPercent(value, options);
+  return Number.isFinite(percent) ? `${percent.toFixed(digits)}%` : 'N/A';
+}
+
+function formatRatio(value, digits = 2) {
+  if (value == null || value === '') return 'N/A';
+  const numeric = Number(value);
+  return Number.isFinite(numeric) ? numeric.toFixed(digits) : 'N/A';
+}
+
+function groupColor(group) {
+  const key = String(group).toLowerCase();
+  if (key.includes('black')) return '#6f2da8';
+  if (key.includes('hispanic')) return '#ef8c1a';
+  if (key.includes('asian')) return '#0f8c75';
+  if (key.includes('rb')) return '#64b5f6';
+  if (key.includes('vra')) return '#7b1fa2';
+  return '#4f7f9a';
 }
