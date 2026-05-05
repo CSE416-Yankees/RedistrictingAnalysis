@@ -47,6 +47,8 @@
 }
 
 .state-analysis__map-panel {
+  display: grid;
+  gap: 10px;
   padding: 10px;
   border: 1px solid rgba(190, 173, 152, 0.45);
   border-top: 3px solid rgba(31, 111, 120, 0.42);
@@ -112,11 +114,18 @@
 }
 
 .state-analysis__plan-controls {
+  position: relative;
+  z-index: 10;
   display: flex;
   align-items: center;
   flex-wrap: wrap;
   gap: 8px;
-  padding: 10px 0 0;
+  padding: 0;
+}
+
+.state-analysis__plan-controls .pill-dropdown__menu {
+  top: auto;
+  bottom: calc(100% + 6px);
 }
 
 .state-analysis__control-field,

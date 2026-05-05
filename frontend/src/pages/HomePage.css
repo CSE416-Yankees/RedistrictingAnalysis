@@ -42,36 +42,6 @@
   max-width: 34ch;
 }
 
-.home__state-select {
-  margin-top: 16px;
-  display: grid;
-  gap: 6px;
-}
-
-.home__state-select label {
-  font-size: 0.72rem;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  color: #5f5345;
-  text-transform: uppercase;
-}
-
-.home__state-select select {
-  width: 100%;
-  border: 1px solid rgba(176, 156, 132, 0.72);
-  border-radius: 10px;
-  background: #fffdf9;
-  color: #2a3e45;
-  font-size: 0.95rem;
-  padding: 10px 12px;
-}
-
-.home__state-select select:focus-visible {
-  outline: none;
-  border-color: var(--color-primary);
-  box-shadow: 0 0 0 3px rgba(31, 111, 120, 0.18);
-}
-
 .home__states-heading {
   font-family: var(--font-body);
   font-size: 0.72rem;

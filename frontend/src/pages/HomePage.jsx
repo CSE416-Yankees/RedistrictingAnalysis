@@ -19,21 +19,6 @@ export default function HomePage() {
             plans, inspect representation, and follow how demographic patterns
             shape political outcomes.
           </p>
-          <div className="home__state-select">
-            <label htmlFor="home-state-select">State</label>
-            <select
-              id="home-state-select"
-              defaultValue=""
-              onChange={(event) => {
-                if (event.target.value) navigate(`/state/${event.target.value}`);
-              }}
-            >
-              <option value="" disabled>Choose a state</option>
-              {stateMarkers.map((state) => (
-                <option key={state.abbr} value={state.abbr}>{state.name}</option>
-              ))}
-            </select>
-          </div>
         </div>
         <div className="home__states home__fade-in" style={{ animationDelay: '90ms' }}>
           <h2 className="home__states-heading">Choose A State To Begin</h2>

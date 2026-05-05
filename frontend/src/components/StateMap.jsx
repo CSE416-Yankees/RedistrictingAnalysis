@@ -1,5 +1,6 @@
 import { MapContainer, TileLayer, GeoJSON, useMap } from 'react-leaflet';
 import { useEffect, useMemo, useState } from 'react';
+import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { mapGeoEndpoints } from '../geo/mapGeoUrls';
 import './StateMap.css';
@@ -243,6 +244,26 @@ function FlyTo({ center, zoom }) {
   useEffect(() => {
     map.flyTo(center, zoom, { duration: 1 });
   }, [center, zoom, map]);
+  return null;
+}
+
+function FitGeoData({ data, maxZoom = 8 }) {
+  const map = useMap();
+
+  useEffect(() => {
+    if (!data?.features?.length) return;
+    const layer = L.geoJSON(data);
+    const bounds = layer.getBounds();
+    if (bounds.isValid()) {
+      map.fitBounds(bounds, {
+        animate: true,
+        duration: 0.8,
+        maxZoom,
+        padding: [34, 34],
+      });
+    }
+  }, [data, map, maxZoom]);
+
   return null;
 }
 
@@ -736,7 +757,11 @@ export default function StateMap({
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
         <SyncMapSize />
-        <FlyTo center={center} zoom={zoom} />
+        {activeGeoData?.features?.length > 0 ? (
+          <FitGeoData data={activeGeoData} maxZoom={usePrecinctLayer ? 9 : 8} />
+        ) : (
+          <FlyTo center={center} zoom={zoom} />
+        )}
         {activeGeoData?.features?.length > 0 && (
           <GeoJSON
             key={activeGeoJsonKey}
@@ -769,7 +794,7 @@ export default function StateMap({
       {isLoading && <div className="state-map__loading">Loading...</div>}
 
       {(activeGeoData || districtData) && (
-          <div className="choropleth-legend">
+        <div className="choropleth-legend">
           <div className="choropleth-legend__title">{legendTitle}</div>
           {isDeltaMode ? (
             isAssignmentDeltaMode ? (

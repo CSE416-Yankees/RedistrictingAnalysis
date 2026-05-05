@@ -156,17 +156,20 @@ export default function StateAnalysisPage() {
     setSelectedInterestingPlan('interestingMax');
   }, [stateKey]);
 
-  const goToGui = useCallback((slug) => {
-    if (!stateKey) return;
-    navigate(`/state/${stateKey}/gui/${slug}`);
-  }, [navigate, stateKey]);
-
   const handleAnalysisMenuChange = useCallback((nextValue) => {
     if (!stateKey) return;
     const slug = routeSlugForAnalysisView(nextValue);
     setAnalysisView(nextValue);
     navigate(`/state/${stateKey}/gui/${slug}`);
   }, [navigate, stateKey]);
+
+  const handleCompareWithEnacted = useCallback(() => {
+    setMapPlanMode((currentMode) => (currentMode === 'comparison' ? 'current' : 'comparison'));
+  }, []);
+
+  const handleDistrictDetail = useCallback(() => {
+    setAnalysisView((currentView) => (currentView === 'districtDetails' ? 'stateSummary' : 'districtDetails'));
+  }, []);
 
   const handleAnalysisGroupLabelChange = useCallback((nextGroupLabel) => {
     const nextGroupValue = groupValueFromLabel(nextGroupLabel);
@@ -270,8 +273,8 @@ export default function StateAnalysisPage() {
 
                   <button
                     type="button"
-                    className="state-analysis__action"
-                    onClick={() => goToGui('gui-8')}
+                    className={`state-analysis__action ${mapPlanMode === 'comparison' ? 'state-analysis__action--active' : ''}`}
+                    onClick={handleCompareWithEnacted}
                     title="Show enacted vs selected plan on the map (GUI-8)"
                   >
                     Compare with enacted
@@ -280,7 +283,7 @@ export default function StateAnalysisPage() {
                   <button
                     type="button"
                     className={`state-analysis__action ${analysisView === 'districtDetails' ? 'state-analysis__action--active' : ''}`}
-                    onClick={() => goToGui('gui-6')}
+                    onClick={handleDistrictDetail}
                   >
                     District Detail
                   </button>
