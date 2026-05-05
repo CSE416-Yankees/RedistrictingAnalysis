@@ -16,6 +16,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Seeds MongoDB with sample GUI payload documents when the seed profile is active.
+ */
 @Component
 @Profile("seed")
 public class DataSeeder implements CommandLineRunner {

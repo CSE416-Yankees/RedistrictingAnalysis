@@ -87,6 +87,7 @@ export default function StateAnalysisPage() {
   const [mapDemographicGroup, setMapDemographicGroup] = useState(() => resolveGuiUiConfig(matchGuiSlug(guiSlug)).mapDemographicGroup);
   const [showDistrictOutlines, setShowDistrictOutlines] = useState(true);
 
+  // Sync page state with the current route.
   useEffect(() => {
     const cfg = resolveGuiUiConfig(guiSlugCanonical);
     setAnalysisView(cfg.analysisView);
@@ -103,6 +104,7 @@ export default function StateAnalysisPage() {
     setSelectedDistrictId(null);
   }, [stateKey, guiSlugCanonical]);
 
+  // Fetch payloads for the selected state.
   useEffect(() => {
     let isCancelled = false;
     const fallback = stateKey ? guiMockPayloads[stateKey] : undefined;
@@ -148,6 +150,7 @@ export default function StateAnalysisPage() {
     }
 
     return () => {
+      // Prevent stale requests from updating the page after state changes.
       isCancelled = true;
     };
   }, [stateKey]);

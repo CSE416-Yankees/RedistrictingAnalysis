@@ -18,6 +18,7 @@ public class MapDataController {
     @Autowired
     private MapDataService mapDataService;
 
+    // GUI-2 current district plan endpoint.
     @GetMapping("/district-plan")
     public DistrictPlan getCurrentDistrictPlan(@PathVariable String state) {
         return mapDataService.getDistrictPlan(State.valueOf(state.toUpperCase()));

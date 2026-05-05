@@ -17,6 +17,7 @@ public class MapDataRepository {
     @Autowired
     private MongoTemplate mongoTemplate;
 
+    // The district_plans collection nests the selected state under state.abbr.
     public DistrictPlan findDistrictPlan(State state) {
         Query query = Query.query(Criteria.where("state.abbr").is(state));
         return mongoTemplate.findOne(query, DistrictPlan.class);

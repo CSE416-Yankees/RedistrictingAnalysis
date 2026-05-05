@@ -16,6 +16,7 @@ export const GUI_GROUPS = ['Black', 'Hispanic', 'Asian'];
 const DEFAULT_ENSEMBLE = 'RB';
 const LEGACY_BOX_ENSEMBLES = ['RB', 'VRA'];
 
+// REST endpoints used by the GUI payload loader.
 export const GUI_PAYLOAD_ENDPOINTS = {
   currentPlan: (stateAbbr) => `/api/${stateAbbr}/district-plan`,
   stateSummary: (stateAbbr) => `/api/${stateAbbr}/summary`,
@@ -48,6 +49,7 @@ function expandPayloadKeyToEndpointKeys(payloadKey) {
 }
 
 export async function fetchGuiPayloadBundle(stateAbbr, fallback) {
+  // Fetch state payloads in parallel so one state selection prepares all GUI views.
   const [
     currentPlan,
     stateSummary,
@@ -103,6 +105,7 @@ export async function fetchGuiPayloadBundle(stateAbbr, fallback) {
   );
 
   return {
+    // Keep fallback values for any endpoint that is unavailable during integration.
     ...fallback,
     currentPlan: currentPlan || fallback.currentPlan,
     stateSummary: normalizedStateSummary,

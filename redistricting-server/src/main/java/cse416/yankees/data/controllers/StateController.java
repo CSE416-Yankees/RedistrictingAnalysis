@@ -14,6 +14,7 @@ public class StateController {
     @Autowired
     private StateService stateService;
 
+    // GUI-3 state summary endpoint.
     @GetMapping("/summary")
     public StateSummary getStateSummary(@PathVariable String state) {
         return stateService.getStateSummary(State.valueOf(state.toUpperCase()));

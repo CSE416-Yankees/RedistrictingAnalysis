@@ -15,6 +15,7 @@ public class StateRepository {
     @Autowired
     private MongoTemplate mongoTemplate;
 
+    // The state_summaries collection stores the selected state in the abbr field.
     public StateSummary findStateSummary(State state) {
         Query query = Query.query(Criteria.where("abbr").is(state));
         return mongoTemplate.findOne(query, StateSummary.class);

@@ -14,6 +14,7 @@ public class StateService {
     @Autowired
     private StateRepository stateRepository;
 
+    // Return a 404-style error when MongoDB has no summary for the requested state.
     public StateSummary getStateSummary(State state) {
         StateSummary result = stateRepository.findStateSummary(state);
         if (result == null) throw new ResourceNotFoundException("StateSummary not found for state: " + state);

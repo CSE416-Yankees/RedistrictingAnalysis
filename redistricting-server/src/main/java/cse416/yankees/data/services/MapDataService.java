@@ -22,6 +22,7 @@ public class MapDataService {
 
     private static final Set<String> GEOJSON_LEVELS = Set.of("DISTRICT", "PRECINCT", "CENSUS_BLOCK");
 
+    // Return the current enacted plan document for GUI-2.
     public DistrictPlan getDistrictPlan(State state) {
         DistrictPlan result = mapDataRepository.findDistrictPlan(state);
         if (result == null) throw new ResourceNotFoundException("DistrictPlan not found for state: " + state);
