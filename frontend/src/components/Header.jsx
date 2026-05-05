@@ -1,10 +1,26 @@
 import { Link, useLocation } from 'react-router-dom';
 import './Header.css';
 
+const ANALYSIS_ROUTE_SLUGS = new Set([
+  'gui-9',
+  'gui-10',
+  'gui-11',
+  'gui-12',
+  'gui-16',
+  'gui-17',
+  'gui-20',
+  'gui-21',
+  'gui-22',
+]);
+
 export default function Header() {
   const location = useLocation();
   const stateMatch = location.pathname.match(/\/state\/([^/]+)/);
-  const stateLabel = stateMatch ? stateMatch[1].toUpperCase() : 'Overview';
+  const guiMatch = location.pathname.match(/\/gui\/([^/]+)/);
+  const stateKey = stateMatch ? stateMatch[1].toUpperCase() : null;
+  const stateLabel = stateKey || 'Overview';
+  const guiSlug = guiMatch ? guiMatch[1].toLowerCase() : null;
+  const isAnalysisView = guiSlug ? ANALYSIS_ROUTE_SLUGS.has(guiSlug) : false;
 
   return (
     <header className="header">
@@ -39,9 +55,29 @@ export default function Header() {
         >
           Maryland
         </Link>
+        {stateKey && (
+          <>
+            <span className="header__divider" aria-hidden="true" />
+            <Link
+              to={`/state/${stateKey}`}
+              className={`header__link ${!isAnalysisView ? 'header__link--active' : ''}`}
+            >
+              Plan Explorer
+            </Link>
+            <Link
+              to={`/state/${stateKey}/gui/gui-9`}
+              className={`header__link ${isAnalysisView ? 'header__link--active' : ''}`}
+            >
+              Analysis
+            </Link>
+          </>
+        )}
       </nav>
       <div className="header__right">
         <span className="header__badge">Viewing: {stateLabel}</span>
+        {stateKey && (
+          <Link to="/" className="header__reset">Reset</Link>
+        )}
       </div>
     </header>
   );

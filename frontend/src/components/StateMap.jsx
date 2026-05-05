@@ -310,6 +310,7 @@ export default function StateMap({
   onMapDemographicGroupChange,
   showDistrictOutlines = true,
   showOverlayControls = true,
+  usePrecinctLayer = false,
 }) {
   const [geoData, setGeoData] = useState(null);
   const [precinctData, setPrecinctData] = useState(null);
@@ -405,9 +406,9 @@ export default function StateMap({
   }, [geoData]);
 
   const activeGeoData = useMemo(() => {
-    if (precinctData?.features?.length) return precinctData;
+    if (usePrecinctLayer && precinctData?.features?.length) return precinctData;
     return geoData;
-  }, [precinctData, geoData]);
+  }, [usePrecinctLayer, precinctData, geoData]);
 
   const demographicShareTotal = (stateDemographics?.blackPercent || 0)
     + (stateDemographics?.hispanicPercent || 0)
@@ -503,14 +504,20 @@ export default function StateMap({
     if (!isDemographicMetric) return [];
     if (activeHeatMap && demographicGroup !== 'overall') {
       const usedBinIds = new Set(Object.values(activeHeatMap.precinctBins).map((value) => Number(value)));
-      return activeHeatMap.bins
+      const usedBins = activeHeatMap.bins
         .filter((bin) => usedBinIds.has(bin.bin))
+        .sort((left, right) => left.minPct - right.minPct)
         .map((bin) => ({
           start: bin.minPct,
           end: bin.maxPct,
-          color: bin.color,
           count: Object.values(activeHeatMap.precinctBins).filter((value) => Number(value) === bin.bin).length,
         }));
+      return usedBins.map((bin, index) => {
+        const colorIndex = usedBins.length === 1
+          ? DEMOGRAPHIC_SCALE.length - 2
+          : Math.round((index / (usedBins.length - 1)) * (DEMOGRAPHIC_SCALE.length - 1));
+        return { ...bin, color: DEMOGRAPHIC_SCALE[colorIndex] };
+      });
     }
 
     const values = [];
@@ -555,6 +562,9 @@ export default function StateMap({
     if (value == null) return '#d1d5db';
     if (isDeltaMode && (value === 0 || value === 1)) {
       return value === 1 ? '#f97316' : '#e5e7eb';
+    }
+    if (!usePrecinctLayer && planMode === 'current' && activeMetric === 'partisan') {
+      return value >= 50 ? '#2f6fbd' : '#d14b45';
     }
     if (isDemographicMetric) {
       if (!demographicBins.length) return DEMOGRAPHIC_SCALE[2];
@@ -662,17 +672,19 @@ export default function StateMap({
 
     Promise.all([
       fetchGeoJsonWithFallback(urls.districtPrimary, urls.districtFallback, controller.signal),
-      fetchGeoJsonWithFallback(urls.precinctPrimary, urls.precinctFallback, controller.signal),
+      usePrecinctLayer
+        ? fetchGeoJsonWithFallback(urls.precinctPrimary, urls.precinctFallback, controller.signal)
+        : Promise.resolve(null),
     ]).then(([districts, precincts]) => {
       if (!isActive) return;
       setGeoData(districts);
-      setPrecinctData(precincts);
+      setPrecinctData(usePrecinctLayer ? precincts : null);
     });
     return () => {
       isActive = false;
       controller.abort();
     };
-  }, [stateAbbr]);
+  }, [stateAbbr, usePrecinctLayer]);
 
   const isLoading = !geoData && !precinctData;
   const demographicGroupLabel = {
@@ -692,15 +704,16 @@ export default function StateMap({
       : 'Plan difference - pick Comparison or Interesting plan')
     : isDemographicMetric
       ? `${demographicGroupLabel} Population % (Precinct Bins)`
-    : activeMetric === 'partisan'
-      ? 'Democrat vs Republican %'
-      : 'Minority Population %';
+      : activeMetric === 'partisan'
+        ? (!usePrecinctLayer && planMode === 'current' ? 'Current plan district winner' : 'Democrat vs Republican %')
+        : 'Minority Population %';
   const activeGeoJsonKey = [
     stateAbbr,
     planMode,
     activeMetric,
     demographicGroup,
     selectedComparisonPlan || 'none',
+    usePrecinctLayer ? 'precinct-layer' : 'district-layer',
     highlightedDistrict ?? 'none',
     Object.keys(currentPlanModel.precinctToDistrict).length,
     Object.keys(selectedAssignmentLookup).length,
@@ -793,6 +806,17 @@ export default function StateMap({
                   <span className="choropleth-legend__bin-range">No values available</span>
                 </div>
               )}
+            </div>
+          ) : !usePrecinctLayer && planMode === 'current' && activeMetric === 'partisan' ? (
+            <div className="choropleth-legend__bins">
+              <div className="choropleth-legend__bin-row">
+                <span className="choropleth-legend__bin-swatch" style={{ background: '#d14b45' }} />
+                <span className="choropleth-legend__bin-range">Republican district</span>
+              </div>
+              <div className="choropleth-legend__bin-row">
+                <span className="choropleth-legend__bin-swatch" style={{ background: '#2f6fbd' }} />
+                <span className="choropleth-legend__bin-range">Democratic district</span>
+              </div>
             </div>
           ) : (
             <>

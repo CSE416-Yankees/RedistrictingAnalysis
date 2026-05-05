@@ -42,6 +42,8 @@ export default function AnalysisPanel({
   summaryError,
   highlightedDistrict,
   onHighlightDistrict,
+  selectedGroup,
+  onSelectedGroupChange,
 }) {
   const [highlightedGinglesPrecinct, setHighlightedGinglesPrecinct] = useState(null);
 
@@ -82,7 +84,12 @@ export default function AnalysisPanel({
         />
       )}
       {analysisView === 'boxWhisker' && (
-        <BoxWhiskerChart payload={guiPayloads.boxWhisker} ensembleType={ensembleType} />
+        <BoxWhiskerChart
+          payload={guiPayloads.boxWhisker}
+          ensembleType={ensembleType}
+          selectedGroup={selectedGroup}
+          onSelectedGroupChange={onSelectedGroupChange}
+        />
       )}
       {analysisView === 'ensembleSplits' && (
         <EnsembleSplitsChart
@@ -92,13 +99,24 @@ export default function AnalysisPanel({
         />
       )}
       {analysisView === 'vraImpact' && (
-        <VraImpactThresholdTable payload={guiPayloads.vraImpactThresholds} />
+        <VraImpactThresholdTable
+          payload={guiPayloads.vraImpactThresholds}
+          selectedGroup={selectedGroup}
+          onSelectedGroupChange={onSelectedGroupChange}
+        />
       )}
       {analysisView === 'minorityEffectivenessBox' && (
-        <MinorityEffectivenessBoxChart payload={guiPayloads.minorityEffectivenessBox} />
+        <MinorityEffectivenessBoxChart
+          payload={guiPayloads.minorityEffectivenessBox}
+          selectedGroup={selectedGroup}
+        />
       )}
       {analysisView === 'minorityEffectivenessHistogram' && (
-        <MinorityEffectivenessHistogram payload={guiPayloads.minorityEffectivenessHistogram} />
+        <MinorityEffectivenessHistogram
+          payload={guiPayloads.minorityEffectivenessHistogram}
+          selectedGroup={selectedGroup}
+          onSelectedGroupChange={onSelectedGroupChange}
+        />
       )}
       {analysisView === 'gingles' && (
         <GinglesSummary
@@ -106,6 +124,8 @@ export default function AnalysisPanel({
           tablePayload={guiPayloads.ginglesTable}
           highlightedPrecinct={highlightedGinglesPrecinct}
           onSelectPrecinct={setHighlightedGinglesPrecinct}
+          selectedGroup={selectedGroup}
+          onSelectedGroupChange={onSelectedGroupChange}
         />
       )}
       {analysisView === 'ginglesTable' && (
@@ -115,6 +135,7 @@ export default function AnalysisPanel({
         <EICandidateResults
           key={`${stateData.abbr}-${eiPayloadRevision(guiPayloads.eiCandidates)}`}
           payload={guiPayloads.eiCandidates}
+          selectedGroup={selectedGroup}
         />
       )}
     </div>
@@ -270,29 +291,39 @@ function DistrictRepresentationTable({ payload, highlightedDistrict, onHighlight
   );
 }
 
-function BoxWhiskerChart({ payload, ensembleType }) {
+function BoxWhiskerChart({
+  payload,
+  ensembleType,
+  selectedGroup,
+  onSelectedGroupChange,
+}) {
   const ensembleKey = ensembleType === 'vra' ? 'VRA' : 'RB';
   const groups = Object.keys(payload?.ensembles?.[ensembleKey]?.groups || {});
-  const [selectedGroup, setSelectedGroup] = useState(groups[0] || 'Black');
-  const activeGroup = groups.includes(selectedGroup) ? selectedGroup : groups[0];
+  const [localSelectedGroup, setLocalSelectedGroup] = useState(groups[0] || 'Black');
+  const requestedGroup = selectedGroup || localSelectedGroup;
+  const activeGroup = groups.includes(requestedGroup) ? requestedGroup : groups[0];
   const rows = useMemo(
     () => normalizeDistrictBoxRows(payload?.ensembles?.[ensembleKey]?.groups?.[activeGroup]?.orderedBins),
     [payload, ensembleKey, activeGroup],
   );
   const boxColor = groupColor(activeGroup);
+  const handleGroupChange = (nextGroup) => {
+    setLocalSelectedGroup(nextGroup);
+    onSelectedGroupChange?.(nextGroup);
+  };
 
   return (
     <ChartCard
       title="District Distribution (Box & Whisker)"
       subtitle={`${ENSEMBLE_LABELS[ensembleKey]} ensemble, ordered by enacted-plan percentage for selected group`}
     >
-      {groups.length > 0 && (
+      {groups.length > 0 && !selectedGroup && (
         <SelectControl
           id="box-whisker-group-select"
           label="Group"
           value={activeGroup || ''}
           options={groups.map((group) => ({ value: group, label: group }))}
-          onChange={setSelectedGroup}
+          onChange={handleGroupChange}
         />
       )}
       {rows.length > 0 ? (
@@ -393,15 +424,20 @@ function EnsembleSplitsChart({ payload, summaryPayload, selectedEnsembleType }) 
   );
 }
 
-function VraImpactThresholdTable({ payload }) {
+function VraImpactThresholdTable({
+  payload,
+  selectedGroup,
+  onSelectedGroupChange,
+}) {
   const rows = useMemo(() => payload?.rows || EMPTY_LIST, [payload?.rows]);
-  const [selectedGroup, setSelectedGroup] = useState(rows[0]?.group || 'Black');
+  const [localSelectedGroup, setLocalSelectedGroup] = useState(rows[0]?.group || 'Black');
+  const requestedGroup = selectedGroup || localSelectedGroup;
 
   const effectiveGroup =
     rows.length === 0
-      ? selectedGroup
-      : rows.some((row) => row.group === selectedGroup)
-        ? selectedGroup
+      ? requestedGroup
+      : rows.some((row) => row.group === requestedGroup)
+        ? requestedGroup
         : rows[0].group;
 
   const activeRow = rows.find((row) => row.group === effectiveGroup) || rows[0];
@@ -412,16 +448,20 @@ function VraImpactThresholdTable({ payload }) {
       ['Joint threshold', activeRow.jointThreshold],
     ]
     : EMPTY_LIST;
+  const handleGroupChange = (nextGroup) => {
+    setLocalSelectedGroup(nextGroup);
+    onSelectedGroupChange?.(nextGroup);
+  };
 
   return (
     <ChartCard title="VRA Impact Thresholds" subtitle="Legal threshold percentages compared side-by-side by ensemble">
-      {rows.length > 0 && (
+      {rows.length > 0 && !selectedGroup && (
         <SelectControl
           id="vra-impact-group-select"
           label="Feasible Race"
           value={effectiveGroup || ''}
           options={rows.map((row) => ({ value: row.group, label: row.group }))}
-          onChange={setSelectedGroup}
+          onChange={handleGroupChange}
         />
       )}
       <div className="analysis-table-wrap">
@@ -451,11 +491,15 @@ function VraImpactThresholdTable({ payload }) {
   );
 }
 
-function MinorityEffectivenessBoxChart({ payload }) {
-  const rows = normalizeMinorityEffectivenessBoxes(payload);
+function MinorityEffectivenessBoxChart({ payload, selectedGroup }) {
+  const rows = normalizeMinorityEffectivenessBoxes(payload)
+    .filter((row) => !selectedGroup || row.group === selectedGroup);
 
   return (
-    <ChartCard title="Minority Effectiveness Box & Whisker" subtitle="Effective districts by feasible group across RB and VRA ensembles">
+    <ChartCard
+      title="Minority Effectiveness Box & Whisker"
+      subtitle={`${selectedGroup || 'Feasible group'} effective districts across RB and VRA ensembles`}
+    >
       {rows.length > 0 ? (
         <ResponsiveContainer width="100%" height={360}>
           <ComposedChart data={rows} margin={{ top: 10, right: 20, bottom: 10, left: 10 }}>
@@ -487,27 +531,36 @@ function MinorityEffectivenessBoxChart({ payload }) {
   );
 }
 
-function MinorityEffectivenessHistogram({ payload }) {
+function MinorityEffectivenessHistogram({
+  payload,
+  selectedGroup,
+  onSelectedGroupChange,
+}) {
   const groupNames = useMemo(() => Object.keys(payload?.groupHistograms || {}), [payload?.groupHistograms]);
-  const [selectedGroup, setSelectedGroup] = useState(groupNames[0] || 'Black');
+  const [localSelectedGroup, setLocalSelectedGroup] = useState(groupNames[0] || 'Black');
+  const requestedGroup = selectedGroup || localSelectedGroup;
 
   const activeGroup =
     groupNames.length === 0
-      ? selectedGroup
-      : groupNames.includes(selectedGroup)
-        ? selectedGroup
+      ? requestedGroup
+      : groupNames.includes(requestedGroup)
+        ? requestedGroup
         : groupNames[0];
   const bins = payload?.groupHistograms?.[activeGroup]?.bins || EMPTY_LIST;
+  const handleGroupChange = (nextGroup) => {
+    setLocalSelectedGroup(nextGroup);
+    onSelectedGroupChange?.(nextGroup);
+  };
 
   return (
     <ChartCard title="Minority Effectiveness Histogram" subtitle="Distribution overlap of minority-effective district counts">
-      {groupNames.length > 0 && (
+      {groupNames.length > 0 && !selectedGroup && (
         <SelectControl
           id="minority-histogram-group-select"
           label="Group"
           value={activeGroup || ''}
           options={groupNames.map((group) => ({ value: group, label: group }))}
-          onChange={setSelectedGroup}
+          onChange={handleGroupChange}
         />
       )}
       {bins.length > 0 ? (
@@ -538,10 +591,13 @@ function GinglesSummary({
   tablePayload,
   highlightedPrecinct,
   onSelectPrecinct,
+  selectedGroup,
+  onSelectedGroupChange,
 }) {
   const groups = Object.keys(payload?.groups || {});
-  const [selectedGroup, setSelectedGroup] = useState(groups[0] || 'Black');
-  const activeGroup = groups.includes(selectedGroup) ? selectedGroup : groups[0];
+  const [localSelectedGroup, setLocalSelectedGroup] = useState(groups[0] || 'Black');
+  const requestedGroup = selectedGroup || localSelectedGroup;
+  const activeGroup = groups.includes(requestedGroup) ? requestedGroup : groups[0];
   const groupData = payload?.groups?.[activeGroup];
   const points = groupData?.points || EMPTY_LIST;
   const demPoints = points.map((point) => ({
@@ -564,16 +620,20 @@ function GinglesSummary({
   }));
   const demTrend = normalizeRegressionLine(groupData?.regression?.dem);
   const repTrend = normalizeRegressionLine(groupData?.regression?.rep);
+  const handleGroupChange = (nextGroup) => {
+    setLocalSelectedGroup(nextGroup);
+    onSelectedGroupChange?.(nextGroup);
+  };
 
   return (
     <ChartCard title="Gingles Analysis Results" subtitle="2024 precinct-level vote share by selected racial/ethnic group">
-      {groups.length > 0 && (
+      {groups.length > 0 && !selectedGroup && (
         <SelectControl
           id="gingles-group-select"
           label="Race/Ethnic Group"
           value={activeGroup || ''}
           options={groups.map((group) => ({ value: group, label: group }))}
-          onChange={setSelectedGroup}
+          onChange={handleGroupChange}
         />
       )}
       {points.length > 0 ? (
@@ -701,12 +761,13 @@ function GinglesTable({
   );
 }
 
-function EICandidateResults({ payload }) {
+function EICandidateResults({ payload, selectedGroup }) {
   const normalized = useMemo(() => normalizeEiCandidateData(payload), [payload]);
   const candidateOptions = normalized.candidates;
   const groupOptions = normalized.groups;
   const [selectedCandidate, setSelectedCandidate] = useState(candidateOptions[0]?.key || '');
   const [selectedGroups, setSelectedGroups] = useState(() => groupOptions.slice(0, 3).map((group) => group.key));
+  const controlledGroup = groupOptions.some((group) => group.key === selectedGroup) ? selectedGroup : null;
 
   const activeCandidateKey =
     candidateOptions.length > 0 && candidateOptions.some((c) => c.key === selectedCandidate)
@@ -715,10 +776,16 @@ function EICandidateResults({ payload }) {
   const activeSeries = normalized.series[activeCandidateKey] || EMPTY_LIST;
   const visibleGroupKeys = selectedGroups.filter((key) => groupOptions.some((group) => group.key === key));
   const fallbackGroupKeys = groupOptions[0] ? [groupOptions[0].key] : EMPTY_LIST;
-  const selectedGroupKeys = visibleGroupKeys.length > 0 ? visibleGroupKeys : fallbackGroupKeys;
+  const selectedGroupKeys = controlledGroup
+    ? [controlledGroup]
+    : (visibleGroupKeys.length > 0 ? visibleGroupKeys : fallbackGroupKeys);
   const visibleGroups = groupOptions.filter((group) => selectedGroupKeys.includes(group.key));
+  const visibleOverlapRows = controlledGroup
+    ? normalized.overlapRows.filter((row) => row.groupPair.split(' / ').includes(controlledGroup))
+    : normalized.overlapRows;
 
   const toggleGroup = (key) => {
+    if (controlledGroup) return;
     setSelectedGroups((current) => {
       if (current.includes(key)) {
         return current.length === 1 ? current : current.filter((entry) => entry !== key);
@@ -741,14 +808,14 @@ function EICandidateResults({ payload }) {
               </tr>
             </thead>
             <tbody>
-              {normalized.overlapRows.map((row) => (
+              {visibleOverlapRows.map((row) => (
                 <tr key={`${row.candidate}-${row.groupPair}`}>
                   <td>{row.candidate}</td>
                   <td>{row.groupPair}</td>
                   <td>{formatPct(row.overlapPct, 1)}</td>
                 </tr>
               ))}
-              {normalized.overlapRows.length === 0 && <EmptyTableRow colSpan={3} label="EI overlap rows are not available." />}
+              {visibleOverlapRows.length === 0 && <EmptyTableRow colSpan={3} label="EI overlap rows are not available." />}
             </tbody>
           </table>
         </div>
@@ -770,7 +837,7 @@ function EICandidateResults({ payload }) {
         <div className="ei-controls__item">
           <span className="ei-controls__label">Groups to Compare</span>
           <div className="ei-group-toggle">
-            {groupOptions.map((group) => {
+            {(controlledGroup ? visibleGroups : groupOptions).map((group) => {
               const selected = selectedGroupKeys.includes(group.key);
               return (
                 <button
@@ -778,6 +845,7 @@ function EICandidateResults({ payload }) {
                   type="button"
                   className={`ei-group-toggle__chip ${selected ? 'ei-group-toggle__chip--active' : ''}`}
                   onClick={() => toggleGroup(group.key)}
+                  disabled={Boolean(controlledGroup)}
                   style={selected ? { borderColor: group.color, color: group.color } : undefined}
                 >
                   {group.label}
@@ -841,14 +909,14 @@ function EICandidateResults({ payload }) {
             </tr>
           </thead>
           <tbody>
-            {normalized.overlapRows.map((row) => (
+            {visibleOverlapRows.map((row) => (
               <tr key={`${row.candidate}-${row.groupPair}`}>
                 <td>{row.candidate}</td>
                 <td>{row.groupPair}</td>
                 <td>{formatPct(row.overlapPct, 1)}</td>
               </tr>
             ))}
-            {normalized.overlapRows.length === 0 && <EmptyTableRow colSpan={3} label="EI overlap rows are not available." />}
+            {visibleOverlapRows.length === 0 && <EmptyTableRow colSpan={3} label="EI overlap rows are not available." />}
           </tbody>
         </table>
       </div>
