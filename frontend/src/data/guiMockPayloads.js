@@ -84,8 +84,42 @@ function planComparisonPayload(stateAbbr, state) {
   return {
     plans: {
       enacted: { precinctToDistrict: buildPrecinctAssignments(stateAbbr, state.currentPlanDistricts) },
-      comparison: { precinctToDistrict: buildPrecinctAssignments(stateAbbr, state.currentPlanDistricts, 1) },
-      interestingMax: { precinctToDistrict: buildPrecinctAssignments(stateAbbr, state.currentPlanDistricts, 2) },
+      comparison: {
+        interestingReason: 'Moderate precinct reassignment against enacted plan',
+        interestingMetrics: {
+          effectiveDistricts: Math.max(1, Math.round(state.numDistricts * 0.38)),
+          opportunityDistricts: Math.max(1, Math.round(state.numDistricts * 0.44)),
+          repDemSplit: `${Math.max(1, Math.round(state.numDistricts * 0.42))}/${Math.max(1, state.numDistricts - Math.round(state.numDistricts * 0.42))}`,
+        },
+        precinctToDistrict: buildPrecinctAssignments(stateAbbr, state.currentPlanDistricts, 1),
+      },
+      interestingMax: {
+        interestingReason: 'Largest simulated increase in minority-effective districts',
+        interestingMetrics: {
+          effectiveDistricts: Math.max(1, Math.round(state.numDistricts * 0.5)),
+          opportunityDistricts: Math.max(1, Math.round(state.numDistricts * 0.62)),
+          repDemSplit: `${Math.max(1, Math.round(state.numDistricts * 0.32))}/${Math.max(1, state.numDistricts - Math.round(state.numDistricts * 0.32))}`,
+        },
+        precinctToDistrict: buildPrecinctAssignments(stateAbbr, state.currentPlanDistricts, 2),
+      },
+      interestingCompact: {
+        interestingReason: 'Compactness-constrained plan with fewer boundary shifts',
+        interestingMetrics: {
+          effectiveDistricts: Math.max(1, Math.round(state.numDistricts * 0.44)),
+          opportunityDistricts: Math.max(1, Math.round(state.numDistricts * 0.5)),
+          repDemSplit: `${Math.max(1, Math.round(state.numDistricts * 0.36))}/${Math.max(1, state.numDistricts - Math.round(state.numDistricts * 0.36))}`,
+        },
+        precinctToDistrict: buildPrecinctAssignments(stateAbbr, state.currentPlanDistricts, 3),
+      },
+      interestingMin: {
+        interestingReason: 'Lowest minority-effectiveness plan kept for contrast',
+        interestingMetrics: {
+          effectiveDistricts: Math.max(1, Math.round(state.numDistricts * 0.25)),
+          opportunityDistricts: Math.max(1, Math.round(state.numDistricts * 0.3)),
+          repDemSplit: `${Math.max(1, Math.round(state.numDistricts * 0.54))}/${Math.max(1, state.numDistricts - Math.round(state.numDistricts * 0.54))}`,
+        },
+        precinctToDistrict: buildPrecinctAssignments(stateAbbr, state.currentPlanDistricts, 4),
+      },
     },
     planMetadata: {
       comparison: {
@@ -95,6 +129,14 @@ function planComparisonPayload(stateAbbr, state) {
       interestingMax: {
         label: 'Max Minority Opportunity Plan',
         characteristics: 'Largest simulated increase in minority-effective districts',
+      },
+      interestingCompact: {
+        label: 'Compact Opportunity Plan',
+        characteristics: 'Compactness-constrained plan with fewer boundary shifts',
+      },
+      interestingMin: {
+        label: 'Minimum Effectiveness Plan',
+        characteristics: 'Lowest minority-effectiveness plan kept for contrast',
       },
     },
   };

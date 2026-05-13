@@ -28,7 +28,7 @@
   align-items: center;
   justify-content: space-between;
   gap: 8px;
-  white-space: nowrap;
+  white-space: normal;
 }
 
 .pill-dropdown__trigger:focus-visible {
@@ -42,8 +42,7 @@
 }
 
 .pill-dropdown__value {
-  overflow: hidden;
-  text-overflow: ellipsis;
+  overflow-wrap: anywhere;
 }
 
 .pill-dropdown__caret {
@@ -59,8 +58,7 @@
   min-width: 100%;
   width: max-content;
   max-width: min(340px, calc(100vw - 24px));
-  max-height: 280px;
-  overflow-y: auto;
+  overflow: visible;
   background: rgba(255, 253, 248, 0.98);
   border: 1px solid rgba(185, 166, 142, 0.75);
   border-radius: 10px;
@@ -100,7 +98,7 @@
 }
 
 .pill-dropdown__option-label {
-  white-space: nowrap;
+  white-space: normal;
 }
 
 .pill-dropdown__option-description {

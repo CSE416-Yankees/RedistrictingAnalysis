@@ -1,24 +1,76 @@
 .home {
   display: flex;
-  height: calc(100vh - var(--header-height));
+  height: 100%;
   background: linear-gradient(180deg, rgba(246, 241, 233, 0.5) 0%, rgba(239, 230, 217, 0.68) 100%);
+  overflow: hidden;
 }
 
 .home__map {
   flex: 1;
+  min-width: 0;
   position: relative;
+}
+
+.custom-marker {
+  background: transparent;
+  border: none;
+}
+
+.custom-marker__pin {
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  border: 3px solid #fffefb;
+  border-radius: 14px;
+  background: linear-gradient(145deg, var(--marker-color) 0%, #154e54 100%);
+  box-shadow: 0 5px 14px rgba(0, 0, 0, 0.26);
+  color: #fff;
+  font-size: 0.72rem;
+  font-weight: 850;
+}
+
+.us-map-popup {
+  min-width: 170px;
+  display: grid;
+  justify-items: center;
+  gap: 4px;
+  padding: 6px 4px;
+  color: var(--color-text);
+  text-align: center;
+}
+
+.us-map-popup strong {
+  color: #17313a;
+  font-size: 0.88rem;
+}
+
+.us-map-popup div {
+  color: var(--color-text-secondary);
+  font-size: 0.7rem;
+}
+
+.us-map-popup button {
+  margin-top: 3px;
+  padding: 5px 14px;
+  border: none;
+  border-radius: 999px;
+  background: var(--color-primary);
+  color: #fff;
+  font-size: 0.76rem;
+  font-weight: 800;
 }
 
 .home__panel {
   width: 392px;
   min-width: 392px;
-  overflow-y: auto;
+  overflow: visible;
   background: linear-gradient(180deg, rgba(255, 253, 249, 0.98) 0%, rgba(255, 249, 241, 0.98) 100%);
   border-left: 1px solid rgba(181, 163, 143, 0.5);
-  padding: 28px 24px;
+  padding: clamp(14px, 2.4vh, 28px) 24px;
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: clamp(12px, 2vh, 24px);
   box-shadow: -6px 0 20px rgba(24, 42, 51, 0.07);
 }
 
@@ -169,15 +221,17 @@
 @media (max-width: 980px) {
   .home {
     flex-direction: column;
-    height: auto;
-    min-height: calc(100vh - var(--header-height));
+    height: 100%;
+    min-height: 0;
   }
 
   .home__map {
-    min-height: 46vh;
+    min-height: 0;
+    flex: 1;
   }
 
   .home__panel {
+    flex: 0 0 auto;
     width: 100%;
     min-width: 0;
     border-left: none;

@@ -584,7 +584,7 @@ export default function StateMap({
     if (isDeltaMode && (value === 0 || value === 1)) {
       return value === 1 ? '#f97316' : '#e5e7eb';
     }
-    if (!usePrecinctLayer && planMode === 'current' && activeMetric === 'partisan') {
+    if (!usePrecinctLayer && activeMetric === 'partisan' && planMode !== 'delta') {
       return value >= 50 ? '#2f6fbd' : '#d14b45';
     }
     if (isDemographicMetric) {
@@ -726,7 +726,9 @@ export default function StateMap({
     : isDemographicMetric
       ? `${demographicGroupLabel} Population % (Precinct Bins)`
       : activeMetric === 'partisan'
-        ? (!usePrecinctLayer && planMode === 'current' ? 'Current plan district winner' : 'Democrat vs Republican %')
+        ? (!usePrecinctLayer && planMode !== 'delta'
+          ? (planMode === 'comparison' || planMode === 'interesting' ? 'Selected plan district winner' : 'Current plan district winner')
+          : 'Democrat vs Republican %')
         : 'Minority Population %';
   const activeGeoJsonKey = [
     stateAbbr,
@@ -832,7 +834,7 @@ export default function StateMap({
                 </div>
               )}
             </div>
-          ) : !usePrecinctLayer && planMode === 'current' && activeMetric === 'partisan' ? (
+          ) : !usePrecinctLayer && planMode !== 'delta' && activeMetric === 'partisan' ? (
             <div className="choropleth-legend__bins">
               <div className="choropleth-legend__bin-row">
                 <span className="choropleth-legend__bin-swatch" style={{ background: '#d14b45' }} />

@@ -3,7 +3,6 @@ import { useNavigate, useParams, Navigate } from 'react-router-dom';
 import StateMap from '../components/StateMap';
 import AnalysisPanel from '../components/AnalysisPanel';
 import PillDropdown from '../components/PillDropdown';
-import GuiQuickNav from '../components/GuiQuickNav';
 import { states } from '../data/mockData';
 import { guiMockPayloads } from '../data/guiMockPayloads';
 import {
@@ -167,7 +166,20 @@ export default function StateAnalysisPage() {
   }, [navigate, stateKey]);
 
   const handleCompareWithEnacted = useCallback(() => {
-    setMapPlanMode((currentMode) => (currentMode === 'comparison' ? 'current' : 'comparison'));
+    const nextMode = mapPlanMode === 'comparison' ? 'current' : 'comparison';
+    setMapPlanMode(nextMode);
+    if (nextMode === 'comparison') {
+      setSelectedInterestingPlan('comparison');
+    }
+  }, [mapPlanMode]);
+
+  const handlePlanModeChange = useCallback((nextMode) => {
+    setMapPlanMode(nextMode);
+    if (nextMode === 'comparison' || nextMode === 'delta') {
+      setSelectedInterestingPlan('comparison');
+    } else if (nextMode === 'interesting') {
+      setSelectedInterestingPlan('interestingMax');
+    }
   }, []);
 
   const handleDistrictDetail = useCallback(() => {
@@ -200,9 +212,24 @@ export default function StateAnalysisPage() {
 
   const currentPlanDistricts = districtsFromPlanPayload(guiPayloads?.currentPlan, stateData.currentPlanDistricts);
   const comparisonPlanOptions = interestingPlanOptions(guiPayloads?.planComparison);
-  const selectedComparisonPlan = comparisonPlanOptions.find((option) => option.value === selectedInterestingPlan)
-    ? selectedInterestingPlan
-    : comparisonPlanOptions[0]?.value || 'interestingMax';
+  const interestingPlanChoices = comparisonPlanOptions.filter((option) => option.value !== 'comparison');
+  const activeComparisonPlanOptions = mapPlanMode === 'interesting' && interestingPlanChoices.length > 0
+    ? interestingPlanChoices
+    : comparisonPlanOptions;
+  const fallbackComparisonPlan = comparisonPlanOptions.find((option) => option.value === 'comparison')
+    || comparisonPlanOptions[0];
+  const fallbackInterestingPlan = activeComparisonPlanOptions.find((option) => option.value === 'interestingMax')
+    || activeComparisonPlanOptions[0];
+  const selectedComparisonOption = activeComparisonPlanOptions.find((option) => option.value === selectedInterestingPlan)
+    || (mapPlanMode === 'interesting' ? fallbackInterestingPlan : fallbackComparisonPlan);
+  const selectedComparisonPlan = selectedComparisonOption?.value || 'comparison';
+  const isSplitPlanComparison = (mapPlanMode === 'comparison' || mapPlanMode === 'interesting')
+    && comparisonPlanOptions.length > 0;
+  const comparisonSummary = planComparisonSummary(
+    guiPayloads?.planComparison,
+    selectedComparisonPlan,
+    selectedComparisonOption,
+  );
 
   const mapCenter = leafletCenterFromGuiState(guiPayloads?.currentPlan?.state, stateData.center);
   const mapZoom = guiPayloads?.currentPlan?.state?.zoom ?? stateData.zoom;
@@ -211,6 +238,7 @@ export default function StateAnalysisPage() {
   const planSideAnalysisView = analysisView === 'districtDetails' ? 'districtDetails' : 'stateSummary';
   const shouldUsePrecinctLayer = analysisView === 'demographicHeatMap';
   const showPlanMetricControls = shouldUsePrecinctLayer;
+  const showAnalysisEnsembleControl = analysisView === 'boxWhisker' || analysisView === 'ensembleSplits';
   const analysisGroupLabel = groupLabelFromValue(mapDemographicGroup);
 
   return (
@@ -225,63 +253,161 @@ export default function StateAnalysisPage() {
           {activeWorkbenchTab === 'plans' ? (
             <div className="state-analysis__plan-shell">
               <section className="state-analysis__map-panel" aria-label={`${stateData.name} district map`}>
-                <div className="state-analysis__map-container">
-                  <StateMap
-                    key={stateKey}
-                    stateAbbr={stateKey}
-                    center={mapCenter}
-                    zoom={mapZoom}
-                    districtData={currentPlanDistricts}
-                    currentPlanPayload={guiPayloads?.currentPlan}
-                    planComparisonPayload={guiPayloads?.planComparison}
-                    selectedComparisonPlan={selectedComparisonPlan}
-                    heatMapPayload={activeHeatMapPayload}
-                    stateDemographics={{
-                      blackPercent: stateData.blackPercent,
-                      hispanicPercent: stateData.hispanicPercent,
-                      asianPercent: stateData.asianPercent,
-                    }}
-                    planMode={mapPlanMode}
-                    highlightedDistrict={selectedDistrictId}
-                    onDistrictSelect={setSelectedDistrictId}
-                    mapMetric={shouldUsePrecinctLayer ? mapMetric : 'partisan'}
-                    onMapMetricChange={setMapMetric}
-                    mapDemographicGroup={mapDemographicGroup}
-                    onMapDemographicGroupChange={setMapDemographicGroup}
-                    showDistrictOutlines={showDistrictOutlines}
-                    showOverlayControls={false}
-                    usePrecinctLayer={shouldUsePrecinctLayer}
-                  />
+                <div className={`state-analysis__map-container ${isSplitPlanComparison ? 'state-analysis__map-container--split' : ''}`}>
+                  {isSplitPlanComparison ? (
+                    <div className="state-analysis__compare-grid">
+                      <div className="state-analysis__compare-pane">
+                        <div className="state-analysis__compare-title">
+                          <span>Enacted plan</span>
+                          <strong>Current districts</strong>
+                        </div>
+                        <div className="state-analysis__compare-map">
+                          <StateMap
+                            key={`${stateKey}-current`}
+                            stateAbbr={stateKey}
+                            center={mapCenter}
+                            zoom={mapZoom}
+                            districtData={currentPlanDistricts}
+                            currentPlanPayload={guiPayloads?.currentPlan}
+                            planComparisonPayload={guiPayloads?.planComparison}
+                            selectedComparisonPlan={selectedComparisonPlan}
+                            heatMapPayload={activeHeatMapPayload}
+                            stateDemographics={{
+                              blackPercent: stateData.blackPercent,
+                              hispanicPercent: stateData.hispanicPercent,
+                              asianPercent: stateData.asianPercent,
+                            }}
+                            planMode="current"
+                            highlightedDistrict={selectedDistrictId}
+                            onDistrictSelect={setSelectedDistrictId}
+                            mapMetric="partisan"
+                            onMapMetricChange={setMapMetric}
+                            mapDemographicGroup={mapDemographicGroup}
+                            onMapDemographicGroupChange={setMapDemographicGroup}
+                            showDistrictOutlines={showDistrictOutlines}
+                            showOverlayControls={false}
+                            usePrecinctLayer={false}
+                          />
+                        </div>
+                      </div>
+
+                      <div className="state-analysis__compare-pane">
+                        <div className="state-analysis__compare-title">
+                          <span>{mapPlanMode === 'interesting' ? 'Interesting plan' : 'Comparison plan'}</span>
+                          <strong>{selectedComparisonOption?.label || titleCasePlanKey(selectedComparisonPlan)}</strong>
+                        </div>
+                        <div className="state-analysis__compare-map">
+                          <StateMap
+                            key={`${stateKey}-${selectedComparisonPlan}`}
+                            stateAbbr={stateKey}
+                            center={mapCenter}
+                            zoom={mapZoom}
+                            districtData={currentPlanDistricts}
+                            currentPlanPayload={guiPayloads?.currentPlan}
+                            planComparisonPayload={guiPayloads?.planComparison}
+                            selectedComparisonPlan={selectedComparisonPlan}
+                            heatMapPayload={activeHeatMapPayload}
+                            stateDemographics={{
+                              blackPercent: stateData.blackPercent,
+                              hispanicPercent: stateData.hispanicPercent,
+                              asianPercent: stateData.asianPercent,
+                            }}
+                            planMode={mapPlanMode}
+                            highlightedDistrict={selectedDistrictId}
+                            onDistrictSelect={setSelectedDistrictId}
+                            mapMetric="partisan"
+                            onMapMetricChange={setMapMetric}
+                            mapDemographicGroup={mapDemographicGroup}
+                            onMapDemographicGroupChange={setMapDemographicGroup}
+                            showDistrictOutlines={showDistrictOutlines}
+                            showOverlayControls={false}
+                            usePrecinctLayer={false}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <StateMap
+                      key={stateKey}
+                      stateAbbr={stateKey}
+                      center={mapCenter}
+                      zoom={mapZoom}
+                      districtData={currentPlanDistricts}
+                      currentPlanPayload={guiPayloads?.currentPlan}
+                      planComparisonPayload={guiPayloads?.planComparison}
+                      selectedComparisonPlan={selectedComparisonPlan}
+                      heatMapPayload={activeHeatMapPayload}
+                      stateDemographics={{
+                        blackPercent: stateData.blackPercent,
+                        hispanicPercent: stateData.hispanicPercent,
+                        asianPercent: stateData.asianPercent,
+                      }}
+                      planMode={mapPlanMode}
+                      highlightedDistrict={selectedDistrictId}
+                      onDistrictSelect={setSelectedDistrictId}
+                      mapMetric={shouldUsePrecinctLayer ? mapMetric : 'partisan'}
+                      onMapMetricChange={setMapMetric}
+                      mapDemographicGroup={mapDemographicGroup}
+                      onMapDemographicGroupChange={setMapDemographicGroup}
+                      showDistrictOutlines={showDistrictOutlines}
+                      showOverlayControls={false}
+                      usePrecinctLayer={shouldUsePrecinctLayer}
+                    />
+                  )}
                 </div>
 
                 <div className="state-analysis__plan-controls">
+                  {isSplitPlanComparison && (
+                    <div className="state-analysis__compare-summary" aria-label="Selected comparison plan summary">
+                      <div className="state-analysis__compare-summary-main">
+                        <span className="state-analysis__compare-summary-kicker">
+                          {mapPlanMode === 'interesting' ? 'Interesting plan' : 'Compared plan'}
+                        </span>
+                        <strong>{selectedComparisonOption?.label || titleCasePlanKey(selectedComparisonPlan)}</strong>
+                        {comparisonSummary.reason && <span>{comparisonSummary.reason}</span>}
+                      </div>
+                      <div className="state-analysis__compare-summary-stat">
+                        <span>Changed precincts</span>
+                        <strong>{comparisonSummary.changedLabel}</strong>
+                      </div>
+                      {comparisonSummary.metricRows.map(([label, value]) => (
+                        <div className="state-analysis__compare-summary-stat" key={label}>
+                          <span>{label}</span>
+                          <strong>{value}</strong>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
                   <PillDropdown
                     className="state-analysis__control-field"
                     label="Plan"
                     value={mapPlanMode}
                     options={PLAN_OPTIONS}
-                    onChange={setMapPlanMode}
+                    onChange={handlePlanModeChange}
                   />
 
                   {(mapPlanMode === 'comparison' || mapPlanMode === 'delta' || mapPlanMode === 'interesting')
-                    && comparisonPlanOptions.length > 0 && (
+                    && activeComparisonPlanOptions.length > 0 && (
                     <PillDropdown
                       className="state-analysis__control-field state-analysis__control-field--wide"
                       label={mapPlanMode === 'interesting' ? 'Interesting' : 'Compare'}
                       value={selectedComparisonPlan}
-                      options={comparisonPlanOptions}
+                      options={activeComparisonPlanOptions}
                       onChange={setSelectedInterestingPlan}
                     />
                   )}
 
-                  <button
-                    type="button"
-                    className={`state-analysis__action ${mapPlanMode === 'comparison' ? 'state-analysis__action--active' : ''}`}
-                    onClick={handleCompareWithEnacted}
-                    title="Show enacted vs selected plan on the map (GUI-8)"
-                  >
-                    Compare with enacted
-                  </button>
+                  {mapPlanMode !== 'interesting' && (
+                    <button
+                      type="button"
+                      className={`state-analysis__action ${mapPlanMode === 'comparison' ? 'state-analysis__action--active' : ''}`}
+                      onClick={handleCompareWithEnacted}
+                      title={mapPlanMode === 'comparison' ? 'Return to the single current-plan map' : 'Show enacted vs selected plan on the map (GUI-8)'}
+                    >
+                      {mapPlanMode === 'comparison' ? 'Exit comparison' : 'Compare with enacted'}
+                    </button>
+                  )}
 
                   <button
                     type="button"
@@ -325,16 +451,26 @@ export default function StateAnalysisPage() {
               </section>
 
               <aside className="state-analysis__overview-panel" aria-label="State overview">
-                <AnalysisPanel
-                  ensembleType={ensembleType}
-                  analysisView={planSideAnalysisView}
-                  stateData={stateData}
-                  guiPayloads={guiPayloads}
-                  isSummaryLoading={isGuiDataLoading}
-                  summaryError={guiDataError}
-                  highlightedDistrict={selectedDistrictId}
-                  onHighlightDistrict={setSelectedDistrictId}
-                />
+                {analysisView === 'interestingPlanMap' ? (
+                  <InterestingPlanPanel
+                    plans={interestingPlanChoices.length > 0 ? interestingPlanChoices : comparisonPlanOptions}
+                    selectedPlanKey={selectedComparisonPlan}
+                    selectedPlan={selectedComparisonOption}
+                    summary={comparisonSummary}
+                    onSelectPlan={setSelectedInterestingPlan}
+                  />
+                ) : (
+                  <AnalysisPanel
+                    ensembleType={ensembleType}
+                    analysisView={planSideAnalysisView}
+                    stateData={stateData}
+                    guiPayloads={guiPayloads}
+                    isSummaryLoading={isGuiDataLoading}
+                    summaryError={guiDataError}
+                    highlightedDistrict={selectedDistrictId}
+                    onHighlightDistrict={setSelectedDistrictId}
+                  />
+                )}
               </aside>
             </div>
           ) : (
@@ -354,13 +490,15 @@ export default function StateAnalysisPage() {
                   options={ANALYSIS_GROUP_OPTIONS}
                   onChange={setMapDemographicGroup}
                 />
-                <PillDropdown
-                  className="state-analysis__control-field"
-                  label="Ensemble"
-                  value={ensembleType}
-                  options={ENSEMBLE_OPTIONS}
-                  onChange={setEnsembleType}
-                />
+                {showAnalysisEnsembleControl && (
+                  <PillDropdown
+                    className="state-analysis__control-field"
+                    label="Ensemble"
+                    value={ensembleType}
+                    options={ENSEMBLE_OPTIONS}
+                    onChange={setEnsembleType}
+                  />
+                )}
               </div>
 
               <div className="state-analysis__analysis-split">
@@ -412,7 +550,72 @@ export default function StateAnalysisPage() {
             </div>
           )}
 
-          <GuiQuickNav stateAbbr={stateKey} />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function InterestingPlanPanel({
+  plans,
+  selectedPlanKey,
+  selectedPlan,
+  summary,
+  onSelectPlan,
+}) {
+  const visiblePlans = plans || [];
+
+  return (
+    <div className="interesting-plan-panel">
+      <div className="interesting-plan-panel__card">
+        <div className="interesting-plan-panel__heading">
+          <span>GUI-19</span>
+          <h3>Interesting District Plan</h3>
+          <p>SeaWulf plan variants selected for notable minority-effectiveness or opportunity-district behavior.</p>
+        </div>
+
+        <div className="interesting-plan-panel__selected">
+          <span>Selected Plan</span>
+          <strong>{selectedPlan?.label || titleCasePlanKey(selectedPlanKey)}</strong>
+          {summary.reason && <p>{summary.reason}</p>}
+        </div>
+
+        <div className="interesting-plan-panel__metrics" aria-label="Selected interesting plan metrics">
+          <div>
+            <span>Changed precincts</span>
+            <strong>{summary.changedLabel}</strong>
+          </div>
+          {summary.metricRows.map(([label, value]) => (
+            <div key={label}>
+              <span>{label}</span>
+              <strong>{value}</strong>
+            </div>
+          ))}
+        </div>
+
+        <div className="interesting-plan-panel__catalog">
+          <div className="interesting-plan-panel__catalog-title">
+            <span>Available Interesting Plans</span>
+            <strong>{visiblePlans.length}</strong>
+          </div>
+          <div className="interesting-plan-panel__list">
+            {visiblePlans.map((plan) => (
+              <button
+                key={plan.value}
+                type="button"
+                className={`interesting-plan-panel__option ${plan.value === selectedPlanKey ? 'interesting-plan-panel__option--active' : ''}`}
+                onClick={() => onSelectPlan(plan.value)}
+              >
+                <span>{plan.label}</span>
+                {plan.description && <small>{plan.description}</small>}
+              </button>
+            ))}
+            {visiblePlans.length === 0 && (
+              <div className="interesting-plan-panel__empty">
+                No interesting plans are available for this state yet.
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>
@@ -494,11 +697,55 @@ function interestingPlanOptions(planComparisonPayload) {
   const metadata = planComparisonPayload?.planMetadata || {};
   return Object.keys(plans)
     .filter((key) => key !== 'enacted')
-    .map((key) => ({
-      value: key,
-      label: metadata[key]?.label || titleCasePlanKey(key),
-      description: metadata[key]?.characteristics,
-    }));
+    .map((key) => {
+      const plan = plans[key] || {};
+      const planMetadata = metadata[key] || {};
+      const metrics = plan.interestingMetrics || plan.metrics || planMetadata.interestingMetrics || planMetadata.metrics || {};
+      const description = plan.interestingReason
+        || plan.reason
+        || planMetadata.interestingReason
+        || planMetadata.characteristics
+        || planMetadata.description;
+      return {
+        value: key,
+        label: planMetadata.label || plan.label || titleCasePlanKey(key),
+        description,
+        metrics,
+      };
+    });
+}
+
+function planComparisonSummary(planComparisonPayload, selectedPlanKey, selectedOption) {
+  const plans = planComparisonPayload?.plans || {};
+  const enactedAssignments = plans.enacted?.precinctToDistrict || {};
+  const selectedAssignments = plans[selectedPlanKey]?.precinctToDistrict || {};
+  const sharedPrecinctIds = Object.keys(enactedAssignments).filter((precinctId) => selectedAssignments[precinctId] != null);
+  const changedCount = sharedPrecinctIds.filter((precinctId) => (
+    Number(enactedAssignments[precinctId]) !== Number(selectedAssignments[precinctId])
+  )).length;
+  const totalCompared = sharedPrecinctIds.length || Object.keys(selectedAssignments).length;
+  const changedLabel = totalCompared > 0 ? `${changedCount} of ${totalCompared}` : 'N/A';
+  const metricRows = Object.entries(selectedOption?.metrics || {})
+    .slice(0, 3)
+    .map(([key, value]) => [formatPlanMetricLabel(key), formatPlanMetricValue(value)]);
+
+  return {
+    changedLabel,
+    reason: selectedOption?.description,
+    metricRows,
+  };
+}
+
+function formatPlanMetricLabel(key) {
+  return titleCasePlanKey(key)
+    .replace(/\bRep Dem\b/i, 'Rep/Dem')
+    .replace(/\bCvap\b/g, 'CVAP');
+}
+
+function formatPlanMetricValue(value) {
+  if (value == null || value === '') return 'N/A';
+  if (typeof value === 'number') return Number.isInteger(value) ? String(value) : value.toFixed(2);
+  return String(value);
 }
 
 function titleCasePlanKey(key) {

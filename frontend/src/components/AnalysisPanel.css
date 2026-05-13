@@ -1,6 +1,8 @@
 .analysis-panel {
   padding: 14px;
-  overflow-y: auto;
+  height: 100%;
+  min-height: 0;
+  overflow: visible;
   display: grid;
   gap: 10px;
 }
@@ -24,6 +26,8 @@
   border-radius: var(--radius-md);
   padding: 16px;
   box-shadow: 0 1px 6px rgba(21, 35, 43, 0.05);
+  min-height: 0;
+  overflow: visible;
 }
 
 .chart-card--nested {
@@ -55,14 +59,14 @@
 }
 
 .analysis-table-wrap {
-  overflow-x: auto;
+  overflow: visible;
   margin-top: 10px;
   border-radius: var(--radius-sm);
 }
 
 .analysis-table-wrap--scroll {
-  max-height: 260px;
-  overflow: auto;
+  max-height: none;
+  overflow: visible;
   border: 1px solid rgba(232, 220, 204, 0.74);
   border-radius: 8px;
 }
@@ -78,6 +82,7 @@
   width: 100%;
   border-collapse: collapse;
   font-size: 0.84rem;
+  table-layout: fixed;
 }
 
 .analysis-table th {
@@ -89,12 +94,16 @@
   font-size: 0.69rem;
   text-transform: uppercase;
   letter-spacing: 0.5px;
+  overflow-wrap: anywhere;
+  white-space: normal;
 }
 
 .analysis-table td {
   padding: 6px 8px;
   border-bottom: 1px solid rgba(232, 220, 204, 0.74);
   font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+  white-space: normal;
 }
 
 .analysis-table tbody tr {
@@ -288,19 +297,18 @@
 }
 
 .ei-controls {
-  margin-bottom: 10px;
   display: grid;
   grid-template-columns: repeat(2, minmax(220px, 1fr));
-  gap: 10px;
+  gap: 8px;
 }
 
 .ei-controls__item {
   border: 1px solid rgba(190, 172, 150, 0.36);
   border-radius: 10px;
   background: rgba(255, 255, 255, 0.62);
-  padding: 8px 10px;
+  padding: 7px 9px;
   display: grid;
-  gap: 6px;
+  gap: 5px;
 }
 
 .ei-controls__item label,
@@ -316,8 +324,8 @@
   border-radius: 8px;
   background: #fffdf9;
   color: #2a3e45;
-  font-size: 0.92rem;
-  padding: 6px 10px;
+  font-size: 0.86rem;
+  padding: 5px 9px;
 }
 
 .ei-group-toggle {
@@ -346,10 +354,190 @@
   cursor: default;
 }
 
+.minority-effectiveness-summary {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.minority-effectiveness-summary__card {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+  padding: 7px 9px;
+  border: 1px solid rgba(190, 172, 150, 0.36);
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.62);
+}
+
+.minority-effectiveness-summary__card span {
+  color: #6d5e4c;
+  font-size: 0.62rem;
+  font-weight: 850;
+  letter-spacing: 0.06em;
+  line-height: 1.15;
+  text-transform: uppercase;
+}
+
+.minority-effectiveness-summary__card strong {
+  color: var(--color-primary-dark);
+  font-size: 0.82rem;
+  line-height: 1.15;
+  overflow-wrap: anywhere;
+}
+
+.minority-effectiveness-table {
+  margin-top: 6px;
+  border: 1px solid rgba(232, 220, 204, 0.74);
+  border-radius: var(--radius-sm);
+}
+
+.minority-histogram-summary {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.minority-histogram-summary__card {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+  padding: 7px 9px;
+  border: 1px solid rgba(190, 172, 150, 0.36);
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.62);
+}
+
+.minority-histogram-summary__card span {
+  color: #6d5e4c;
+  font-size: 0.62rem;
+  font-weight: 850;
+  letter-spacing: 0.06em;
+  line-height: 1.15;
+  text-transform: uppercase;
+}
+
+.minority-histogram-summary__card strong {
+  color: var(--color-primary-dark);
+  font-size: 0.82rem;
+  line-height: 1.15;
+  overflow-wrap: anywhere;
+}
+
+.minority-histogram-table {
+  margin-top: 6px;
+  border: 1px solid rgba(232, 220, 204, 0.74);
+  border-radius: var(--radius-sm);
+}
+
+.ei-diagnostic {
+  display: grid;
+  gap: 8px;
+  min-height: 0;
+}
+
+.ei-diagnostic__summary {
+  display: grid;
+  grid-template-columns: minmax(120px, 0.72fr) minmax(180px, 1.45fr) minmax(100px, 0.55fr);
+  gap: 6px;
+}
+
+.ei-diagnostic__summary-card {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+  padding: 7px 9px;
+  border: 1px solid rgba(190, 172, 150, 0.36);
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.62);
+}
+
+.ei-diagnostic__summary-card span,
+.ei-overlap-panel__header span {
+  color: #6d5e4c;
+  font-size: 0.62rem;
+  font-weight: 850;
+  letter-spacing: 0.06em;
+  line-height: 1.15;
+  text-transform: uppercase;
+}
+
+.ei-diagnostic__summary-card strong,
+.ei-overlap-panel__header strong {
+  color: var(--color-primary-dark);
+  font-size: 0.82rem;
+  line-height: 1.15;
+  overflow-wrap: anywhere;
+}
+
+.ei-chart-shell,
+.ei-overlap-panel {
+  border: 1px solid rgba(190, 172, 150, 0.36);
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.52);
+}
+
+.ei-chart-shell {
+  padding: 4px 2px 0;
+}
+
+.ei-overlap-panel {
+  padding: 7px;
+}
+
+.ei-overlap-panel__header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.ei-overlap-panel .analysis-table-wrap {
+  margin-top: 0;
+}
+
 .analysis-note {
   margin: 0;
   color: var(--color-text-secondary);
   font-size: 0.9rem;
+}
+
+.analysis-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.analysis-pagination__button {
+  border: 1px solid rgba(31, 111, 120, 0.5);
+  border-radius: 999px;
+  background: rgba(31, 111, 120, 0.08);
+  color: var(--color-primary-dark);
+  font-size: 0.76rem;
+  font-weight: 800;
+  padding: 5px 10px;
+}
+
+.analysis-pagination__button:hover:not(:disabled) {
+  background: var(--color-primary);
+  color: #f7fffb;
+}
+
+.analysis-pagination__button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.analysis-pagination__status {
+  color: var(--color-text-secondary);
+  font-size: 0.76rem;
+  font-weight: 800;
+  text-align: center;
 }
 
 @media (max-width: 760px) {
@@ -370,6 +558,18 @@
   }
 
   .ei-controls {
+    grid-template-columns: 1fr;
+  }
+
+  .minority-effectiveness-summary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .minority-histogram-summary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .ei-diagnostic__summary {
     grid-template-columns: 1fr;
   }
 
