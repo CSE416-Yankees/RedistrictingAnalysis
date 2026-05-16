@@ -12,3 +12,28 @@
   min-height: 0;
   overflow: hidden;
 }
+
+.app__main:focus {
+  outline: none;
+}
+
+.app__skip-link {
+  position: absolute;
+  left: 12px;
+  top: -100px;
+  z-index: 2000;
+  padding: 8px 14px;
+  border-radius: 999px;
+  background: var(--color-primary);
+  color: #fff;
+  font-weight: 800;
+  font-size: 0.84rem;
+  box-shadow: var(--shadow-md);
+}
+
+.app__skip-link:focus,
+.app__skip-link:focus-visible {
+  top: 12px;
+  outline: 3px solid rgba(31, 111, 120, 0.35);
+  outline-offset: 2px;
+}

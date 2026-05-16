@@ -50,9 +50,24 @@
 }
 
 .pill-dropdown__caret {
-  line-height: 1;
+  flex: 0 0 auto;
   color: #6f604e;
-  font-size: 0.7rem;
+  transition: transform 0.18s ease;
+  transform-origin: center;
+}
+
+.pill-dropdown--open .pill-dropdown__caret {
+  transform: rotate(-180deg);
+  color: var(--color-primary-dark);
+}
+
+.pill-dropdown__trigger:hover:not(:disabled) {
+  border-color: rgba(31, 111, 120, 0.55);
+}
+
+.pill-dropdown--open .pill-dropdown__trigger {
+  border-color: rgba(31, 111, 120, 0.55);
+  box-shadow: 0 0 0 3px rgba(31, 111, 120, 0.14);
 }
 
 .pill-dropdown__menu {

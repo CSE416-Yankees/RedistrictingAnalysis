@@ -45,13 +45,13 @@ export default function Header() {
         </Link>
         <Link
           to="/state/MS"
-          className={`header__link ${location.pathname.includes('/state/MS') ? 'header__link--active' : ''}`}
+          className={`header__link ${stateKey === 'MS' ? 'header__link--active' : ''}`}
         >
           Mississippi
         </Link>
         <Link
           to="/state/MD"
-          className={`header__link ${location.pathname.includes('/state/MD') ? 'header__link--active' : ''}`}
+          className={`header__link ${stateKey === 'MD' ? 'header__link--active' : ''}`}
         >
           Maryland
         </Link>

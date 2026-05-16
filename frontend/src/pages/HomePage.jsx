@@ -27,16 +27,26 @@ export default function HomePage() {
                 key={s.abbr}
                 className="state-card"
                 onClick={() => navigate(`/state/${s.abbr}`)}
+                aria-label={`Open ${s.name} analysis`}
               >
                 <span className="state-card__abbr" aria-hidden="true">{s.abbr}</span>
                 <span className="state-card__copy">
                   <span className="state-card__name">{s.name}</span>
                   <span className="state-card__meta">
                     {states[s.abbr].numDistricts} districts
-                    {states[s.abbr].preclearance ? ' - preclearance context' : ' - standard review'}
+                    {states[s.abbr].preclearance ? ' \u2014 preclearance context' : ' \u2014 standard review'}
                   </span>
                 </span>
-                <span className="state-card__arrow">View</span>
+                <svg
+                  className="state-card__arrow"
+                  viewBox="0 0 14 14"
+                  width="14"
+                  height="14"
+                  aria-hidden="true"
+                  focusable="false"
+                >
+                  <path d="M4 2.5l5 4.5-5 4.5" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
               </button>
             ))}
           </div>

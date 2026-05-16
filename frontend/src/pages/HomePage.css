@@ -168,15 +168,14 @@
 }
 
 .state-card__arrow {
-  font-size: 0.72rem;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
+  flex: 0 0 auto;
   color: #7a7064;
+  transition: transform 0.18s ease, color 0.18s ease;
 }
 
-.state-card:hover .state-card__arrow {
-  transform: translateX(4px);
+.state-card:hover .state-card__arrow,
+.state-card:focus-visible .state-card__arrow {
+  transform: translateX(3px);
   color: var(--color-primary-dark);
 }
 

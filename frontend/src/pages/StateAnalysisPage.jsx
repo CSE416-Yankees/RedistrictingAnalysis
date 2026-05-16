@@ -482,8 +482,12 @@ export default function StateAnalysisPage() {
                       type="button"
                       className={`state-analysis__action ${analysisView === 'districtDetails' ? 'state-analysis__action--active' : ''}`}
                       onClick={handleDistrictDetail}
+                      aria-pressed={analysisView === 'districtDetails'}
+                      title={analysisView === 'districtDetails'
+                        ? 'Return to the state summary panel'
+                        : 'Show per-district representation details'}
                     >
-                      District Detail
+                      {analysisView === 'districtDetails' ? 'Hide district detail' : 'District detail'}
                     </button>
                   )}
 
@@ -491,7 +495,7 @@ export default function StateAnalysisPage() {
                     <>
                       <PillDropdown
                         className="state-analysis__control-field"
-                        label="Color"
+                        label="Color by"
                         value={mapMetric}
                         options={MAP_METRIC_OPTIONS}
                         onChange={setMapMetric}
@@ -509,13 +513,16 @@ export default function StateAnalysisPage() {
                     </>
                   )}
 
-                  <label className="state-analysis__check-pill">
+                  <label
+                    className="state-analysis__check-pill"
+                    title="Toggle district boundary outlines on the map"
+                  >
                     <input
                       type="checkbox"
                       checked={showDistrictOutlines}
                       onChange={(event) => setShowDistrictOutlines(event.target.checked)}
                     />
-                    <span>Boundaries</span>
+                    <span>District boundaries</span>
                   </label>
                 </div>
               </section>

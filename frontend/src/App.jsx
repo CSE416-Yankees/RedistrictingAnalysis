@@ -7,8 +7,9 @@ import './App.css';
 export default function App() {
   return (
     <div className="app">
+      <a href="#main-content" className="app__skip-link">Skip to main content</a>
       <Header />
-      <main className="app__main">
+      <main id="main-content" className="app__main" tabIndex={-1}>
         <Routes>
           <Route path="/" element={<HomePage />} />
           <Route path="/state/:stateAbbr" element={<StateAnalysisPage />} />

@@ -59,7 +59,16 @@ export default function PillDropdown({
         onClick={() => hasOptions && setIsOpen((prev) => !prev)}
       >
         <span className="pill-dropdown__value">{selected?.label ?? value ?? 'N/A'}</span>
-        <span className="pill-dropdown__caret">v</span>
+        <svg
+          className="pill-dropdown__caret"
+          viewBox="0 0 12 12"
+          width="10"
+          height="10"
+          aria-hidden="true"
+          focusable="false"
+        >
+          <path d="M2 4.5l4 4 4-4" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
       </button>
 
       {menuOpen && (
