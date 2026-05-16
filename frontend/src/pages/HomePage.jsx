@@ -15,9 +15,8 @@ export default function HomePage() {
         <div className="home__intro home__fade-in">
           <h1 className="home__heading">See the people behind the district lines</h1>
           <p className="home__desc">
-            Explore each state like a conversation, not just a chart. Compare
-            plans, inspect representation, and follow how demographic patterns
-            shape political outcomes.
+            Explore each state through maps, district plans, representation,
+            demographics, and voting-rights analysis.
           </p>
         </div>
         <div className="home__states home__fade-in" style={{ animationDelay: '90ms' }}>
@@ -53,7 +52,7 @@ export default function HomePage() {
             </div>
             <div>
               <strong>Interactive Geography</strong>
-              <p>Inspect the current district plan, precinct heat maps, and plan differences.</p>
+              <p>Current districts, heat maps, and plan differences.</p>
             </div>
           </div>
           <div className="feature">
@@ -66,7 +65,7 @@ export default function HomePage() {
             </div>
             <div>
               <strong>Scenario Comparison</strong>
-              <p>Contrast current, comparison, delta, and interesting district plans.</p>
+              <p>Compare enacted, alternate, and notable district plans.</p>
             </div>
           </div>
           <div className="feature">
@@ -77,7 +76,7 @@ export default function HomePage() {
             </div>
             <div>
               <strong>Voting Rights Diagnostics</strong>
-              <p>Review Gingles, EI, ensemble splits, and seat-vote responsiveness in one place.</p>
+              <p>Gingles, EI, ensemble, and VRA metrics in one workspace.</p>
             </div>
           </div>
         </div>

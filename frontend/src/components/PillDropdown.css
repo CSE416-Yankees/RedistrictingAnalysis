@@ -5,6 +5,10 @@
   gap: 6px;
 }
 
+.pill-dropdown--open {
+  z-index: 2300;
+}
+
 .pill-dropdown__label {
   font-size: 0.67rem;
   font-weight: 800;

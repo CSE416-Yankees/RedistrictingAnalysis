@@ -56,10 +56,56 @@ const ANALYSIS_TAB_VIEWS = new Set([
 
 const ANALYSIS_TAB_OPTIONS = ANALYSIS_OPTIONS.filter((option) => ANALYSIS_TAB_VIEWS.has(option.value));
 
+const VIEW_TITLES = {
+  currentPlanMap: 'Current district plan',
+  stateSummary: 'State data summary',
+  demographicHeatMap: 'Demographic heat map',
+  districtDetails: 'Congressional representation',
+  planComparisonMap: 'Compare district plans',
+  interestingPlanMap: 'Interesting district plan',
+  gingles: 'Gingles analysis',
+  ginglesTable: 'Gingles precinct table',
+  eiCandidates: 'Ecological inference results',
+  ensembleSplits: 'Ensemble vote splits',
+  boxWhisker: 'District distribution',
+  vraImpact: 'VRA impact thresholds',
+  minorityEffectivenessBox: 'Minority effectiveness range',
+  minorityEffectivenessHistogram: 'Minority effectiveness histogram',
+};
+
+const VIEW_DESCRIPTIONS = {
+  currentPlanMap: 'Current enacted congressional districts centered on the selected state.',
+  stateSummary: 'Population, vote share, representation, demographics, and ensemble availability.',
+  demographicHeatMap: 'Precinct demographic concentration by selected minority group.',
+  districtDetails: 'Representative, party, vote margin, and effectiveness scores by district.',
+  planComparisonMap: 'Enacted and selected district plans shown side by side.',
+  interestingPlanMap: 'SeaWulf-selected plans with the metrics that make each plan notable.',
+  gingles: 'Precinct-level vote share compared with selected minority population share.',
+  ginglesTable: 'Precinct population and vote inputs used in the Gingles analysis.',
+  eiCandidates: 'Candidate support curves by selected racial or language groups.',
+  ensembleSplits: 'Race-Blind and VRA-constrained partisan split frequencies.',
+  boxWhisker: 'District-level demographic distributions across ensemble plans.',
+  vraImpact: 'Race-Blind and VRA ensemble outcomes compared against legal thresholds.',
+  minorityEffectivenessBox: 'Effective-district counts compared across Race-Blind and VRA ensembles.',
+  minorityEffectivenessHistogram: 'Distribution overlap for minority-effective districts across ensembles.',
+};
+
 function matchGuiSlug(slug) {
   if (slug == null || slug === '') return undefined;
   const normalized = String(slug).trim().toLowerCase();
   return ALL_GUI_SLUGS.find((s) => s.toLowerCase() === normalized);
+}
+
+function defaultComparisonPlanForMode(planMode) {
+  if (planMode === 'comparison' || planMode === 'delta') return 'comparison';
+  return 'interestingMax';
+}
+
+function pageTitleForView(stateName, analysisView, mapPlanMode) {
+  if (analysisView === 'stateSummary' && mapPlanMode === 'current') {
+    return `${stateName} district plans`;
+  }
+  return VIEW_TITLES[analysisView] || `${stateName} analysis`;
 }
 
 export default function StateAnalysisPage() {
@@ -91,6 +137,7 @@ export default function StateAnalysisPage() {
     const cfg = resolveGuiUiConfig(guiSlugCanonical);
     setAnalysisView(cfg.analysisView);
     setMapPlanMode(cfg.mapPlanMode);
+    setSelectedInterestingPlan(defaultComparisonPlanForMode(cfg.mapPlanMode));
     setMapMetric(cfg.mapMetric);
     setMapDemographicGroup((currentGroup) => {
       if (ANALYSIS_TAB_VIEWS.has(cfg.analysisView)) {
@@ -154,10 +201,6 @@ export default function StateAnalysisPage() {
     };
   }, [stateKey]);
 
-  useEffect(() => {
-    setSelectedInterestingPlan('interestingMax');
-  }, [stateKey]);
-
   const handleAnalysisMenuChange = useCallback((nextValue) => {
     if (!stateKey) return;
     const slug = routeSlugForAnalysisView(nextValue);
@@ -170,17 +213,31 @@ export default function StateAnalysisPage() {
     setMapPlanMode(nextMode);
     if (nextMode === 'comparison') {
       setSelectedInterestingPlan('comparison');
+      setAnalysisView('planComparisonMap');
+      navigate(`/state/${stateKey}/gui/gui-8`);
+    } else {
+      setAnalysisView('stateSummary');
+      navigate(`/state/${stateKey}`);
     }
-  }, [mapPlanMode]);
+  }, [mapPlanMode, navigate, stateKey]);
 
   const handlePlanModeChange = useCallback((nextMode) => {
     setMapPlanMode(nextMode);
     if (nextMode === 'comparison' || nextMode === 'delta') {
       setSelectedInterestingPlan('comparison');
+      setAnalysisView(nextMode === 'comparison' ? 'planComparisonMap' : 'stateSummary');
+      if (nextMode === 'comparison') {
+        navigate(`/state/${stateKey}/gui/gui-8`);
+      }
     } else if (nextMode === 'interesting') {
       setSelectedInterestingPlan('interestingMax');
+      setAnalysisView('interestingPlanMap');
+      navigate(`/state/${stateKey}/gui/gui-19`);
+    } else {
+      setAnalysisView('stateSummary');
+      navigate(`/state/${stateKey}`);
     }
-  }, []);
+  }, [navigate, stateKey]);
 
   const handleDistrictDetail = useCallback(() => {
     setAnalysisView((currentView) => (currentView === 'districtDetails' ? 'stateSummary' : 'districtDetails'));
@@ -240,18 +297,29 @@ export default function StateAnalysisPage() {
   const showPlanMetricControls = shouldUsePrecinctLayer;
   const showAnalysisEnsembleControl = analysisView === 'boxWhisker' || analysisView === 'ensembleSplits';
   const analysisGroupLabel = groupLabelFromValue(mapDemographicGroup);
+  const isFullWidthPlanComparison = mapPlanMode === 'comparison' && isSplitPlanComparison;
+  const pageTitle = pageTitleForView(stateData.name, analysisView, mapPlanMode);
+  const pageDescription = VIEW_DESCRIPTIONS[analysisView] || VIEW_DESCRIPTIONS.stateSummary;
+  const workspaceLabel = activeWorkbenchTab === 'plans' ? 'Plan Explorer' : 'Analysis';
 
   return (
     <div className="state-analysis">
       <div className="state-analysis__main">
         <div className="state-analysis__map">
           <div className="state-analysis__state-title">
-            <h2>{activeWorkbenchTab === 'plans' ? 'Congressional Districts' : 'Analysis'}</h2>
-            <span>{stateData.name}</span>
+            <div className="state-analysis__title-copy">
+              <span className="state-analysis__eyebrow">{workspaceLabel}</span>
+              <h2>{pageTitle}</h2>
+              <p>{pageDescription}</p>
+            </div>
+            <div className="state-analysis__title-meta" aria-label="Selected state">
+              <span>{stateData.name}</span>
+              <span>{stateData.numDistricts} districts</span>
+            </div>
           </div>
 
           {activeWorkbenchTab === 'plans' ? (
-            <div className="state-analysis__plan-shell">
+            <div className={`state-analysis__plan-shell ${isFullWidthPlanComparison ? 'state-analysis__plan-shell--compare' : ''}`}>
               <section className="state-analysis__map-panel" aria-label={`${stateData.name} district map`}>
                 <div className={`state-analysis__map-container ${isSplitPlanComparison ? 'state-analysis__map-container--split' : ''}`}>
                   {isSplitPlanComparison ? (
@@ -403,19 +471,21 @@ export default function StateAnalysisPage() {
                       type="button"
                       className={`state-analysis__action ${mapPlanMode === 'comparison' ? 'state-analysis__action--active' : ''}`}
                       onClick={handleCompareWithEnacted}
-                      title={mapPlanMode === 'comparison' ? 'Return to the single current-plan map' : 'Show enacted vs selected plan on the map (GUI-8)'}
+                      title={mapPlanMode === 'comparison' ? 'Return to the single current-plan map' : 'Show enacted and selected plans side by side'}
                     >
                       {mapPlanMode === 'comparison' ? 'Exit comparison' : 'Compare with enacted'}
                     </button>
                   )}
 
-                  <button
-                    type="button"
-                    className={`state-analysis__action ${analysisView === 'districtDetails' ? 'state-analysis__action--active' : ''}`}
-                    onClick={handleDistrictDetail}
-                  >
-                    District Detail
-                  </button>
+                  {!isFullWidthPlanComparison && (
+                    <button
+                      type="button"
+                      className={`state-analysis__action ${analysisView === 'districtDetails' ? 'state-analysis__action--active' : ''}`}
+                      onClick={handleDistrictDetail}
+                    >
+                      District Detail
+                    </button>
+                  )}
 
                   {showPlanMetricControls && (
                     <>
@@ -450,28 +520,30 @@ export default function StateAnalysisPage() {
                 </div>
               </section>
 
-              <aside className="state-analysis__overview-panel" aria-label="State overview">
-                {analysisView === 'interestingPlanMap' ? (
-                  <InterestingPlanPanel
-                    plans={interestingPlanChoices.length > 0 ? interestingPlanChoices : comparisonPlanOptions}
-                    selectedPlanKey={selectedComparisonPlan}
-                    selectedPlan={selectedComparisonOption}
-                    summary={comparisonSummary}
-                    onSelectPlan={setSelectedInterestingPlan}
-                  />
-                ) : (
-                  <AnalysisPanel
-                    ensembleType={ensembleType}
-                    analysisView={planSideAnalysisView}
-                    stateData={stateData}
-                    guiPayloads={guiPayloads}
-                    isSummaryLoading={isGuiDataLoading}
-                    summaryError={guiDataError}
-                    highlightedDistrict={selectedDistrictId}
-                    onHighlightDistrict={setSelectedDistrictId}
-                  />
-                )}
-              </aside>
+              {!isFullWidthPlanComparison && (
+                <aside className="state-analysis__overview-panel" aria-label="State overview">
+                  {analysisView === 'interestingPlanMap' ? (
+                    <InterestingPlanPanel
+                      plans={interestingPlanChoices.length > 0 ? interestingPlanChoices : comparisonPlanOptions}
+                      selectedPlanKey={selectedComparisonPlan}
+                      selectedPlan={selectedComparisonOption}
+                      summary={comparisonSummary}
+                      onSelectPlan={setSelectedInterestingPlan}
+                    />
+                  ) : (
+                    <AnalysisPanel
+                      ensembleType={ensembleType}
+                      analysisView={planSideAnalysisView}
+                      stateData={stateData}
+                      guiPayloads={guiPayloads}
+                      isSummaryLoading={isGuiDataLoading}
+                      summaryError={guiDataError}
+                      highlightedDistrict={selectedDistrictId}
+                      onHighlightDistrict={setSelectedDistrictId}
+                    />
+                  )}
+                </aside>
+              )}
             </div>
           ) : (
             <div className="state-analysis__analysis-shell">
@@ -567,9 +639,9 @@ function InterestingPlanPanel({
 
   return (
     <div className="interesting-plan-panel">
-      <div className="interesting-plan-panel__card">
-        <div className="interesting-plan-panel__heading">
-          <span>GUI-19</span>
+        <div className="interesting-plan-panel__card">
+          <div className="interesting-plan-panel__heading">
+          <span>SeaWulf Plans</span>
           <h3>Interesting District Plan</h3>
           <p>SeaWulf plan variants selected for notable minority-effectiveness or opportunity-district behavior.</p>
         </div>

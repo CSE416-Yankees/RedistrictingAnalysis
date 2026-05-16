@@ -64,13 +64,14 @@
 .home__panel {
   width: 392px;
   min-width: 392px;
-  overflow: visible;
+  min-height: 0;
+  overflow: hidden;
   background: linear-gradient(180deg, rgba(255, 253, 249, 0.98) 0%, rgba(255, 249, 241, 0.98) 100%);
   border-left: 1px solid rgba(181, 163, 143, 0.5);
-  padding: clamp(14px, 2.4vh, 28px) 24px;
+  padding: clamp(12px, 2vh, 22px) 22px;
   display: flex;
   flex-direction: column;
-  gap: clamp(12px, 2vh, 24px);
+  gap: clamp(10px, 1.6vh, 18px);
   box-shadow: -6px 0 20px rgba(24, 42, 51, 0.07);
 }
 
@@ -80,17 +81,17 @@
 }
 
 .home__heading {
-  font-size: clamp(1.35rem, 2.8vw, 1.95rem);
+  font-size: clamp(1.28rem, 2.5vw, 1.8rem);
   line-height: 1.12;
   letter-spacing: -0.3px;
   color: #17313a;
 }
 
 .home__desc {
-  margin-top: 9px;
-  font-size: 0.94rem;
+  margin-top: 7px;
+  font-size: 0.88rem;
   color: var(--color-text-secondary);
-  line-height: 1.6;
+  line-height: 1.45;
   max-width: 34ch;
 }
 
@@ -101,20 +102,20 @@
   text-transform: uppercase;
   letter-spacing: 1.1px;
   color: #5f5345;
-  margin-bottom: 10px;
+  margin-bottom: 8px;
 }
 
 .home__state-cards {
   display: flex;
   flex-direction: column;
-  gap: 9px;
+  gap: 8px;
 }
 
 .state-card {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 13px 14px;
+  padding: 10px 12px;
   background: #fcf7ef;
   border: 1px solid #dacdbd;
   border-radius: var(--radius-md);
@@ -138,8 +139,8 @@
 .state-card__abbr {
   display: grid;
   place-items: center;
-  width: 40px;
-  height: 40px;
+  width: 36px;
+  height: 36px;
   background: linear-gradient(145deg, var(--color-primary) 0%, #255b79 100%);
   color: #fff;
   border-radius: 12px;
@@ -182,23 +183,23 @@
 .home__features {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
 }
 
 .feature {
   display: flex;
-  gap: 11px;
+  gap: 10px;
   align-items: flex-start;
   border: 1px solid rgba(190, 173, 153, 0.3);
   border-radius: 12px;
   background: rgba(255, 255, 255, 0.56);
-  padding: 9px;
+  padding: 8px;
 }
 
 .feature__icon {
   flex-shrink: 0;
-  width: 36px;
-  height: 36px;
+  width: 32px;
+  height: 32px;
   display: grid;
   place-items: center;
   background: #e5f0ec;
@@ -213,9 +214,9 @@
 }
 
 .feature p {
-  font-size: 0.8rem;
+  font-size: 0.76rem;
   color: var(--color-text-secondary);
-  line-height: 1.42;
+  line-height: 1.32;
 }
 
 @media (max-width: 980px) {

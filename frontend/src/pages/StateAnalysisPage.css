@@ -18,7 +18,7 @@
 .state-analysis__map {
   display: grid;
   grid-template-rows: auto minmax(0, 1fr);
-  gap: 8px;
+  gap: 10px;
   height: 100%;
   min-height: 0;
   overflow: hidden;
@@ -26,26 +26,83 @@
 
 .state-analysis__state-title {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   justify-content: space-between;
-  gap: 12px;
-  padding: 4px;
+  gap: 14px;
+  min-height: 54px;
+  padding: 8px 12px;
+  border: 1px solid rgba(190, 173, 152, 0.42);
+  border-left: 4px solid rgba(31, 111, 120, 0.74);
+  border-radius: var(--radius-md);
+  background:
+    linear-gradient(90deg, rgba(238, 249, 249, 0.82) 0%, rgba(255, 253, 249, 0.95) 46%, rgba(255, 249, 241, 0.9) 100%);
+  box-shadow: var(--shadow-sm);
+}
+
+.state-analysis__title-copy {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.state-analysis__eyebrow {
+  color: #6d5e4c;
+  font-size: 0.62rem;
+  font-weight: 850;
+  letter-spacing: 0.08em;
+  line-height: 1.1;
+  text-transform: uppercase;
 }
 
 .state-analysis__state-title h2 {
   margin: 0;
   font-family: var(--font-display);
-  font-size: 1.05rem;
+  font-size: 1.08rem;
   font-weight: 700;
   letter-spacing: -0.02em;
   text-transform: none;
   color: var(--color-primary-dark);
+  line-height: 1.05;
 }
 
-.state-analysis__state-title span {
-  font-size: 0.84rem;
-  font-weight: 600;
+.state-analysis__state-title p {
+  margin: 0;
+  max-width: 78ch;
+  font-size: 0.72rem;
+  font-weight: 650;
+  line-height: 1.25;
   color: var(--color-text-secondary);
+}
+
+.state-analysis__title-meta {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 6px;
+  max-width: 34%;
+}
+
+.state-analysis__title-meta span {
+  display: inline-flex;
+  align-items: center;
+  min-height: 25px;
+  padding: 4px 9px;
+  border: 1px solid rgba(178, 159, 138, 0.56);
+  border-radius: 999px;
+  background: rgba(255, 254, 251, 0.72);
+  color: #536066;
+  font-size: 0.72rem;
+  font-weight: 800;
+  line-height: 1.1;
+  white-space: nowrap;
+}
+
+.state-analysis__title-meta span:first-child {
+  border-color: rgba(31, 111, 120, 0.34);
+  background: rgba(232, 248, 250, 0.86);
+  color: var(--color-primary-dark);
 }
 
 .state-analysis__plan-shell {
@@ -57,7 +114,12 @@
   overflow: hidden;
 }
 
+.state-analysis__plan-shell--compare {
+  grid-template-columns: minmax(0, 1fr);
+}
+
 .state-analysis__map-panel {
+  position: relative;
   display: grid;
   grid-template-rows: minmax(0, 1fr) auto;
   gap: 10px;
@@ -147,7 +209,7 @@
 }
 
 .state-analysis__overview-panel .analysis-panel {
-  padding: 8px;
+  padding: 7px;
 }
 
 .state-analysis__overview-panel .chart-card {
@@ -155,37 +217,37 @@
   border: 1px solid rgba(190, 173, 152, 0.42);
   box-shadow: 0 1px 6px rgba(21, 35, 43, 0.05);
   height: 100%;
-  padding: 9px;
+  padding: 7px;
   background: linear-gradient(180deg, rgba(255, 253, 249, 0.94) 0%, rgba(255, 249, 241, 0.94) 100%);
 }
 
 .state-analysis__overview-panel .chart-title {
-  margin-bottom: 6px;
+  margin-bottom: 4px;
   font-family: var(--font-display);
   color: var(--color-primary-dark);
 }
 
 .state-analysis__overview-panel .chart-subtitle {
   display: block;
-  font-size: 0.72rem;
-  line-height: 1.25;
+  font-size: 0.68rem;
+  line-height: 1.16;
 }
 
 .state-analysis__overview-panel .analysis-kpi-grid,
 .state-analysis__overview-panel .analysis-summary-grid {
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 5px;
+  gap: 4px;
 }
 
 .state-analysis__overview-panel .analysis-kpi,
 .state-analysis__overview-panel .analysis-summary-card,
 .state-analysis__overview-panel .analysis-voter-dist {
-  padding: 6px;
+  padding: 5px;
 }
 
 .state-analysis__overview-panel .analysis-summary-grid,
 .state-analysis__overview-panel .analysis-voter-dist {
-  margin-top: 5px;
+  margin-top: 4px;
 }
 
 .state-analysis__overview-panel .analysis-kpi__label,
@@ -204,7 +266,7 @@
 }
 
 .state-analysis__overview-panel .analysis-table-wrap {
-  margin-top: 5px;
+  margin-top: 4px;
   border: 1px solid rgba(232, 220, 204, 0.74);
   border-radius: var(--radius-sm);
   overflow: visible;
@@ -216,7 +278,8 @@
 
 .state-analysis__overview-panel .analysis-table th,
 .state-analysis__overview-panel .analysis-table td {
-  padding: 3px 5px;
+  padding: 2px 5px;
+  line-height: 1.12;
 }
 
 .state-analysis__overview-panel .analysis-table th {
@@ -379,12 +442,15 @@
 
 .state-analysis__plan-controls {
   position: relative;
-  z-index: 10;
+  z-index: 2200;
   display: flex;
   align-items: center;
   flex-wrap: wrap;
   gap: 8px;
-  padding: 0;
+  padding: 8px;
+  border: 1px solid rgba(190, 173, 152, 0.42);
+  border-radius: var(--radius-md);
+  background: linear-gradient(180deg, rgba(255, 253, 249, 0.95), rgba(250, 245, 237, 0.9));
   overflow: visible;
 }
 
@@ -449,6 +515,7 @@
 .state-analysis__plan-controls .pill-dropdown__menu {
   top: auto;
   bottom: calc(100% + 6px);
+  z-index: 2400;
 }
 
 .state-analysis__control-field,
@@ -516,6 +583,8 @@
 }
 
 .state-analysis__analysis-toolbar {
+  position: relative;
+  z-index: 2200;
   display: flex;
   align-items: center;
   flex-wrap: wrap;
@@ -618,6 +687,11 @@
   .state-analysis__state-title {
     align-items: flex-start;
     flex-direction: column;
+  }
+
+  .state-analysis__title-meta {
+    justify-content: flex-start;
+    max-width: none;
   }
 
   .state-analysis__plan-shell,

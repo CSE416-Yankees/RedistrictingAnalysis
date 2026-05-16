@@ -47,7 +47,7 @@ export default function PillDropdown({
   return (
     <div
       ref={rootRef}
-      className={`pill-dropdown ${align === 'right' ? 'pill-dropdown--align-right' : ''} ${className}`.trim()}
+      className={`pill-dropdown ${align === 'right' ? 'pill-dropdown--align-right' : ''} ${menuOpen ? 'pill-dropdown--open' : ''} ${className}`.trim()}
     >
       <span className="pill-dropdown__label">{label}</span>
       <button

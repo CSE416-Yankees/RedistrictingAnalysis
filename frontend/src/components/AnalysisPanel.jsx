@@ -20,10 +20,12 @@ import './AnalysisPanel.css';
 
 const EMPTY_LIST = [];
 const ANALYSIS_CHART_HEIGHT = 300;
+const GINGLES_CHART_HEIGHT = 165;
 const EI_CHART_HEIGHT = 205;
 const MINORITY_EFFECTIVENESS_CHART_HEIGHT = 235;
 const MINORITY_HISTOGRAM_CHART_HEIGHT = 225;
-const GINGLES_PRECINCT_PAGE_SIZE = 6;
+const GINGLES_PRECINCT_PAGE_SIZE = 2;
+const GINGLES_TABLE_PAGE_SIZE = 5;
 
 function eiPayloadRevision(payload) {
   const results = payload?.candidateResults;
@@ -761,7 +763,7 @@ function GinglesSummary({
         />
       )}
       {points.length > 0 ? (
-        <ResponsiveContainer width="100%" height={ANALYSIS_CHART_HEIGHT}>
+        <ResponsiveContainer width="100%" height={GINGLES_CHART_HEIGHT}>
           <ScatterChart margin={{ top: 14, right: 20, bottom: 10, left: 10 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="#ece6de" />
             <XAxis
@@ -847,7 +849,7 @@ function GinglesTable({
     () => prioritizeHighlightedRow(sourceRows, highlightedPrecinct),
     [sourceRows, highlightedPrecinct],
   );
-  const pageSize = Math.max(1, Number(maxRows ?? 10));
+  const pageSize = Math.max(1, Number(maxRows ?? GINGLES_TABLE_PAGE_SIZE));
   const pageCount = Math.max(1, Math.ceil(orderedRows.length / pageSize));
   const paginationKey = `${sourceRows.length}:${highlightedPrecinct ?? 'none'}:${pageSize}`;
   const pageIndex = pagination.key === paginationKey ? pagination.pageIndex : 0;

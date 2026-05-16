@@ -31,15 +31,19 @@
 }
 
 .chart-card--nested {
-  margin-top: 12px;
-  padding: 12px;
+  margin-top: 6px;
+  padding: 8px;
   background: rgba(255, 255, 255, 0.56);
   box-shadow: none;
 }
 
 .chart-card--nested .chart-title {
-  margin-bottom: 8px;
-  font-size: 0.92rem;
+  margin-bottom: 5px;
+  font-size: 0.84rem;
+}
+
+.chart-card--nested .chart-subtitle {
+  font-size: 0.66rem;
 }
 
 .chart-title {
@@ -76,6 +80,12 @@
   top: 0;
   z-index: 1;
   background: #fffaf2;
+}
+
+.analysis-table-wrap--scroll .analysis-table th,
+.analysis-table-wrap--scroll .analysis-table td {
+  padding: 4px 6px;
+  font-size: 0.7rem;
 }
 
 .analysis-table {
@@ -510,7 +520,7 @@
   align-items: center;
   justify-content: space-between;
   gap: 8px;
-  margin-top: 8px;
+  margin-top: 5px;
 }
 
 .analysis-pagination__button {
@@ -520,7 +530,7 @@
   color: var(--color-primary-dark);
   font-size: 0.76rem;
   font-weight: 800;
-  padding: 5px 10px;
+  padding: 4px 10px;
 }
 
 .analysis-pagination__button:hover:not(:disabled) {

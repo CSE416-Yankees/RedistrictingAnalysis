@@ -18,7 +18,7 @@ export const OVERVIEW_CONFIG = {
 export const GUI_SLUG_TO_CONFIG = {
   'gui-1': {
     routeSlug: 'gui-1',
-    title: 'Select state to display',
+    title: 'State selection',
     payloadKeys: ['currentPlan', 'stateSummary'],
     analysisView: 'stateSummary',
     isAnalysisOpen: true,
@@ -28,7 +28,7 @@ export const GUI_SLUG_TO_CONFIG = {
   },
   'gui-2': {
     routeSlug: 'gui-2',
-    title: 'Display current district plan',
+    title: 'Current district plan',
     payloadKeys: ['currentPlan'],
     analysisView: 'currentPlanMap',
     isAnalysisOpen: false,
@@ -48,7 +48,7 @@ export const GUI_SLUG_TO_CONFIG = {
   },
   'gui-4': {
     routeSlug: 'gui-4',
-    title: 'Demographic heat map by precinct',
+    title: 'Demographic heat map',
     payloadKeys: ['heatMaps'],
     analysisView: 'demographicHeatMap',
     isAnalysisOpen: false,
@@ -58,7 +58,7 @@ export const GUI_SLUG_TO_CONFIG = {
   },
   'gui-6': {
     routeSlug: 'gui-6',
-    title: 'Congressional representation table',
+    title: 'Congressional representation',
     payloadKeys: ['districtDetails'],
     analysisView: 'districtDetails',
     isAnalysisOpen: true,
@@ -68,7 +68,7 @@ export const GUI_SLUG_TO_CONFIG = {
   },
   'gui-7': {
     routeSlug: 'gui-7',
-    title: 'Highlight district',
+    title: 'District highlight',
     payloadKeys: ['districtDetails', 'currentPlan'],
     analysisView: 'districtDetails',
     isAnalysisOpen: true,
@@ -78,7 +78,7 @@ export const GUI_SLUG_TO_CONFIG = {
   },
   'gui-8': {
     routeSlug: 'gui-8',
-    title: 'Compare two district plans on the map',
+    title: 'Compare district plans',
     payloadKeys: ['planComparison'],
     analysisView: 'planComparisonMap',
     isAnalysisOpen: false,
@@ -88,7 +88,7 @@ export const GUI_SLUG_TO_CONFIG = {
   },
   'gui-9': {
     routeSlug: 'gui-9',
-    title: 'Gingles analysis results',
+    title: 'Gingles analysis',
     payloadKeys: ['ginglesResults'],
     analysisView: 'gingles',
     isAnalysisOpen: true,
@@ -98,7 +98,7 @@ export const GUI_SLUG_TO_CONFIG = {
   },
   'gui-10': {
     routeSlug: 'gui-10',
-    title: 'Gingles 2/3 analysis table',
+    title: 'Gingles precinct table',
     payloadKeys: ['ginglesTable'],
     analysisView: 'ginglesTable',
     isAnalysisOpen: true,
@@ -108,7 +108,7 @@ export const GUI_SLUG_TO_CONFIG = {
   },
   'gui-11': {
     routeSlug: 'gui-11',
-    title: 'Highlight Gingles table row',
+    title: 'Gingles precinct highlight',
     payloadKeys: ['ginglesResults', 'ginglesTable'],
     analysisView: 'gingles',
     isAnalysisOpen: true,
@@ -118,7 +118,7 @@ export const GUI_SLUG_TO_CONFIG = {
   },
   'gui-12': {
     routeSlug: 'gui-12',
-    title: 'Ecological inference candidate results',
+    title: 'Ecological inference results',
     payloadKeys: ['eiCandidates'],
     analysisView: 'eiCandidates',
     isAnalysisOpen: true,
@@ -128,7 +128,7 @@ export const GUI_SLUG_TO_CONFIG = {
   },
   'gui-16': {
     routeSlug: 'gui-16',
-    title: 'Ensemble splits bar chart',
+    title: 'Ensemble vote splits',
     payloadKeys: ['ensembleSplits'],
     analysisView: 'ensembleSplits',
     isAnalysisOpen: true,
@@ -138,7 +138,7 @@ export const GUI_SLUG_TO_CONFIG = {
   },
   'gui-17': {
     routeSlug: 'gui-17',
-    title: 'Box and whisker data',
+    title: 'District distribution',
     payloadKeys: ['boxWhisker'],
     analysisView: 'boxWhisker',
     isAnalysisOpen: true,
@@ -158,7 +158,7 @@ export const GUI_SLUG_TO_CONFIG = {
   },
   'gui-20': {
     routeSlug: 'gui-20',
-    title: 'VRA impact threshold table',
+    title: 'VRA impact thresholds',
     payloadKeys: ['vraImpactThresholds'],
     analysisView: 'vraImpact',
     isAnalysisOpen: true,
@@ -168,7 +168,7 @@ export const GUI_SLUG_TO_CONFIG = {
   },
   'gui-21': {
     routeSlug: 'gui-21',
-    title: 'Minority effectiveness box and whisker',
+    title: 'Minority effectiveness range',
     payloadKeys: ['minorityEffectivenessBox'],
     analysisView: 'minorityEffectivenessBox',
     isAnalysisOpen: true,
@@ -231,27 +231,27 @@ export function resolveGuiUiConfig(guiSlug) {
 
 /** Dropdown options: value matches AnalysisPanel routing */
 export const ANALYSIS_OPTIONS = [
-  { value: 'currentPlanMap', label: 'GUI-2 - Current plan map', routeSlug: 'gui-2' },
-  { value: 'stateSummary', label: 'GUI-3 - State data summary', routeSlug: 'gui-3' },
-  { value: 'demographicHeatMap', label: 'GUI-4 - Demographic heat map', routeSlug: 'gui-4' },
-  { value: 'planComparisonMap', label: 'GUI-8 - Compare plans (map)', routeSlug: 'gui-8' },
-  { value: 'districtDetails', label: 'GUI-6 - Congressional representation', routeSlug: 'gui-6' },
-  { value: 'boxWhisker', label: 'GUI-17 - Box & whisker', routeSlug: 'gui-17' },
-  { value: 'ensembleSplits', label: 'GUI-16 - Ensemble splits', routeSlug: 'gui-16' },
-  { value: 'vraImpact', label: 'GUI-20 - VRA impact thresholds', routeSlug: 'gui-20' },
-  { value: 'minorityEffectivenessBox', label: 'GUI-21 - Minority effectiveness (box)', routeSlug: 'gui-21' },
-  { value: 'minorityEffectivenessHistogram', label: 'GUI-22 - Minority effectiveness (histogram)', routeSlug: 'gui-22' },
-  { value: 'gingles', label: 'GUI-9 - Gingles scatter', routeSlug: 'gui-9' },
-  { value: 'ginglesTable', label: 'GUI-10 - Gingles 2/3 table', routeSlug: 'gui-10' },
-  { value: 'eiCandidates', label: 'GUI-12 - EI candidate results', routeSlug: 'gui-12' },
-  { value: 'interestingPlanMap', label: 'GUI-19 - Interesting plan (map)', routeSlug: 'gui-19' },
+  { value: 'currentPlanMap', label: 'Current plan map', routeSlug: 'gui-2' },
+  { value: 'stateSummary', label: 'State data summary', routeSlug: 'gui-3' },
+  { value: 'demographicHeatMap', label: 'Demographic heat map', routeSlug: 'gui-4' },
+  { value: 'planComparisonMap', label: 'Compare plans', routeSlug: 'gui-8' },
+  { value: 'districtDetails', label: 'Congressional representation', routeSlug: 'gui-6' },
+  { value: 'boxWhisker', label: 'District distribution', routeSlug: 'gui-17' },
+  { value: 'ensembleSplits', label: 'Ensemble vote splits', routeSlug: 'gui-16' },
+  { value: 'vraImpact', label: 'VRA impact thresholds', routeSlug: 'gui-20' },
+  { value: 'minorityEffectivenessBox', label: 'Minority effectiveness range', routeSlug: 'gui-21' },
+  { value: 'minorityEffectivenessHistogram', label: 'Minority effectiveness histogram', routeSlug: 'gui-22' },
+  { value: 'gingles', label: 'Gingles scatter', routeSlug: 'gui-9' },
+  { value: 'ginglesTable', label: 'Gingles precinct table', routeSlug: 'gui-10' },
+  { value: 'eiCandidates', label: 'Ecological inference results', routeSlug: 'gui-12' },
+  { value: 'interestingPlanMap', label: 'Interesting plan', routeSlug: 'gui-19' },
 ];
 
 export const MAP_GUI_LINKS = [
-  { slug: 'gui-2', label: 'GUI-2 - Current plan map' },
-  { slug: 'gui-4', label: 'GUI-4 - Demographic heat map' },
-  { slug: 'gui-8', label: 'GUI-8 - Compare plans' },
-  { slug: 'gui-19', label: 'GUI-19 - Interesting plan' },
+  { slug: 'gui-2', label: 'Current plan map' },
+  { slug: 'gui-4', label: 'Demographic heat map' },
+  { slug: 'gui-8', label: 'Compare plans' },
+  { slug: 'gui-19', label: 'Interesting plan' },
 ];
 
 export function routeSlugForAnalysisView(analysisView) {
