@@ -125,6 +125,12 @@ export default function AnalysisPanel({
           onSelectedGroupChange={onSelectedGroupChange}
         />
       )}
+      {analysisView === 'minorityRangeBars' && (
+        <MinorityRangeBarCharts
+          payload={guiPayloads.minorityRangeBars}
+          selectedGroup={selectedGroup}
+        />
+      )}
       {analysisView === 'gingles' && (
         <GinglesSummary
           payload={guiPayloads.ginglesResults}
@@ -706,6 +712,242 @@ function MinorityEffectivenessHistogram({
         </div>
       )}
     </ChartCard>
+  );
+}
+
+function MinorityRangeBarCharts({ payload, selectedGroup }) {
+  const districtCount = Number(payload?.districtCount);
+  const yAxisMax = Number.isFinite(districtCount) ? districtCount : 'auto';
+  const groupEntries = useMemo(
+    () => Object.entries(payload?.groups || {}),
+    [payload?.groups],
+  );
+  const highlightedGroupKey = useMemo(() => {
+    if (!selectedGroup) return null;
+    const target = String(selectedGroup).toLowerCase();
+    const match = groupEntries.find(([key]) => key.toLowerCase() === target);
+    return match ? match[0] : null;
+  }, [groupEntries, selectedGroup]);
+
+  if (groupEntries.length === 0) {
+    return (
+      <ChartCard
+        title="Minority-Effective and Majority-Minority Ranges"
+        subtitle="Range of district counts across Race-Blind and VRA ensembles per feasible group"
+      >
+        <p className="analysis-note">No feasible minority groups meet the threshold for this state.</p>
+      </ChartCard>
+    );
+  }
+
+  const buildRows = (metricKey) => groupEntries.map(([groupKey, groupData]) => {
+    const rb = groupData?.[metricKey]?.RB || {};
+    const vra = groupData?.[metricKey]?.VRA || {};
+    return {
+      group: groupKey,
+      rbMin: Number(rb.min) || 0,
+      rbMedian: Number(rb.median) || 0,
+      rbMax: Number(rb.max) || 0,
+      rbHeight: Math.max(0, (Number(rb.max) || 0) - (Number(rb.min) || 0)),
+      vraMin: Number(vra.min) || 0,
+      vraMedian: Number(vra.median) || 0,
+      vraMax: Number(vra.max) || 0,
+      vraHeight: Math.max(0, (Number(vra.max) || 0) - (Number(vra.min) || 0)),
+      enacted: Number(rb.enacted ?? vra.enacted) || 0,
+    };
+  });
+
+  const effectiveRows = buildRows('minorityEffective');
+  const majorityRows = buildRows('majorityMinority');
+
+  const summaryRows = groupEntries.map(([groupKey, groupData]) => {
+    const eff = groupData?.minorityEffective || {};
+    const maj = groupData?.majorityMinority || {};
+    return {
+      group: groupKey,
+      effRbMin: Number(eff.RB?.min) || 0,
+      effRbMax: Number(eff.RB?.max) || 0,
+      effVraMin: Number(eff.VRA?.min) || 0,
+      effVraMax: Number(eff.VRA?.max) || 0,
+      effEnacted: Number(eff.RB?.enacted ?? eff.VRA?.enacted) || 0,
+      majRbMin: Number(maj.RB?.min) || 0,
+      majRbMax: Number(maj.RB?.max) || 0,
+      majVraMin: Number(maj.VRA?.min) || 0,
+      majVraMax: Number(maj.VRA?.max) || 0,
+      majEnacted: Number(maj.RB?.enacted ?? maj.VRA?.enacted) || 0,
+    };
+  });
+
+  return (
+    <ChartCard
+      title="Minority-Effective and Majority-Minority Ranges"
+      subtitle={`Range of district counts across Race-Blind and VRA ensembles per feasible group (0-${Number.isFinite(districtCount) ? districtCount : 'N'} districts)`}
+    >
+      <div className="range-bar-grid">
+        <div className="range-bar-grid__chart">
+          <h4 className="range-bar-grid__heading">Minority-Effective Districts</h4>
+          <ResponsiveContainer width="100%" height={ANALYSIS_CHART_HEIGHT}>
+            <BarChart data={effectiveRows} margin={{ top: 10, right: 18, bottom: 6, left: 8 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#eee" />
+              <XAxis dataKey="group" tick={{ fontSize: 11 }} />
+              <YAxis
+                allowDecimals={false}
+                domain={[0, yAxisMax]}
+                tick={{ fontSize: 11 }}
+                label={{ value: 'Effective Districts', angle: -90, position: 'insideLeft', fontSize: 12 }}
+              />
+              <Tooltip content={(props) => <RangeBarTooltip {...props} label="Minority-Effective" />} />
+              <Legend wrapperStyle={{ fontSize: 11 }} />
+              <Bar dataKey="rbMin" stackId="rb" fill="transparent" legendType="none" isAnimationActive={false} />
+              <Bar
+                dataKey="rbHeight"
+                stackId="rb"
+                name="Race-Blind range"
+                fill="#64b5f6"
+                fillOpacity={0.55}
+                stroke="#2d7fbd"
+                strokeWidth={1.3}
+                radius={[4, 4, 0, 0]}
+                isAnimationActive={false}
+              >
+                {effectiveRows.map((row) => (
+                  <Cell
+                    key={`rb-eff-${row.group}`}
+                    fillOpacity={!highlightedGroupKey || row.group === highlightedGroupKey ? 0.55 : 0.22}
+                    stroke={row.group === highlightedGroupKey ? '#1f6f78' : '#2d7fbd'}
+                    strokeWidth={row.group === highlightedGroupKey ? 1.8 : 1.3}
+                  />
+                ))}
+              </Bar>
+              <Bar dataKey="vraMin" stackId="vra" fill="transparent" legendType="none" isAnimationActive={false} />
+              <Bar
+                dataKey="vraHeight"
+                stackId="vra"
+                name="VRA Constrained range"
+                fill="#7b1fa2"
+                fillOpacity={0.5}
+                stroke="#5a168f"
+                strokeWidth={1.3}
+                radius={[4, 4, 0, 0]}
+                isAnimationActive={false}
+              >
+                {effectiveRows.map((row) => (
+                  <Cell
+                    key={`vra-eff-${row.group}`}
+                    fillOpacity={!highlightedGroupKey || row.group === highlightedGroupKey ? 0.5 : 0.2}
+                    stroke={row.group === highlightedGroupKey ? '#1f6f78' : '#5a168f'}
+                    strokeWidth={row.group === highlightedGroupKey ? 1.8 : 1.3}
+                  />
+                ))}
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+
+        <div className="range-bar-grid__chart">
+          <h4 className="range-bar-grid__heading">Majority-Minority Districts</h4>
+          <ResponsiveContainer width="100%" height={ANALYSIS_CHART_HEIGHT}>
+            <BarChart data={majorityRows} margin={{ top: 10, right: 18, bottom: 6, left: 8 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#eee" />
+              <XAxis dataKey="group" tick={{ fontSize: 11 }} />
+              <YAxis
+                allowDecimals={false}
+                domain={[0, yAxisMax]}
+                tick={{ fontSize: 11 }}
+                label={{ value: 'Districts', angle: -90, position: 'insideLeft', fontSize: 12 }}
+              />
+              <Tooltip content={(props) => <RangeBarTooltip {...props} label="Majority-Minority" />} />
+              <Legend wrapperStyle={{ fontSize: 11 }} />
+              <Bar dataKey="rbMin" stackId="rb" fill="transparent" legendType="none" isAnimationActive={false} />
+              <Bar
+                dataKey="rbHeight"
+                stackId="rb"
+                name="Race-Blind range"
+                fill="#64b5f6"
+                fillOpacity={0.55}
+                stroke="#2d7fbd"
+                strokeWidth={1.3}
+                radius={[4, 4, 0, 0]}
+                isAnimationActive={false}
+              >
+                {majorityRows.map((row) => (
+                  <Cell
+                    key={`rb-maj-${row.group}`}
+                    fillOpacity={!highlightedGroupKey || row.group === highlightedGroupKey ? 0.55 : 0.22}
+                    stroke={row.group === highlightedGroupKey ? '#1f6f78' : '#2d7fbd'}
+                    strokeWidth={row.group === highlightedGroupKey ? 1.8 : 1.3}
+                  />
+                ))}
+              </Bar>
+              <Bar dataKey="vraMin" stackId="vra" fill="transparent" legendType="none" isAnimationActive={false} />
+              <Bar
+                dataKey="vraHeight"
+                stackId="vra"
+                name="VRA Constrained range"
+                fill="#7b1fa2"
+                fillOpacity={0.5}
+                stroke="#5a168f"
+                strokeWidth={1.3}
+                radius={[4, 4, 0, 0]}
+                isAnimationActive={false}
+              >
+                {majorityRows.map((row) => (
+                  <Cell
+                    key={`vra-maj-${row.group}`}
+                    fillOpacity={!highlightedGroupKey || row.group === highlightedGroupKey ? 0.5 : 0.2}
+                    stroke={row.group === highlightedGroupKey ? '#1f6f78' : '#5a168f'}
+                    strokeWidth={row.group === highlightedGroupKey ? 1.8 : 1.3}
+                  />
+                ))}
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
+
+      <div className="analysis-table-wrap">
+        <table className="analysis-table analysis-table--compact">
+          <thead>
+            <tr>
+              <th>Group</th>
+              <th className="num">Effective RB Range</th>
+              <th className="num">Effective VRA Range</th>
+              <th className="num">Effective Enacted</th>
+              <th className="num">Majority RB Range</th>
+              <th className="num">Majority VRA Range</th>
+              <th className="num">Majority Enacted</th>
+            </tr>
+          </thead>
+          <tbody>
+            {summaryRows.map((row) => (
+              <tr key={row.group} className={row.group === highlightedGroupKey ? 'analysis-table__row--active' : ''}>
+                <td>{row.group}</td>
+                <td className="num">{row.effRbMin}-{row.effRbMax}</td>
+                <td className="num">{row.effVraMin}-{row.effVraMax}</td>
+                <td className="num">{row.effEnacted}</td>
+                <td className="num">{row.majRbMin}-{row.majRbMax}</td>
+                <td className="num">{row.majVraMin}-{row.majVraMax}</td>
+                <td className="num">{row.majEnacted}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </ChartCard>
+  );
+}
+
+function RangeBarTooltip({ active, payload, label }) {
+  if (!active || !payload || payload.length === 0) return null;
+  const row = payload[0]?.payload;
+  if (!row) return null;
+  return (
+    <div className="analysis-tooltip">
+      <div className="analysis-tooltip__title">{row.group} - {label}</div>
+      <div>Race-Blind range: {row.rbMin} to {row.rbMax} (median {row.rbMedian})</div>
+      <div>VRA range: {row.vraMin} to {row.vraMax} (median {row.vraMedian})</div>
+      <div>Enacted: {row.enacted}</div>
+    </div>
   );
 }
 

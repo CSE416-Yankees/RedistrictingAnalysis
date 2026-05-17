@@ -196,6 +196,16 @@ export const GUI_SLUG_TO_CONFIG = {
     mapMetric: 'demographic',
     mapDemographicGroup: 'overall',
   },
+  'gui-26': {
+    routeSlug: 'gui-26',
+    title: 'Minority district range bar charts',
+    payloadKeys: ['minorityRangeBars'],
+    analysisView: 'minorityRangeBars',
+    isAnalysisOpen: true,
+    mapPlanMode: 'current',
+    mapMetric: 'demographic',
+    mapDemographicGroup: 'overall',
+  },
 };
 
 export const ALL_GUI_SLUGS = Object.keys(GUI_SLUG_TO_CONFIG);
@@ -213,6 +223,7 @@ export const REQUIRED_GUI_SLUGS = [
   'gui-20',
   'gui-21',
   'gui-22',
+  'gui-26',
 ];
 
 export const PREFERRED_GUI_SLUGS = [
@@ -241,6 +252,7 @@ export const ANALYSIS_OPTIONS = [
   { value: 'vraImpact', label: 'VRA Impact Thresholds', routeSlug: 'gui-20' },
   { value: 'minorityEffectivenessBox', label: 'Minority Effectiveness Range', routeSlug: 'gui-21' },
   { value: 'minorityEffectivenessHistogram', label: 'Minority Effectiveness Histogram', routeSlug: 'gui-22' },
+  { value: 'minorityRangeBars', label: 'Minority District Range Bars', routeSlug: 'gui-26' },
   { value: 'gingles', label: 'Gingles Analysis', routeSlug: 'gui-9' },
   { value: 'eiCandidates', label: 'Ecological Inference Results', routeSlug: 'gui-12' },
   { value: 'interestingPlanMap', label: 'Interesting Plan', routeSlug: 'gui-19' },

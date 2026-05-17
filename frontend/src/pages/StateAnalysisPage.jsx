@@ -82,6 +82,7 @@ const ANALYSIS_TAB_VIEWS = new Set([
   'vraImpact',
   'minorityEffectivenessBox',
   'minorityEffectivenessHistogram',
+  'minorityRangeBars',
 ]);
 
 const DEPRECATED_ROUTE_REDIRECTS = {
@@ -104,6 +105,7 @@ const VIEW_TITLES = {
   vraImpact: 'VRA Impact Thresholds',
   minorityEffectivenessBox: 'Minority Effectiveness Range',
   minorityEffectivenessHistogram: 'Minority Effectiveness Histogram',
+  minorityRangeBars: 'Minority District Range Bars',
 };
 
 const VIEW_DESCRIPTIONS = {
@@ -121,6 +123,7 @@ const VIEW_DESCRIPTIONS = {
   vraImpact: 'Race-Blind and VRA ensemble outcomes compared against legal thresholds.',
   minorityEffectivenessBox: 'Effective-district counts compared across Race-Blind and VRA ensembles.',
   minorityEffectivenessHistogram: 'Distribution overlap for minority-effective districts across ensembles.',
+  minorityRangeBars: 'Range of minority-effective and majority-minority districts per feasible group, Race-Blind vs VRA.',
 };
 
 function matchGuiSlug(slug) {

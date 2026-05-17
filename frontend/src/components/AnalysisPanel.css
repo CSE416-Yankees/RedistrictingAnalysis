@@ -11,6 +11,31 @@
   animation: riseIn 0.45s ease;
 }
 
+.range-bar-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 14px;
+  margin-bottom: 12px;
+}
+
+.range-bar-grid__chart {
+  min-width: 0;
+}
+
+.range-bar-grid__heading {
+  margin: 0 0 6px;
+  font-family: var(--font-display);
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: var(--color-primary-dark);
+}
+
+@media (max-width: 1280px) {
+  .range-bar-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
 .analysis-panel__empty {
   display: flex;
   align-items: center;

@@ -455,6 +455,77 @@ function boxStats(median, enacted, districtCount) {
   };
 }
 
+// Mirrors the page-level Mississippi minority restriction so that this
+// payload only carries feasible groups when SeaWulf-10 would have flagged
+// the others as below threshold. Keep this in sync with
+// FEASIBLE_GROUPS_BY_STATE in StateAnalysisPage.jsx.
+const FEASIBLE_GROUPS_BY_STATE_MOCK = {
+  MS: new Set(['Black']),
+};
+
+function isFeasibleGroup(stateAbbr, groupKey) {
+  const allowed = FEASIBLE_GROUPS_BY_STATE_MOCK[stateAbbr];
+  if (!allowed) return true;
+  return allowed.has(groupKey);
+}
+
+// GUI-26 payload: per-group, per-ensemble range data for two metrics —
+// minority-effective district counts (>=22% group share heuristic) and
+// majority-minority district counts (>=50% group share heuristic).
+function minorityRangeBarsPayload(stateAbbr, state) {
+  const districtCount = state.numDistricts;
+  const groups = {};
+  DEMOGRAPHIC_GROUPS.forEach((group, index) => {
+    if (!isFeasibleGroup(stateAbbr, group.key)) return;
+    const groupShare = fractionPct(state[group.statePercentKey]);
+
+    const effectiveEnacted = state.currentPlanDistricts
+      .filter((district) => groupShareForGroup(district, group) >= 22).length;
+    const effectiveRbMedian = clamp(
+      Math.round(districtCount * groupShare * (1.1 - index * 0.08)),
+      0,
+      districtCount,
+    );
+    const effectiveVraMedian = clamp(effectiveRbMedian + 1, 0, districtCount);
+
+    const majorityEnacted = state.currentPlanDistricts
+      .filter((district) => groupShareForGroup(district, group) >= 50).length;
+    const majorityRbMedian = clamp(
+      Math.round(districtCount * groupShare * (0.78 - index * 0.07)),
+      0,
+      districtCount,
+    );
+    const majorityVraMedian = clamp(majorityRbMedian + 1, 0, districtCount);
+
+    groups[group.key] = {
+      minorityEffective: {
+        RB: rangeStats(effectiveRbMedian, effectiveEnacted, districtCount, 2),
+        VRA: rangeStats(effectiveVraMedian, effectiveEnacted, districtCount, 2),
+      },
+      majorityMinority: {
+        RB: rangeStats(majorityRbMedian, majorityEnacted, districtCount, 1),
+        VRA: rangeStats(majorityVraMedian, majorityEnacted, districtCount, 1),
+      },
+    };
+  });
+
+  return { districtCount, groups };
+}
+
+function groupShareForGroup(district, group) {
+  return groupShare(district, group);
+}
+
+function rangeStats(median, enacted, districtCount, spread) {
+  const med = Number(median) || 0;
+  return {
+    min: clamp(med - spread, 0, districtCount),
+    median: clamp(med, 0, districtCount),
+    max: clamp(med + spread, 0, districtCount),
+    enacted: clamp(Number(enacted) || 0, 0, districtCount),
+  };
+}
+
 function buildStateGuiPayloads(stateAbbr, state) {
   const minorityEffectiveness = minorityEffectivenessPayload(state);
 
@@ -479,6 +550,7 @@ function buildStateGuiPayloads(stateAbbr, state) {
       groupHistograms: minorityEffectiveness.groupHistograms,
     },
     minorityEffectiveness,
+    minorityRangeBars: minorityRangeBarsPayload(stateAbbr, state),
   };
 }
 
