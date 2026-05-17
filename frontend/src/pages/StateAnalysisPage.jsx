@@ -45,7 +45,6 @@ const ANALYSIS_GROUP_OPTIONS = DEMOGRAPHIC_GROUP_OPTIONS.filter((option) => opti
 
 const ANALYSIS_TAB_VIEWS = new Set([
   'gingles',
-  'ginglesTable',
   'eiCandidates',
   'boxWhisker',
   'ensembleSplits',
@@ -54,23 +53,26 @@ const ANALYSIS_TAB_VIEWS = new Set([
   'minorityEffectivenessHistogram',
 ]);
 
+const DEPRECATED_ROUTE_REDIRECTS = {
+  'gui-10': 'gui-9',
+};
+
 const ANALYSIS_TAB_OPTIONS = ANALYSIS_OPTIONS.filter((option) => ANALYSIS_TAB_VIEWS.has(option.value));
 
 const VIEW_TITLES = {
-  currentPlanMap: 'Current district plan',
-  stateSummary: 'State data summary',
-  demographicHeatMap: 'Demographic heat map',
-  districtDetails: 'Congressional representation',
-  planComparisonMap: 'Compare district plans',
-  interestingPlanMap: 'Interesting district plan',
-  gingles: 'Gingles analysis',
-  ginglesTable: 'Gingles precinct table',
-  eiCandidates: 'Ecological inference results',
-  ensembleSplits: 'Ensemble vote splits',
-  boxWhisker: 'District distribution',
-  vraImpact: 'VRA impact thresholds',
-  minorityEffectivenessBox: 'Minority effectiveness range',
-  minorityEffectivenessHistogram: 'Minority effectiveness histogram',
+  currentPlanMap: 'Current District Plan',
+  stateSummary: 'State Data Summary',
+  demographicHeatMap: 'Demographic Heat Map',
+  districtDetails: 'Congressional Representation',
+  planComparisonMap: 'Compare District Plans',
+  interestingPlanMap: 'Interesting District Plan',
+  gingles: 'Gingles Analysis',
+  eiCandidates: 'Ecological Inference Results',
+  ensembleSplits: 'Ensemble Vote Splits',
+  boxWhisker: 'District Distribution',
+  vraImpact: 'VRA Impact Thresholds',
+  minorityEffectivenessBox: 'Minority Effectiveness Range',
+  minorityEffectivenessHistogram: 'Minority Effectiveness Histogram',
 };
 
 const VIEW_DESCRIPTIONS = {
@@ -103,9 +105,9 @@ function defaultComparisonPlanForMode(planMode) {
 
 function pageTitleForView(stateName, analysisView, mapPlanMode) {
   if (analysisView === 'stateSummary' && mapPlanMode === 'current') {
-    return `${stateName} district plans`;
+    return `${stateName} District Plans`;
   }
-  return VIEW_TITLES[analysisView] || `${stateName} analysis`;
+  return VIEW_TITLES[analysisView] || `${stateName} Analysis`;
 }
 
 export default function StateAnalysisPage() {
@@ -263,6 +265,10 @@ export default function StateAnalysisPage() {
     return <Navigate to={`/state/${stateKey}`} replace />;
   }
 
+  if (guiSlugCanonical && DEPRECATED_ROUTE_REDIRECTS[guiSlugCanonical]) {
+    return <Navigate to={`/state/${stateKey}/gui/${DEPRECATED_ROUTE_REDIRECTS[guiSlugCanonical]}`} replace />;
+  }
+
   if (guiSlug && guiSlugCanonical !== guiSlug) {
     return <Navigate to={`/state/${stateKey}/gui/${guiSlugCanonical}`} replace />;
   }
@@ -326,8 +332,8 @@ export default function StateAnalysisPage() {
                     <div className="state-analysis__compare-grid">
                       <div className="state-analysis__compare-pane">
                         <div className="state-analysis__compare-title">
-                          <span>Enacted plan</span>
-                          <strong>Current districts</strong>
+                          <span>Enacted Plan</span>
+                          <strong>Current Districts</strong>
                         </div>
                         <div className="state-analysis__compare-map">
                           <StateMap
@@ -348,20 +354,20 @@ export default function StateAnalysisPage() {
                             planMode="current"
                             highlightedDistrict={selectedDistrictId}
                             onDistrictSelect={setSelectedDistrictId}
-                            mapMetric="partisan"
+                            mapMetric="district"
                             onMapMetricChange={setMapMetric}
                             mapDemographicGroup={mapDemographicGroup}
                             onMapDemographicGroupChange={setMapDemographicGroup}
                             showDistrictOutlines={showDistrictOutlines}
                             showOverlayControls={false}
-                            usePrecinctLayer={false}
+                            usePrecinctLayer
                           />
                         </div>
                       </div>
 
                       <div className="state-analysis__compare-pane">
                         <div className="state-analysis__compare-title">
-                          <span>{mapPlanMode === 'interesting' ? 'Interesting plan' : 'Comparison plan'}</span>
+                          <span>{mapPlanMode === 'interesting' ? 'Interesting Plan' : 'Comparison Plan'}</span>
                           <strong>{selectedComparisonOption?.label || titleCasePlanKey(selectedComparisonPlan)}</strong>
                         </div>
                         <div className="state-analysis__compare-map">
@@ -383,13 +389,13 @@ export default function StateAnalysisPage() {
                             planMode={mapPlanMode}
                             highlightedDistrict={selectedDistrictId}
                             onDistrictSelect={setSelectedDistrictId}
-                            mapMetric="partisan"
+                            mapMetric="district"
                             onMapMetricChange={setMapMetric}
                             mapDemographicGroup={mapDemographicGroup}
                             onMapDemographicGroupChange={setMapDemographicGroup}
                             showDistrictOutlines={showDistrictOutlines}
                             showOverlayControls={false}
-                            usePrecinctLayer={false}
+                            usePrecinctLayer
                           />
                         </div>
                       </div>
@@ -429,13 +435,13 @@ export default function StateAnalysisPage() {
                     <div className="state-analysis__compare-summary" aria-label="Selected comparison plan summary">
                       <div className="state-analysis__compare-summary-main">
                         <span className="state-analysis__compare-summary-kicker">
-                          {mapPlanMode === 'interesting' ? 'Interesting plan' : 'Compared plan'}
+                          {mapPlanMode === 'interesting' ? 'Interesting Plan' : 'Compared Plan'}
                         </span>
                         <strong>{selectedComparisonOption?.label || titleCasePlanKey(selectedComparisonPlan)}</strong>
                         {comparisonSummary.reason && <span>{comparisonSummary.reason}</span>}
                       </div>
                       <div className="state-analysis__compare-summary-stat">
-                        <span>Changed precincts</span>
+                        <span>Changed Precincts</span>
                         <strong>{comparisonSummary.changedLabel}</strong>
                       </div>
                       {comparisonSummary.metricRows.map(([label, value]) => (
@@ -473,7 +479,7 @@ export default function StateAnalysisPage() {
                       onClick={handleCompareWithEnacted}
                       title={mapPlanMode === 'comparison' ? 'Return to the single current-plan map' : 'Show enacted and selected plans side by side'}
                     >
-                      {mapPlanMode === 'comparison' ? 'Exit comparison' : 'Compare with enacted'}
+                      {mapPlanMode === 'comparison' ? 'Exit Comparison' : 'Compare with Enacted'}
                     </button>
                   )}
 
@@ -487,7 +493,7 @@ export default function StateAnalysisPage() {
                         ? 'Return to the state summary panel'
                         : 'Show per-district representation details'}
                     >
-                      {analysisView === 'districtDetails' ? 'Hide district detail' : 'District detail'}
+                      {analysisView === 'districtDetails' ? 'Hide District Detail' : 'District Detail'}
                     </button>
                   )}
 
@@ -495,7 +501,7 @@ export default function StateAnalysisPage() {
                     <>
                       <PillDropdown
                         className="state-analysis__control-field"
-                        label="Color by"
+                        label="Color By"
                         value={mapMetric}
                         options={MAP_METRIC_OPTIONS}
                         onChange={setMapMetric}
@@ -522,7 +528,7 @@ export default function StateAnalysisPage() {
                       checked={showDistrictOutlines}
                       onChange={(event) => setShowDistrictOutlines(event.target.checked)}
                     />
-                    <span>District boundaries</span>
+                    <span>District Boundaries</span>
                   </label>
                 </div>
               </section>
@@ -661,7 +667,7 @@ function InterestingPlanPanel({
 
         <div className="interesting-plan-panel__metrics" aria-label="Selected interesting plan metrics">
           <div>
-            <span>Changed precincts</span>
+            <span>Changed Precincts</span>
             <strong>{summary.changedLabel}</strong>
           </div>
           {summary.metricRows.map(([label, value]) => (

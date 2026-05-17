@@ -24,8 +24,8 @@ const GINGLES_CHART_HEIGHT = 165;
 const EI_CHART_HEIGHT = 205;
 const MINORITY_EFFECTIVENESS_CHART_HEIGHT = 235;
 const MINORITY_HISTOGRAM_CHART_HEIGHT = 225;
-const GINGLES_PRECINCT_PAGE_SIZE = 2;
-const GINGLES_TABLE_PAGE_SIZE = 5;
+const GINGLES_PRECINCT_PAGE_SIZE = 8;
+const GINGLES_TABLE_PAGE_SIZE = 8;
 
 function eiPayloadRevision(payload) {
   const results = payload?.candidateResults;
@@ -135,9 +135,6 @@ export default function AnalysisPanel({
           onSelectedGroupChange={onSelectedGroupChange}
         />
       )}
-      {analysisView === 'ginglesTable' && (
-        <GinglesTable payload={guiPayloads.ginglesTable} highlightedPrecinct={highlightedGinglesPrecinct} />
-      )}
       {analysisView === 'eiCandidates' && (
         <EICandidateResults
           key={`${stateData.abbr}-${eiPayloadRevision(guiPayloads.eiCandidates)}`}
@@ -207,16 +204,16 @@ function StateSummaryCard({ payload, stateData, isLoading, error }) {
           <thead>
             <tr>
               <th>Group</th>
-              <th>Population %</th>
-              <th>CVAP %</th>
+              <th className="num">Population %</th>
+              <th className="num">CVAP %</th>
             </tr>
           </thead>
           <tbody>
             {summary.demographicRows.map((row) => (
               <tr key={row.group}>
                 <td>{row.group}</td>
-                <td>{formatPct(row.populationPct, 1)}</td>
-                <td>{formatPct(row.cvapPct, 1)}</td>
+                <td className="num">{formatPct(row.populationPct, 1)}</td>
+                <td className="num">{formatPct(row.cvapPct, 1)}</td>
               </tr>
             ))}
           </tbody>
@@ -228,22 +225,22 @@ function StateSummaryCard({ payload, stateData, isLoading, error }) {
           <thead>
             <tr>
               <th>Ensemble</th>
-              <th>Plans</th>
-              <th>Pop. Eq.</th>
-              <th>Black RP</th>
-              <th>Hispanic RP</th>
-              <th>Asian RP</th>
+              <th className="num">Plans</th>
+              <th className="num">Pop. Eq.</th>
+              <th className="num">Black RP</th>
+              <th className="num">Hispanic RP</th>
+              <th className="num">Asian RP</th>
             </tr>
           </thead>
           <tbody>
             {summary.ensembleRows.map((row) => (
               <tr key={row.name}>
                 <td>{row.name}</td>
-                <td>{formatNumber(row.planCount)}</td>
-                <td>{formatPct(row.populationEqualityThresholdPct, 1, { alreadyPercent: true })}</td>
-                <td>{formatRatio(row.roughProportionality.Black)}</td>
-                <td>{formatRatio(row.roughProportionality.Hispanic)}</td>
-                <td>{formatRatio(row.roughProportionality.Asian)}</td>
+                <td className="num">{formatNumber(row.planCount)}</td>
+                <td className="num">{formatPct(row.populationEqualityThresholdPct, 1, { alreadyPercent: true })}</td>
+                <td className="num">{formatRatio(row.roughProportionality.Black)}</td>
+                <td className="num">{formatRatio(row.roughProportionality.Hispanic)}</td>
+                <td className="num">{formatRatio(row.roughProportionality.Asian)}</td>
               </tr>
             ))}
           </tbody>
@@ -262,13 +259,13 @@ function DistrictRepresentationTable({ payload, highlightedDistrict, onHighlight
         <table className="analysis-table analysis-table--clickable">
           <thead>
             <tr>
-              <th>District #</th>
+              <th className="num">District #</th>
               <th>Representative</th>
               <th>Party</th>
               <th>Rep. Group</th>
-              <th>Vote Margin %</th>
-              <th>Effectiveness</th>
-              <th>Calibrated</th>
+              <th className="num">Vote Margin %</th>
+              <th className="num">Effectiveness</th>
+              <th className="num">Calibrated</th>
             </tr>
           </thead>
           <tbody>
@@ -280,13 +277,13 @@ function DistrictRepresentationTable({ payload, highlightedDistrict, onHighlight
                 className={Number(highlightedDistrict) === districtNum ? 'analysis-table__row--active' : ''}
                 onClick={() => onHighlightDistrict(Number.isFinite(districtNum) ? districtNum : row.districtNumber)}
               >
-                <td>{row.districtNumber}</td>
+                <td className="num">{row.districtNumber}</td>
                 <td>{row.representative}</td>
                 <td>{row.party}</td>
                 <td>{row.representativeGroup}</td>
-                <td>{formatPct(row.voteMarginPct, 1, { alreadyPercent: true })}</td>
-                <td>{formatRatio(row.effectivenessScore)}</td>
-                <td>{formatRatio(row.calibratedEffectivenessScore)}</td>
+                <td className="num">{formatPct(row.voteMarginPct, 1, { alreadyPercent: true })}</td>
+                <td className="num">{formatRatio(row.effectivenessScore)}</td>
+                <td className="num">{formatRatio(row.calibratedEffectivenessScore)}</td>
               </tr>
               );
             })}
@@ -397,16 +394,16 @@ function EnsembleSplitsChart({ payload, summaryPayload, selectedEnsembleType }) 
           <thead>
             <tr>
               <th>Ensemble</th>
-              <th>District Plans</th>
-              <th>Population Equality Threshold</th>
+              <th className="num">District Plans</th>
+              <th className="num">Population Equality Threshold</th>
             </tr>
           </thead>
           <tbody>
             {Object.entries(summaryPayload?.ensembleSummaries || {}).map(([key, row]) => (
               <tr key={key} className={key === selectedKey ? 'analysis-table__row--active' : ''}>
                 <td>{ENSEMBLE_LABELS[key] || key}</td>
-                <td>{formatNumber(row.planCount)}</td>
-                <td>{formatPct(row.populationEqualityThresholdPct, 1, { alreadyPercent: true })}</td>
+                <td className="num">{formatNumber(row.planCount)}</td>
+                <td className="num">{formatPct(row.populationEqualityThresholdPct, 1, { alreadyPercent: true })}</td>
               </tr>
             ))}
           </tbody>
@@ -477,8 +474,8 @@ function VraImpactThresholdTable({
             <tr>
               <th>Group</th>
               <th>Metric</th>
-              <th>Race-Blind</th>
-              <th>VRA Constrained</th>
+              <th className="num">Race-Blind</th>
+              <th className="num">VRA Constrained</th>
             </tr>
           </thead>
           <tbody>
@@ -486,8 +483,8 @@ function VraImpactThresholdTable({
               <tr key={metric}>
                 <td>{activeRow?.group}</td>
                 <td>{metric}</td>
-                <td>{formatPct(values?.rbPct, 1)}</td>
-                <td>{formatPct(values?.vraPct, 1)}</td>
+                <td className="num">{formatPct(values?.rbPct, 1)}</td>
+                <td className="num">{formatPct(values?.vraPct, 1)}</td>
               </tr>
             ))}
             {metricRows.length === 0 && <EmptyTableRow colSpan={4} label="No VRA impact threshold rows are available." />}
@@ -578,20 +575,20 @@ function MinorityEffectivenessBoxChart({ payload, selectedGroup }) {
             <thead>
               <tr>
                 <th>Group</th>
-                <th>RB Median</th>
-                <th>VRA Median</th>
-                <th>VRA Lift</th>
-                <th>Enacted</th>
+                <th className="num">RB Median</th>
+                <th className="num">VRA Median</th>
+                <th className="num">VRA Lift</th>
+                <th className="num">Enacted</th>
               </tr>
             </thead>
             <tbody>
               {summaryRows.map((row) => (
                 <tr key={row.group} className={row.group === highlightedGroup ? 'analysis-table__row--active' : ''}>
                   <td>{row.group}</td>
-                  <td>{formatNumber(row.rbMedian)}</td>
-                  <td>{formatNumber(row.vraMedian)}</td>
-                  <td>{formatSignedNumber(row.vraLift)}</td>
-                  <td>{formatNumber(row.enacted)}</td>
+                  <td className="num">{formatNumber(row.rbMedian)}</td>
+                  <td className="num">{formatNumber(row.vraMedian)}</td>
+                  <td className="num">{formatSignedNumber(row.vraLift)}</td>
+                  <td className="num">{formatNumber(row.enacted)}</td>
                 </tr>
               ))}
             </tbody>
@@ -689,19 +686,19 @@ function MinorityEffectivenessHistogram({
           <table className="analysis-table analysis-table--compact">
             <thead>
               <tr>
-                <th>Effective Districts</th>
-                <th>Race-Blind</th>
-                <th>VRA Constrained</th>
-                <th>Overlap</th>
+                <th className="num">Effective Districts</th>
+                <th className="num">Race-Blind</th>
+                <th className="num">VRA Constrained</th>
+                <th className="num">Overlap</th>
               </tr>
             </thead>
             <tbody>
               {bins.map((row) => (
                 <tr key={row.effectiveDistricts}>
-                  <td>{row.effectiveDistricts}</td>
-                  <td>{formatNumber(row.rbFrequency)}</td>
-                  <td>{formatNumber(row.vraFrequency)}</td>
-                  <td>{formatNumber(Math.min(Number(row.rbFrequency) || 0, Number(row.vraFrequency) || 0))}</td>
+                  <td className="num">{row.effectiveDistricts}</td>
+                  <td className="num">{formatNumber(row.rbFrequency)}</td>
+                  <td className="num">{formatNumber(row.vraFrequency)}</td>
+                  <td className="num">{formatNumber(Math.min(Number(row.rbFrequency) || 0, Number(row.vraFrequency) || 0))}</td>
                 </tr>
               ))}
             </tbody>
@@ -827,8 +824,10 @@ function GinglesSummary({
         payload={tablePayload}
         highlightedPrecinct={highlightedPrecinct}
         maxRows={GINGLES_PRECINCT_PAGE_SIZE}
-        title="Gingles 2/3 Precinct Inputs"
-        subtitle={highlightedPrecinct ? `Selected precinct: ${highlightedPrecinct}` : 'Click a scatter point to highlight its precinct row'}
+        title="Precinct Inputs"
+        subtitle={highlightedPrecinct
+          ? `Selected precinct: ${highlightedPrecinct}`
+          : 'Population and 2024 vote inputs for the Gingles 2/3 scatter above. Click a scatter point to highlight its row.'}
         nested
       />
     </ChartCard>
@@ -870,10 +869,10 @@ function GinglesTable({
             <tr>
               <th>Precinct ID</th>
               <th>Precinct Name</th>
-              <th>Total Pop.</th>
-              <th>Minority Pop.</th>
-              <th>Rep Votes</th>
-              <th>Dem Votes</th>
+              <th className="num">Total Pop.</th>
+              <th className="num">Minority Pop.</th>
+              <th className="num">Rep Votes</th>
+              <th className="num">Dem Votes</th>
             </tr>
           </thead>
           <tbody>
@@ -884,10 +883,10 @@ function GinglesTable({
               >
                 <td>{row.precinctId}</td>
                 <td>{row.precinctName}</td>
-                <td>{formatNumber(row.totalPopulation)}</td>
-                <td>{formatNumber(row.minorityPopulation)}</td>
-                <td>{formatNumber(row.republicanVotes)}</td>
-                <td>{formatNumber(row.democraticVotes)}</td>
+                <td className="num">{formatNumber(row.totalPopulation)}</td>
+                <td className="num">{formatNumber(row.minorityPopulation)}</td>
+                <td className="num">{formatNumber(row.republicanVotes)}</td>
+                <td className="num">{formatNumber(row.democraticVotes)}</td>
               </tr>
             ))}
             {rows.length === 0 && <EmptyTableRow colSpan={6} label="Gingles table rows are not available." />}
@@ -970,7 +969,7 @@ function EICandidateResults({ payload, selectedGroup }) {
               <tr>
                 <th>Candidate</th>
                 <th>Group Pair</th>
-                <th>Curve Overlap</th>
+                <th className="num">Curve Overlap</th>
               </tr>
             </thead>
             <tbody>
@@ -978,7 +977,7 @@ function EICandidateResults({ payload, selectedGroup }) {
                 <tr key={`${row.candidate}-${row.groupPair}`}>
                   <td>{row.candidate}</td>
                   <td>{row.groupPair}</td>
-                  <td>{formatPct(row.overlapPct, 1)}</td>
+                  <td className="num">{formatPct(row.overlapPct, 1)}</td>
                 </tr>
               ))}
               {visibleOverlapRows.length === 0 && <EmptyTableRow colSpan={3} label="EI overlap rows are not available." />}
@@ -1092,14 +1091,14 @@ function EICandidateResults({ payload, selectedGroup }) {
               <thead>
                 <tr>
                   <th>Group Pair</th>
-                  <th>Overlap</th>
+                  <th className="num">Overlap</th>
                 </tr>
               </thead>
               <tbody>
                 {visibleOverlapRows.map((row) => (
                   <tr key={`${row.candidate}-${row.groupPair}`}>
                     <td>{row.groupPair}</td>
-                    <td>{formatPct(row.overlapPct, 1)}</td>
+                    <td className="num">{formatPct(row.overlapPct, 1)}</td>
                   </tr>
                 ))}
                 {visibleOverlapRows.length === 0 && (

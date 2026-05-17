@@ -20,7 +20,7 @@ export default function HomePage() {
           </p>
         </div>
         <div className="home__states home__fade-in" style={{ animationDelay: '90ms' }}>
-          <h2 className="home__states-heading">Choose A State To Begin</h2>
+          <h2 className="home__states-heading">Choose a State to Begin</h2>
           <div className="home__state-cards">
             {stateMarkers.map((s) => (
               <button

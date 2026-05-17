@@ -48,6 +48,28 @@ const DIVERGING_SCALE = [
   { t: 14 / 14, color: '#002171' },
 ];
 
+const DISTRICT_PALETTE = [
+  '#1f6f78',
+  '#f18f5d',
+  '#7b1fa2',
+  '#2ca02c',
+  '#d62728',
+  '#9467bd',
+  '#8c564b',
+  '#1f77b4',
+  '#ff7f0e',
+  '#17becf',
+  '#bcbd22',
+  '#e377c2',
+];
+
+function colorForDistrict(districtId) {
+  const value = Number(districtId);
+  if (!Number.isFinite(value)) return '#d1d5db';
+  const idx = ((value - 1) % DISTRICT_PALETTE.length + DISTRICT_PALETTE.length) % DISTRICT_PALETTE.length;
+  return DISTRICT_PALETTE[idx];
+}
+
 function interpolateColor(t, scale) {
   for (let i = scale.length - 1; i >= 0; i--) {
     if (t >= scale[i].t) {
@@ -475,6 +497,9 @@ export default function StateMap({
     if (planMode === 'delta') {
       return assignmentDeltaValue(feature);
     }
+    if (activeMetric === 'district') {
+      return districtId;
+    }
     if (isDemographicMetric) {
       return resolveDemographicValue(feature, district);
     }
@@ -584,6 +609,9 @@ export default function StateMap({
     if (isDeltaMode && (value === 0 || value === 1)) {
       return value === 1 ? '#f97316' : '#e5e7eb';
     }
+    if (activeMetric === 'district') {
+      return colorForDistrict(value);
+    }
     if (!usePrecinctLayer && activeMetric === 'partisan' && planMode !== 'delta') {
       return value >= 50 ? '#2f6fbd' : '#d14b45';
     }
@@ -630,6 +658,8 @@ export default function StateMap({
       detailLine = delta == null
         ? 'Plan assignment: unavailable'
         : `Plan assignment: ${delta === 1 ? 'changed' : 'same district'}`;
+    } else if (activeMetric === 'district') {
+      detailLine = districtId != null ? `Assigned to District ${districtId}` : 'District assignment unavailable';
     } else if (isDemographicMetric) {
       const demographicValue = valueForFeature(feature);
       const heatBin = demographicGroup !== 'overall'
@@ -719,17 +749,36 @@ export default function StateMap({
     : activeMetric === 'partisan'
       ? DIVERGING_SCALE
       : HEAT_SCALE;
+  const districtIdsForLegend = useMemo(() => {
+    if (activeMetric !== 'district') return [];
+    const ids = new Set();
+    activeGeoData?.features?.forEach((feature) => {
+      const id = resolveDistrictId(feature);
+      if (id != null && Number.isFinite(Number(id))) ids.add(Number(id));
+    });
+    if (ids.size === 0) {
+      districtData?.forEach((district) => {
+        if (district?.id != null) ids.add(Number(district.id));
+      });
+    }
+    return [...ids].sort((left, right) => left - right);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeMetric, activeGeoData, districtData, selectedAssignmentLookup, currentAssignmentLookup, planMode]);
   const legendTitle = isDeltaMode
     ? (hasAssignmentComparison
       ? 'Plan difference (same vs changed assignment)'
-      : 'Plan difference - pick Comparison or Interesting plan')
-    : isDemographicMetric
-      ? `${demographicGroupLabel} Population % (Precinct Bins)`
-      : activeMetric === 'partisan'
-        ? (!usePrecinctLayer && planMode !== 'delta'
-          ? (planMode === 'comparison' || planMode === 'interesting' ? 'Selected plan district winner' : 'Current plan district winner')
-          : 'Democrat vs Republican %')
-        : 'Minority Population %';
+      : 'Plan difference — pick comparison or interesting plan')
+    : activeMetric === 'district'
+      ? (planMode === 'comparison' || planMode === 'interesting'
+        ? 'District assignment under selected plan'
+        : 'District assignment under enacted plan')
+      : isDemographicMetric
+        ? `${demographicGroupLabel} population % (precinct bins)`
+        : activeMetric === 'partisan'
+          ? (!usePrecinctLayer && planMode !== 'delta'
+            ? (planMode === 'comparison' || planMode === 'interesting' ? 'Selected plan district winner' : 'Current plan district winner')
+            : 'Democrat vs Republican %')
+          : 'Minority population %';
   const activeGeoJsonKey = [
     stateAbbr,
     planMode,
@@ -819,13 +868,28 @@ export default function StateMap({
                 </div>
               </div>
             )
+          ) : activeMetric === 'district' ? (
+            <div className="choropleth-legend__bins">
+              {districtIdsForLegend.length > 0 ? (
+                districtIdsForLegend.map((id) => (
+                  <div key={`district-${id}`} className="choropleth-legend__bin-row">
+                    <span className="choropleth-legend__bin-swatch" style={{ background: colorForDistrict(id) }} />
+                    <span className="choropleth-legend__bin-range">District {id}</span>
+                  </div>
+                ))
+              ) : (
+                <div className="choropleth-legend__bin-row">
+                  <span className="choropleth-legend__bin-range">No districts available</span>
+                </div>
+              )}
+            </div>
           ) : isDemographicMetric ? (
             <div className="choropleth-legend__bins">
               {demographicBins.length > 0 ? (
                 demographicBins.map((bin) => (
                   <div key={`${bin.start}-${bin.end}`} className="choropleth-legend__bin-row">
                     <span className="choropleth-legend__bin-swatch" style={{ background: bin.color }} />
-                    <span className="choropleth-legend__bin-range">{bin.start}% - {bin.end}%</span>
+                    <span className="choropleth-legend__bin-range">{bin.start}% – {bin.end}%</span>
                   </div>
                 ))
               ) : (
@@ -881,7 +945,7 @@ export default function StateMap({
       {showOverlayControls && (activeGeoData || districtData) && (
         <div className="choropleth-controls">
           <div className="choropleth-metric">
-            <label htmlFor="metric-select">Color by:</label>
+            <label htmlFor="metric-select">Color By:</label>
             <select
               id="metric-select"
               value={activeMetric}
@@ -894,7 +958,7 @@ export default function StateMap({
           </div>
           {isDemographicMetric && (
             <div className="choropleth-metric">
-              <label htmlFor="group-select">Minority group:</label>
+              <label htmlFor="group-select">Minority Group:</label>
               <select
                 id="group-select"
                 value={demographicGroup}
