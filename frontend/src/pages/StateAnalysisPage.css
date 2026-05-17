@@ -579,6 +579,32 @@
   accent-color: var(--color-primary);
 }
 
+.state-analysis__static-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 34px;
+  padding: 4px 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(178, 159, 138, 0.7);
+  background: rgba(255, 254, 251, 0.84);
+  color: #2a3e45;
+  font-size: 0.8rem;
+}
+
+.state-analysis__static-pill-label {
+  color: #5c4d3c;
+  font-size: 0.67rem;
+  font-weight: 800;
+  letter-spacing: 0.2px;
+  text-transform: uppercase;
+}
+
+.state-analysis__static-pill-value {
+  font-weight: 700;
+  color: var(--color-primary-dark);
+}
+
 .state-analysis__analysis-shell {
   display: grid;
   grid-template-rows: auto minmax(0, 1fr);

@@ -43,6 +43,37 @@ const DEMOGRAPHIC_GROUP_OPTIONS = [
 
 const ANALYSIS_GROUP_OPTIONS = DEMOGRAPHIC_GROUP_OPTIONS.filter((option) => option.value !== 'overall');
 
+// Only minority groups above the demographic threshold for VRA analysis
+// are available to pick. Mississippi: Black is ~38%; Hispanic and Asian
+// are each well under threshold so they are excluded.
+const FEASIBLE_GROUPS_BY_STATE = {
+  MS: ['black'],
+};
+
+function feasibleGroupValues(stateAbbr) {
+  return FEASIBLE_GROUPS_BY_STATE[stateAbbr] || null;
+}
+
+function feasibleDemographicGroupOptions(stateAbbr) {
+  const allowed = feasibleGroupValues(stateAbbr);
+  if (!allowed) return DEMOGRAPHIC_GROUP_OPTIONS;
+  const allowedSet = new Set(allowed);
+  return DEMOGRAPHIC_GROUP_OPTIONS.filter((option) => allowedSet.has(option.value));
+}
+
+function feasibleAnalysisGroupOptions(stateAbbr) {
+  const allowed = feasibleGroupValues(stateAbbr);
+  if (!allowed) return ANALYSIS_GROUP_OPTIONS;
+  const allowedSet = new Set(allowed);
+  return ANALYSIS_GROUP_OPTIONS.filter((option) => allowedSet.has(option.value));
+}
+
+function coerceDemographicGroup(stateAbbr, group) {
+  const allowed = feasibleGroupValues(stateAbbr);
+  if (!allowed) return group;
+  return allowed.includes(group) ? group : allowed[0];
+}
+
 const ANALYSIS_TAB_VIEWS = new Set([
   'gingles',
   'eiCandidates',
@@ -142,12 +173,10 @@ export default function StateAnalysisPage() {
     setSelectedInterestingPlan(defaultComparisonPlanForMode(cfg.mapPlanMode));
     setMapMetric(cfg.mapMetric);
     setMapDemographicGroup((currentGroup) => {
-      if (ANALYSIS_TAB_VIEWS.has(cfg.analysisView)) {
-        return ANALYSIS_GROUP_OPTIONS.some((option) => option.value === currentGroup)
-          ? currentGroup
-          : 'black';
-      }
-      return cfg.mapDemographicGroup;
+      const targetGroup = ANALYSIS_TAB_VIEWS.has(cfg.analysisView)
+        ? (ANALYSIS_GROUP_OPTIONS.some((option) => option.value === currentGroup) ? currentGroup : 'black')
+        : cfg.mapDemographicGroup;
+      return coerceDemographicGroup(stateKey, targetGroup);
     });
     setSelectedDistrictId(null);
   }, [stateKey, guiSlugCanonical]);
@@ -307,6 +336,8 @@ export default function StateAnalysisPage() {
   const pageTitle = pageTitleForView(stateData.name, analysisView, mapPlanMode);
   const pageDescription = VIEW_DESCRIPTIONS[analysisView] || VIEW_DESCRIPTIONS.stateSummary;
   const workspaceLabel = activeWorkbenchTab === 'plans' ? 'Plan Explorer' : 'Analysis';
+  const demographicGroupOptions = feasibleDemographicGroupOptions(stateKey);
+  const analysisGroupOptions = feasibleAnalysisGroupOptions(stateKey);
 
   return (
     <div className="state-analysis">
@@ -360,7 +391,7 @@ export default function StateAnalysisPage() {
                             onMapDemographicGroupChange={setMapDemographicGroup}
                             showDistrictOutlines={showDistrictOutlines}
                             showOverlayControls={false}
-                            usePrecinctLayer
+                            usePrecinctLayer={false}
                           />
                         </div>
                       </div>
@@ -395,7 +426,7 @@ export default function StateAnalysisPage() {
                             onMapDemographicGroupChange={setMapDemographicGroup}
                             showDistrictOutlines={showDistrictOutlines}
                             showOverlayControls={false}
-                            usePrecinctLayer
+                            usePrecinctLayer={false}
                           />
                         </div>
                       </div>
@@ -507,14 +538,23 @@ export default function StateAnalysisPage() {
                         onChange={setMapMetric}
                       />
 
-                      {mapMetric === 'demographic' && (
+                      {mapMetric === 'demographic' && demographicGroupOptions.length > 1 && (
                         <PillDropdown
                           className="state-analysis__control-field"
                           label="Group"
                           value={mapDemographicGroup}
-                          options={DEMOGRAPHIC_GROUP_OPTIONS}
+                          options={demographicGroupOptions}
                           onChange={setMapDemographicGroup}
                         />
+                      )}
+                      {mapMetric === 'demographic' && demographicGroupOptions.length === 1 && (
+                        <span
+                          className="state-analysis__static-pill"
+                          title="Only this group meets the demographic threshold for this state."
+                        >
+                          <span className="state-analysis__static-pill-label">Group</span>
+                          <span className="state-analysis__static-pill-value">{demographicGroupOptions[0].label}</span>
+                        </span>
                       )}
                     </>
                   )}
@@ -568,13 +608,21 @@ export default function StateAnalysisPage() {
                   options={ANALYSIS_TAB_OPTIONS}
                   onChange={handleAnalysisMenuChange}
                 />
-                <PillDropdown
-                  className="state-analysis__control-field"
-                  label="Minority"
-                  value={mapDemographicGroup}
-                  options={ANALYSIS_GROUP_OPTIONS}
-                  onChange={setMapDemographicGroup}
-                />
+                {analysisGroupOptions.length > 1 && (
+                  <PillDropdown
+                    className="state-analysis__control-field"
+                    label="Minority"
+                    value={mapDemographicGroup}
+                    options={analysisGroupOptions}
+                    onChange={setMapDemographicGroup}
+                  />
+                )}
+                {analysisGroupOptions.length === 1 && (
+                  <span className="state-analysis__static-pill" title="Only this group meets the demographic threshold for this state.">
+                    <span className="state-analysis__static-pill-label">Minority</span>
+                    <span className="state-analysis__static-pill-value">{analysisGroupOptions[0].label}</span>
+                  </span>
+                )}
                 {showAnalysisEnsembleControl && (
                   <PillDropdown
                     className="state-analysis__control-field"

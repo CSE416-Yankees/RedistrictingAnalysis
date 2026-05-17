@@ -159,6 +159,7 @@ function normalizeComparisonPlan(payload, selectedPlanKey) {
   const enacted = normalizeAssignmentMap(plans.enacted?.precinctToDistrict);
   const selected = normalizeAssignmentMap(plans[activeKey]?.precinctToDistrict);
   const selectedByCurrentDistrict = {};
+  const modalSelectedByCurrentDistrict = {};
 
   Object.entries(enacted).forEach(([precinctId, currentDistrict]) => {
     const selectedDistrict = selected[precinctId];
@@ -167,10 +168,38 @@ function normalizeComparisonPlan(payload, selectedPlanKey) {
     selectedByCurrentDistrict[currentDistrict].push(selectedDistrict);
   });
 
+  Object.entries(selectedByCurrentDistrict).forEach(([currentDistrict, destinations]) => {
+    const currentNum = Number(currentDistrict);
+    const counts = new Map();
+    destinations.forEach((dest) => {
+      counts.set(dest, (counts.get(dest) || 0) + 1);
+    });
+    // Score destinations by count; on ties, prefer destinations that are
+    // not equal to the current district (otherwise uniform mock data would
+    // collapse the comparison view back to looking identical to enacted).
+    let bestValue = null;
+    let bestScore = -Infinity;
+    counts.forEach((count, value) => {
+      const sameAsCurrent = Number(value) === currentNum;
+      const score = count + (sameAsCurrent ? -0.5 : 0);
+      if (
+        score > bestScore
+        || (score === bestScore && (bestValue == null || Number(value) < Number(bestValue)))
+      ) {
+        bestValue = value;
+        bestScore = score;
+      }
+    });
+    if (bestValue != null) {
+      modalSelectedByCurrentDistrict[currentNum] = bestValue;
+    }
+  });
+
   return {
     enacted,
     selected,
     selectedByCurrentDistrict,
+    modalSelectedByCurrentDistrict,
     selectedKey: activeKey,
   };
 }
@@ -391,6 +420,12 @@ export default function StateMap({
 
     if (planMode === 'comparison' || planMode === 'interesting') {
       const currentDistrictFallback = normalizeDistrictId(feature.properties);
+      const directSelected = assignedDistrictForFeature(feature.properties || {}, selectedAssignmentLookup);
+      if (directSelected != null) return directSelected;
+      const modal = currentDistrictFallback != null
+        ? comparisonPlanModel.modalSelectedByCurrentDistrict?.[Number(currentDistrictFallback)]
+        : null;
+      if (Number.isFinite(modal)) return modal;
       const selectedAssigned = assignedDistrictForFeature(
         feature.properties || {},
         selectedAssignmentLookup,
@@ -411,12 +446,21 @@ export default function StateMap({
     const currentDistrictFallback = normalizeDistrictId(properties);
     const currentAssigned = assignedDistrictForFeature(properties, currentAssignmentLookup)
       ?? currentDistrictFallback;
-    const selectedAssigned = assignedDistrictForFeature(
-      properties,
-      selectedAssignmentLookup,
-      comparisonPlanModel.selectedByCurrentDistrict,
-      currentAssigned ?? currentDistrictFallback,
-    );
+    let selectedAssigned = assignedDistrictForFeature(properties, selectedAssignmentLookup);
+    if (selectedAssigned == null) {
+      const modal = currentAssigned != null
+        ? comparisonPlanModel.modalSelectedByCurrentDistrict?.[Number(currentAssigned)]
+        : null;
+      if (Number.isFinite(modal)) selectedAssigned = modal;
+    }
+    if (selectedAssigned == null) {
+      selectedAssigned = assignedDistrictForFeature(
+        properties,
+        selectedAssignmentLookup,
+        comparisonPlanModel.selectedByCurrentDistrict,
+        currentAssigned ?? currentDistrictFallback,
+      );
+    }
     if (currentAssigned == null || selectedAssigned == null) return null;
     return currentAssigned !== selectedAssigned ? 1 : 0;
   };
@@ -638,6 +682,16 @@ export default function StateMap({
     const value = valueForFeature(feature);
     const color = createColor(value);
     const isChanged = isPlanComparisonMode && assignmentChanged(feature);
+    if (activeMetric === 'district' && !usePrecinctLayer && isPlanComparisonMode) {
+      return {
+        fillColor: color,
+        weight: isHighlighted ? 3.2 : isChanged ? 2.2 : 0.6,
+        opacity: 1,
+        color: isHighlighted ? '#1f6f78' : isChanged ? '#f97316' : '#3d5c63',
+        dashArray: isChanged ? '6 4' : undefined,
+        fillOpacity: isHighlighted ? 0.92 : 0.78,
+      };
+    }
     return {
       fillColor: color,
       weight: isHighlighted ? 1.4 : isChanged ? 1 : 0,
