@@ -48,6 +48,7 @@ const ENSEMBLE_LABELS = {
 
 export default function AnalysisPanel({
   ensembleType,
+  onEnsembleTypeChange,
   analysisView,
   stateData,
   guiPayloads,
@@ -55,8 +56,6 @@ export default function AnalysisPanel({
   summaryError,
   highlightedDistrict,
   onHighlightDistrict,
-  selectedGroup,
-  onSelectedGroupChange,
   feasibleGroups,
   inlineHeatmapGroup,
   onToggleInlineHeatmap,
@@ -106,8 +105,7 @@ export default function AnalysisPanel({
         <BoxWhiskerChart
           payload={guiPayloads.boxWhisker}
           ensembleType={ensembleType}
-          selectedGroup={selectedGroup}
-          onSelectedGroupChange={onSelectedGroupChange}
+          onEnsembleTypeChange={onEnsembleTypeChange}
         />
       )}
       {analysisView === 'ensembleSplits' && (
@@ -115,32 +113,27 @@ export default function AnalysisPanel({
           payload={guiPayloads.ensembleSplits}
           summaryPayload={guiPayloads.stateSummary}
           selectedEnsembleType={ensembleType}
+          onEnsembleTypeChange={onEnsembleTypeChange}
         />
       )}
       {analysisView === 'vraImpact' && (
         <VraImpactThresholdTable
           payload={guiPayloads.vraImpactThresholds}
-          selectedGroup={selectedGroup}
-          onSelectedGroupChange={onSelectedGroupChange}
         />
       )}
       {analysisView === 'minorityEffectivenessBox' && (
         <MinorityEffectivenessBoxChart
           payload={guiPayloads.minorityEffectivenessBox}
-          selectedGroup={selectedGroup}
         />
       )}
       {analysisView === 'minorityEffectivenessHistogram' && (
         <MinorityEffectivenessHistogram
           payload={guiPayloads.minorityEffectivenessHistogram}
-          selectedGroup={selectedGroup}
-          onSelectedGroupChange={onSelectedGroupChange}
         />
       )}
       {analysisView === 'minorityRangeBars' && (
         <MinorityRangeBarCharts
           payload={guiPayloads.minorityRangeBars}
-          selectedGroup={selectedGroup}
         />
       )}
       {analysisView === 'gingles' && (
@@ -149,15 +142,12 @@ export default function AnalysisPanel({
           tablePayload={guiPayloads.ginglesTable}
           highlightedPrecinct={highlightedGinglesPrecinct}
           onSelectPrecinct={setHighlightedGinglesPrecinct}
-          selectedGroup={selectedGroup}
-          onSelectedGroupChange={onSelectedGroupChange}
         />
       )}
       {analysisView === 'eiCandidates' && (
         <EICandidateResults
           key={`${stateData.abbr}-${eiPayloadRevision(guiPayloads.eiCandidates)}`}
           payload={guiPayloads.eiCandidates}
-          selectedGroup={selectedGroup}
         />
       )}
     </div>
@@ -363,38 +353,38 @@ function DistrictRepresentationTable({ payload, highlightedDistrict, onHighlight
 function BoxWhiskerChart({
   payload,
   ensembleType,
-  selectedGroup,
-  onSelectedGroupChange,
+  onEnsembleTypeChange,
 }) {
   const ensembleKey = ensembleType === 'vra' ? 'VRA' : 'RB';
   const groups = Object.keys(payload?.ensembles?.[ensembleKey]?.groups || {});
   const [localSelectedGroup, setLocalSelectedGroup] = useState(groups[0] || 'Black');
-  const requestedGroup = selectedGroup || localSelectedGroup;
-  const activeGroup = groups.includes(requestedGroup) ? requestedGroup : groups[0];
+  const activeGroup = groups.includes(localSelectedGroup) ? localSelectedGroup : groups[0];
   const rows = useMemo(
     () => normalizeDistrictBoxRows(payload?.ensembles?.[ensembleKey]?.groups?.[activeGroup]?.orderedBins),
     [payload, ensembleKey, activeGroup],
   );
   const boxColor = groupColor(activeGroup);
-  const handleGroupChange = (nextGroup) => {
-    setLocalSelectedGroup(nextGroup);
-    onSelectedGroupChange?.(nextGroup);
-  };
 
   return (
     <ChartCard
       title="District Distribution (Box & Whisker)"
       subtitle={`${ENSEMBLE_LABELS[ensembleKey]} ensemble, ordered by enacted-plan percentage for selected group`}
     >
-      {groups.length > 0 && !selectedGroup && (
-        <SelectControl
-          id="box-whisker-group-select"
-          label="Group"
-          value={activeGroup || ''}
-          options={groups.map((group) => ({ value: group, label: group }))}
-          onChange={handleGroupChange}
+      <div className="analysis-inline-controls">
+        {groups.length > 0 && (
+          <SelectControl
+            id="box-whisker-group-select"
+            label="Group"
+            value={activeGroup || ''}
+            options={groups.map((group) => ({ value: group, label: group }))}
+            onChange={setLocalSelectedGroup}
+          />
+        )}
+        <EnsembleToggle
+          ensembleType={ensembleType}
+          onEnsembleTypeChange={onEnsembleTypeChange}
         />
-      )}
+      </div>
       {rows.length > 0 ? (
         <ResponsiveContainer width="100%" height={ANALYSIS_CHART_HEIGHT}>
           <ComposedChart data={rows} margin={{ top: 10, right: 20, bottom: 10, left: 10 }}>
@@ -432,27 +422,49 @@ function BoxWhiskerChart({
   );
 }
 
-function EnsembleSplitsChart({ payload, summaryPayload, selectedEnsembleType }) {
+function EnsembleSplitsChart({ payload, summaryPayload, selectedEnsembleType, onEnsembleTypeChange }) {
   const rows = (payload?.splits || EMPTY_LIST).map((row) => ({
     ...row,
     splitLabel: `${row.repWins}R/${row.demWins}D`,
   }));
   const selectedKey = selectedEnsembleType === 'vra' ? 'VRA' : 'RB';
-  const selectedSummary = summaryPayload?.ensembleSummaries?.[selectedKey];
+  const ensembleSummaries = summaryPayload?.ensembleSummaries || {};
+  const handleSelectEnsemble = (nextEnsembleType) => {
+    onEnsembleTypeChange?.(nextEnsembleType);
+  };
 
   return (
     <ChartCard title="Ensemble Splits" subtitle="Race-Blind and VRA constrained simulated election split frequencies">
-      <div className="analysis-summary-grid">
-        <div className="analysis-summary-card">
-          <span className="analysis-summary-card__label">Comparison</span>
-          <span className="analysis-summary-card__value">Race-Blind vs VRA Constrained</span>
-        </div>
-        <div className="analysis-summary-card">
-          <span className="analysis-summary-card__label">Selected Ensemble Metadata</span>
-          <span className="analysis-summary-card__value">
-            {ENSEMBLE_LABELS[selectedKey]} / {formatPct(selectedSummary?.populationEqualityThresholdPct, 1, { alreadyPercent: true })}
-          </span>
-        </div>
+      <div className="ensemble-card-toggle" role="group" aria-label="Ensemble metadata - click to switch">
+        {[
+          { typeValue: 'raceBlind', summaryKey: 'RB' },
+          { typeValue: 'vra', summaryKey: 'VRA' },
+        ].map(({ typeValue, summaryKey }) => {
+          const summary = ensembleSummaries[summaryKey];
+          const isActive = selectedKey === summaryKey;
+          return (
+            <button
+              key={summaryKey}
+              type="button"
+              className={`ensemble-card-toggle__card ${isActive ? 'ensemble-card-toggle__card--active' : ''}`}
+              onClick={() => handleSelectEnsemble(typeValue)}
+              aria-pressed={isActive}
+              title={isActive ? 'Currently selected ensemble' : `Switch to ${ENSEMBLE_LABELS[summaryKey]} ensemble`}
+            >
+              <span className="ensemble-card-toggle__label">
+                {isActive ? 'Selected Ensemble Metadata' : 'Switch To'}
+              </span>
+              <span className="ensemble-card-toggle__value">
+                {ENSEMBLE_LABELS[summaryKey]} / {formatPct(summary?.populationEqualityThresholdPct, 1, { alreadyPercent: true })}
+              </span>
+              {summary?.planCount != null && (
+                <span className="ensemble-card-toggle__meta">
+                  {formatNumber(summary.planCount)} plans
+                </span>
+              )}
+            </button>
+          );
+        })}
       </div>
       <div className="analysis-table-wrap">
         <table className="analysis-table analysis-table--compact">
@@ -1733,6 +1745,37 @@ function SelectControl({ id, label, value, options, onChange }) {
           ))}
         </select>
       )}
+    </div>
+  );
+}
+
+/** Inline pill-toggle that swaps between the Race-Blind and VRA Constrained
+ * ensembles. Replaces the global Ensemble dropdown that used to live in the
+ * analysis toolbar. */
+function EnsembleToggle({ ensembleType, onEnsembleTypeChange }) {
+  const options = [
+    { value: 'raceBlind', label: 'Race-Blind' },
+    { value: 'vra', label: 'VRA Constrained' },
+  ];
+  return (
+    <div className="ensemble-toggle" role="group" aria-label="Ensemble">
+      <span className="ensemble-toggle__label">Ensemble</span>
+      <div className="ensemble-toggle__group">
+        {options.map((option) => {
+          const isActive = ensembleType === option.value;
+          return (
+            <button
+              key={option.value}
+              type="button"
+              className={`ensemble-toggle__option ${isActive ? 'ensemble-toggle__option--active' : ''}`}
+              onClick={() => onEnsembleTypeChange?.(option.value)}
+              aria-pressed={isActive}
+            >
+              {option.label}
+            </button>
+          );
+        })}
+      </div>
     </div>
   );
 }

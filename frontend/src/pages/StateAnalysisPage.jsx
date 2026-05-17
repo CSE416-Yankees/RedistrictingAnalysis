@@ -289,13 +289,6 @@ export default function StateAnalysisPage() {
     setAnalysisView((currentView) => (currentView === 'districtDetails' ? 'stateSummary' : 'districtDetails'));
   }, []);
 
-  const handleAnalysisGroupLabelChange = useCallback((nextGroupLabel) => {
-    const nextGroupValue = groupValueFromLabel(nextGroupLabel);
-    if (nextGroupValue) {
-      setMapDemographicGroup(nextGroupValue);
-    }
-  }, []);
-
   const handleToggleSummaryHeatmap = useCallback((groupValue) => {
     if (!groupValue) return;
     if (!coerceGroupAllowed(stateKey, groupValue)) return;
@@ -360,14 +353,11 @@ export default function StateAnalysisPage() {
   const shouldUsePrecinctLayer = analysisView === 'demographicHeatMap' || summaryHeatmapActive;
   const activeHeatMapPayload = heatMapPayloadForGroup(guiPayloads?.heatMaps, effectiveMapDemographicGroup);
   const showPlanMetricControls = shouldUsePrecinctLayer && !summaryHeatmapActive;
-  const showAnalysisEnsembleControl = analysisView === 'boxWhisker' || analysisView === 'ensembleSplits';
-  const analysisGroupLabel = groupLabelFromValue(mapDemographicGroup);
   const isFullWidthPlanComparison = mapPlanMode === 'comparison' && isSplitPlanComparison;
   const pageTitle = pageTitleForView(stateData.name, analysisView, mapPlanMode);
   const pageDescription = VIEW_DESCRIPTIONS[analysisView] || VIEW_DESCRIPTIONS.stateSummary;
   const workspaceLabel = activeWorkbenchTab === 'plans' ? 'Plan Explorer' : 'Analysis';
   const demographicGroupOptions = feasibleDemographicGroupOptions(stateKey);
-  const analysisGroupOptions = feasibleAnalysisGroupOptions(stateKey);
   const feasibleGroups = feasibleGroupValues(stateKey);
 
   return (
@@ -642,36 +632,13 @@ export default function StateAnalysisPage() {
                   options={ANALYSIS_TAB_OPTIONS}
                   onChange={handleAnalysisMenuChange}
                 />
-                {analysisGroupOptions.length > 1 && (
-                  <PillDropdown
-                    className="state-analysis__control-field"
-                    label="Minority"
-                    value={mapDemographicGroup}
-                    options={analysisGroupOptions}
-                    onChange={setMapDemographicGroup}
-                  />
-                )}
-                {analysisGroupOptions.length === 1 && (
-                  <span className="state-analysis__static-pill" title="Only this group meets the demographic threshold for this state.">
-                    <span className="state-analysis__static-pill-label">Minority</span>
-                    <span className="state-analysis__static-pill-value">{analysisGroupOptions[0].label}</span>
-                  </span>
-                )}
-                {showAnalysisEnsembleControl && (
-                  <PillDropdown
-                    className="state-analysis__control-field"
-                    label="Ensemble"
-                    value={ensembleType}
-                    options={ENSEMBLE_OPTIONS}
-                    onChange={setEnsembleType}
-                  />
-                )}
               </div>
 
               <div className="state-analysis__analysis-split state-analysis__analysis-split--solo">
                 <div className="state-analysis__analysis-board">
                   <AnalysisPanel
                     ensembleType={ensembleType}
+                    onEnsembleTypeChange={setEnsembleType}
                     analysisView={analysisView}
                     stateData={stateData}
                     guiPayloads={guiPayloads}
@@ -679,8 +646,6 @@ export default function StateAnalysisPage() {
                     summaryError={guiDataError}
                     highlightedDistrict={selectedDistrictId}
                     onHighlightDistrict={setSelectedDistrictId}
-                    selectedGroup={analysisGroupLabel}
-                    onSelectedGroupChange={handleAnalysisGroupLabelChange}
                   />
                 </div>
               </div>
