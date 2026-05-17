@@ -19,13 +19,16 @@ import {
 import './AnalysisPanel.css';
 
 const EMPTY_LIST = [];
-const ANALYSIS_CHART_HEIGHT = 300;
-const GINGLES_CHART_HEIGHT = 165;
-const EI_CHART_HEIGHT = 205;
-const MINORITY_EFFECTIVENESS_CHART_HEIGHT = 235;
-const MINORITY_HISTOGRAM_CHART_HEIGHT = 225;
-const GINGLES_PRECINCT_PAGE_SIZE = 8;
-const GINGLES_TABLE_PAGE_SIZE = 8;
+// Chart sizes are tuned so each analysis tab fills the now full-width
+// workspace with very little blank space below the chart canvas.
+const ANALYSIS_CHART_HEIGHT = 520;
+const GINGLES_CHART_HEIGHT = 300;
+const EI_CHART_HEIGHT = 380;
+const MINORITY_EFFECTIVENESS_CHART_HEIGHT = 440;
+const MINORITY_HISTOGRAM_CHART_HEIGHT = 440;
+const RANGE_BAR_CHART_HEIGHT = 360;
+const GINGLES_PRECINCT_PAGE_SIZE = 12;
+const GINGLES_TABLE_PAGE_SIZE = 12;
 
 function eiPayloadRevision(payload) {
   const results = payload?.candidateResults;
@@ -839,7 +842,7 @@ function MinorityRangeBarCharts({ payload, selectedGroup }) {
       <div className="range-bar-grid">
         <div className="range-bar-grid__chart">
           <h4 className="range-bar-grid__heading">Minority-Effective Districts</h4>
-          <ResponsiveContainer width="100%" height={ANALYSIS_CHART_HEIGHT}>
+          <ResponsiveContainer width="100%" height={RANGE_BAR_CHART_HEIGHT}>
             <BarChart data={effectiveRows} margin={{ top: 10, right: 18, bottom: 6, left: 8 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#eee" />
               <XAxis dataKey="group" tick={{ fontSize: 11 }} />
@@ -899,7 +902,7 @@ function MinorityRangeBarCharts({ payload, selectedGroup }) {
 
         <div className="range-bar-grid__chart">
           <h4 className="range-bar-grid__heading">Majority-Minority Districts</h4>
-          <ResponsiveContainer width="100%" height={ANALYSIS_CHART_HEIGHT}>
+          <ResponsiveContainer width="100%" height={RANGE_BAR_CHART_HEIGHT}>
             <BarChart data={majorityRows} margin={{ top: 10, right: 18, bottom: 6, left: 8 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#eee" />
               <XAxis dataKey="group" tick={{ fontSize: 11 }} />

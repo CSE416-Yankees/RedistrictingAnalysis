@@ -173,9 +173,11 @@ export default function StateAnalysisPage() {
   const [mapMetric, setMapMetric] = useState(() => resolveGuiUiConfig(matchGuiSlug(guiSlug)).mapMetric);
   const [mapDemographicGroup, setMapDemographicGroup] = useState(() => resolveGuiUiConfig(matchGuiSlug(guiSlug)).mapDemographicGroup);
   const [showDistrictOutlines, setShowDistrictOutlines] = useState(true);
-  // The State Summary view exposes one heatmap-toggle button per race; this
-  // tracks which (if any) is currently revealed inline below the summary.
-  const [inlineHeatmapGroup, setInlineHeatmapGroup] = useState(null);
+  // The State Summary's demographic table exposes one heatmap-toggle button
+  // per race; when set, the *left-pane* district map swaps to a precinct-level
+  // heatmap for that group. Toggling the same button clears it and reverts
+  // to the current-plan district view.
+  const [summaryHeatmapGroup, setSummaryHeatmapGroup] = useState(null);
 
   // Sync page state with the current route.
   useEffect(() => {
@@ -191,7 +193,7 @@ export default function StateAnalysisPage() {
       return coerceDemographicGroup(stateKey, targetGroup);
     });
     setSelectedDistrictId(null);
-    setInlineHeatmapGroup(null);
+    setSummaryHeatmapGroup(null);
   }, [stateKey, guiSlugCanonical]);
 
   // Fetch payloads for the selected state.
@@ -294,10 +296,10 @@ export default function StateAnalysisPage() {
     }
   }, []);
 
-  const handleToggleInlineHeatmap = useCallback((groupValue) => {
+  const handleToggleSummaryHeatmap = useCallback((groupValue) => {
     if (!groupValue) return;
     if (!coerceGroupAllowed(stateKey, groupValue)) return;
-    setInlineHeatmapGroup((current) => (current === groupValue ? null : groupValue));
+    setSummaryHeatmapGroup((current) => (current === groupValue ? null : groupValue));
   }, [stateKey]);
 
   if (!stateData) {
@@ -344,27 +346,29 @@ export default function StateAnalysisPage() {
 
   const mapCenter = leafletCenterFromGuiState(guiPayloads?.currentPlan?.state, stateData.center);
   const mapZoom = guiPayloads?.currentPlan?.state?.zoom ?? stateData.zoom;
-  const activeHeatMapPayload = heatMapPayloadForGroup(guiPayloads?.heatMaps, mapDemographicGroup);
   const activeWorkbenchTab = ANALYSIS_TAB_VIEWS.has(analysisView) ? 'analysis' : 'plans';
   const planSideAnalysisView = analysisView === 'districtDetails' ? 'districtDetails' : 'stateSummary';
-  const shouldUsePrecinctLayer = analysisView === 'demographicHeatMap';
-  const showPlanMetricControls = shouldUsePrecinctLayer;
+  // When the user toggles a heatmap from inside the State Summary, swap the
+  // left-pane map into precinct-level demographic mode for that race. This
+  // overrides the route-derived mapMetric/mapDemographicGroup only for
+  // render purposes so the underlying controls aren't disturbed.
+  const summaryHeatmapActive = analysisView === 'stateSummary' && !!summaryHeatmapGroup;
+  const effectiveMapMetric = summaryHeatmapActive ? 'demographic' : mapMetric;
+  const effectiveMapDemographicGroup = summaryHeatmapActive
+    ? summaryHeatmapGroup
+    : mapDemographicGroup;
+  const shouldUsePrecinctLayer = analysisView === 'demographicHeatMap' || summaryHeatmapActive;
+  const activeHeatMapPayload = heatMapPayloadForGroup(guiPayloads?.heatMaps, effectiveMapDemographicGroup);
+  const showPlanMetricControls = shouldUsePrecinctLayer && !summaryHeatmapActive;
   const showAnalysisEnsembleControl = analysisView === 'boxWhisker' || analysisView === 'ensembleSplits';
   const analysisGroupLabel = groupLabelFromValue(mapDemographicGroup);
   const isFullWidthPlanComparison = mapPlanMode === 'comparison' && isSplitPlanComparison;
-  // State Summary takes over the entire workspace: no side map, no plan
-  // controls strip. The user toggles heatmaps inline from the demographic
-  // table inside the summary instead.
-  const isFullWidthSummary = analysisView === 'stateSummary';
   const pageTitle = pageTitleForView(stateData.name, analysisView, mapPlanMode);
   const pageDescription = VIEW_DESCRIPTIONS[analysisView] || VIEW_DESCRIPTIONS.stateSummary;
   const workspaceLabel = activeWorkbenchTab === 'plans' ? 'Plan Explorer' : 'Analysis';
   const demographicGroupOptions = feasibleDemographicGroupOptions(stateKey);
   const analysisGroupOptions = feasibleAnalysisGroupOptions(stateKey);
   const feasibleGroups = feasibleGroupValues(stateKey);
-  const inlineHeatmapPayload = inlineHeatmapGroup
-    ? heatMapPayloadForGroup(guiPayloads?.heatMaps, inlineHeatmapGroup)
-    : null;
 
   return (
     <div className="state-analysis">
@@ -382,68 +386,7 @@ export default function StateAnalysisPage() {
             </div>
           </div>
 
-          {activeWorkbenchTab === 'plans' && isFullWidthSummary ? (
-            <div className="state-analysis__plan-shell state-analysis__plan-shell--summary">
-              <section className="state-analysis__summary-panel" aria-label={`${stateData.name} state summary`}>
-                <AnalysisPanel
-                  ensembleType={ensembleType}
-                  analysisView="stateSummary"
-                  stateData={stateData}
-                  guiPayloads={guiPayloads}
-                  isSummaryLoading={isGuiDataLoading}
-                  summaryError={guiDataError}
-                  highlightedDistrict={selectedDistrictId}
-                  onHighlightDistrict={setSelectedDistrictId}
-                  feasibleGroups={feasibleGroups}
-                  inlineHeatmapGroup={inlineHeatmapGroup}
-                  onToggleInlineHeatmap={handleToggleInlineHeatmap}
-                />
-
-                {inlineHeatmapGroup && (
-                  <div className="state-analysis__inline-heatmap" aria-label={`${inlineHeatmapGroup} heat map`}>
-                    <div className="state-analysis__inline-heatmap-header">
-                      <span className="state-analysis__inline-heatmap-eyebrow">Inline Heat Map</span>
-                      <strong className="state-analysis__inline-heatmap-title">
-                        {groupLabelFromValue(inlineHeatmapGroup)} population by precinct
-                      </strong>
-                      <button
-                        type="button"
-                        className="state-analysis__inline-heatmap-close"
-                        onClick={() => setInlineHeatmapGroup(null)}
-                        aria-label="Close inline heat map"
-                      >
-                        Close
-                      </button>
-                    </div>
-                    <div className="state-analysis__inline-heatmap-map">
-                      <StateMap
-                        key={`${stateKey}-inline-${inlineHeatmapGroup}`}
-                        stateAbbr={stateKey}
-                        center={mapCenter}
-                        zoom={mapZoom}
-                        districtData={currentPlanDistricts}
-                        currentPlanPayload={guiPayloads?.currentPlan}
-                        heatMapPayload={inlineHeatmapPayload}
-                        stateDemographics={{
-                          blackPercent: stateData.blackPercent,
-                          hispanicPercent: stateData.hispanicPercent,
-                          asianPercent: stateData.asianPercent,
-                        }}
-                        planMode="current"
-                        highlightedDistrict={selectedDistrictId}
-                        onDistrictSelect={setSelectedDistrictId}
-                        mapMetric="demographic"
-                        mapDemographicGroup={inlineHeatmapGroup}
-                        showDistrictOutlines={showDistrictOutlines}
-                        showOverlayControls={false}
-                        usePrecinctLayer
-                      />
-                    </div>
-                  </div>
-                )}
-              </section>
-            </div>
-          ) : activeWorkbenchTab === 'plans' ? (
+          {activeWorkbenchTab === 'plans' ? (
             <div className={`state-analysis__plan-shell ${isFullWidthPlanComparison ? 'state-analysis__plan-shell--compare' : ''}`}>
               <section className="state-analysis__map-panel" aria-label={`${stateData.name} district map`}>
                 <div className={`state-analysis__map-container ${isSplitPlanComparison ? 'state-analysis__map-container--split' : ''}`}>
@@ -521,7 +464,7 @@ export default function StateAnalysisPage() {
                     </div>
                   ) : (
                     <StateMap
-                      key={stateKey}
+                      key={`${stateKey}-${summaryHeatmapActive ? `heat-${summaryHeatmapGroup}` : 'plan'}`}
                       stateAbbr={stateKey}
                       center={mapCenter}
                       zoom={mapZoom}
@@ -538,9 +481,9 @@ export default function StateAnalysisPage() {
                       planMode={mapPlanMode}
                       highlightedDistrict={selectedDistrictId}
                       onDistrictSelect={setSelectedDistrictId}
-                      mapMetric={shouldUsePrecinctLayer ? mapMetric : 'partisan'}
+                      mapMetric={shouldUsePrecinctLayer ? effectiveMapMetric : 'partisan'}
                       onMapMetricChange={setMapMetric}
-                      mapDemographicGroup={mapDemographicGroup}
+                      mapDemographicGroup={effectiveMapDemographicGroup}
                       onMapDemographicGroupChange={setMapDemographicGroup}
                       showDistrictOutlines={showDistrictOutlines}
                       showOverlayControls={false}
@@ -681,6 +624,9 @@ export default function StateAnalysisPage() {
                       summaryError={guiDataError}
                       highlightedDistrict={selectedDistrictId}
                       onHighlightDistrict={setSelectedDistrictId}
+                      feasibleGroups={feasibleGroups}
+                      inlineHeatmapGroup={summaryHeatmapGroup}
+                      onToggleInlineHeatmap={handleToggleSummaryHeatmap}
                     />
                   )}
                 </aside>

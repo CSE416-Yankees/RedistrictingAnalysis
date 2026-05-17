@@ -1,10 +1,10 @@
 .analysis-panel {
-  padding: 14px;
+  padding: 10px;
   height: 100%;
   min-height: 0;
   overflow: visible;
   display: grid;
-  gap: 10px;
+  gap: 8px;
 }
 
 .analysis-panel > * {
@@ -14,8 +14,8 @@
 .range-bar-grid {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  gap: 14px;
-  margin-bottom: 12px;
+  gap: 12px;
+  margin-bottom: 6px;
 }
 
 .range-bar-grid__chart {
@@ -63,14 +63,14 @@
   background: linear-gradient(180deg, rgba(255, 253, 249, 0.94) 0%, rgba(255, 249, 241, 0.94) 100%);
   border: 1px solid rgba(190, 173, 152, 0.42);
   border-radius: var(--radius-md);
-  padding: 16px;
+  padding: 12px 14px 14px;
   box-shadow: 0 1px 6px rgba(21, 35, 43, 0.05);
   min-height: 0;
   overflow: visible;
 }
 
 .chart-card--nested {
-  margin-top: 6px;
+  margin-top: 4px;
   padding: 8px;
   background: rgba(255, 255, 255, 0.56);
   box-shadow: none;
@@ -88,10 +88,10 @@
 .chart-title {
   font-size: 1.01rem;
   letter-spacing: -0.15px;
-  margin-bottom: 16px;
+  margin-bottom: 8px;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 2px;
 }
 
 .chart-subtitle {
@@ -103,7 +103,7 @@
 
 .analysis-table-wrap {
   overflow: visible;
-  margin-top: 10px;
+  margin-top: 6px;
   border-radius: var(--radius-sm);
 }
 
@@ -257,10 +257,10 @@
 }
 
 .analysis-summary-grid {
-  margin-top: 10px;
+  margin-top: 6px;
   display: grid;
   grid-template-columns: repeat(2, minmax(180px, 1fr));
-  gap: 10px;
+  gap: 8px;
 }
 
 .analysis-summary-card {
@@ -286,10 +286,10 @@
 }
 
 .analysis-voter-dist {
-  margin-top: 10px;
+  margin-top: 6px;
   border: 1px solid rgba(190, 172, 150, 0.38);
   border-radius: var(--radius-sm);
-  padding: 10px;
+  padding: 8px 10px;
   background: rgba(255, 255, 255, 0.6);
 }
 
@@ -352,12 +352,12 @@
 }
 
 .gingles-controls {
-  margin-bottom: 10px;
+  margin-bottom: 6px;
   display: flex;
   align-items: center;
   gap: 10px;
   flex-wrap: wrap;
-  padding: 8px 10px;
+  padding: 6px 10px;
   border-radius: 10px;
   border: 1px solid rgba(190, 172, 150, 0.36);
   background: rgba(255, 255, 255, 0.62);
@@ -466,7 +466,7 @@
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 6px;
-  margin-bottom: 8px;
+  margin-bottom: 4px;
 }
 
 .minority-effectiveness-summary__card {
