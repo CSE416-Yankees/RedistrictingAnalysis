@@ -188,6 +188,58 @@
   font-size: 0.78rem;
 }
 
+/* Inline heat map toggle inside the State Summary demographic table. */
+.heatmap-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--color-primary-dark);
+  background: rgba(31, 111, 120, 0.08);
+  border: 1px solid rgba(31, 111, 120, 0.32);
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease, transform 0.1s ease;
+}
+
+.heatmap-toggle:hover:not(:disabled),
+.heatmap-toggle:focus-visible:not(:disabled) {
+  background: rgba(31, 111, 120, 0.16);
+  border-color: rgba(31, 111, 120, 0.5);
+  outline: none;
+}
+
+.heatmap-toggle:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+.heatmap-toggle--active {
+  background: var(--color-primary-dark);
+  border-color: var(--color-primary-dark);
+  color: #fff;
+}
+
+.heatmap-toggle--active:hover,
+.heatmap-toggle--active:focus-visible {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  color: #fff;
+}
+
+.heatmap-toggle:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.heatmap-toggle__placeholder {
+  display: inline-block;
+  color: rgba(94, 100, 110, 0.55);
+  font-size: 12px;
+}
+
 .analysis-kpi-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(160px, 1fr));

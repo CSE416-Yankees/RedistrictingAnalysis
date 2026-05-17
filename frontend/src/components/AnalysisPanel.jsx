@@ -51,6 +51,9 @@ export default function AnalysisPanel({
   onHighlightDistrict,
   selectedGroup,
   onSelectedGroupChange,
+  feasibleGroups,
+  inlineHeatmapGroup,
+  onToggleInlineHeatmap,
 }) {
   const [highlightedGinglesPrecinct, setHighlightedGinglesPrecinct] = useState(null);
 
@@ -81,6 +84,9 @@ export default function AnalysisPanel({
           stateData={stateData}
           isLoading={isSummaryLoading}
           error={summaryError}
+          feasibleGroups={feasibleGroups}
+          inlineHeatmapGroup={inlineHeatmapGroup}
+          onToggleInlineHeatmap={onToggleInlineHeatmap}
         />
       )}
       {analysisView === 'districtDetails' && (
@@ -152,7 +158,22 @@ export default function AnalysisPanel({
   );
 }
 
-function StateSummaryCard({ payload, stateData, isLoading, error }) {
+const HEATMAP_TOGGLE_ROW_GROUPS = ['Black', 'Hispanic', 'Asian'];
+const HEATMAP_GROUP_VALUE = {
+  Black: 'black',
+  Hispanic: 'hispanic',
+  Asian: 'asian',
+};
+
+function StateSummaryCard({
+  payload,
+  stateData,
+  isLoading,
+  error,
+  feasibleGroups,
+  inlineHeatmapGroup,
+  onToggleInlineHeatmap,
+}) {
   if (isLoading) {
     return (
       <ChartCard title="State Data Summary" subtitle="Population, demographics, party control, statewide vote, and representation">
@@ -170,6 +191,9 @@ function StateSummaryCard({ payload, stateData, isLoading, error }) {
   }
 
   const summary = normalizeStateSummary(payload, stateData);
+  // `feasibleGroups` is null/undefined when every group meets the threshold.
+  const allowedHeatmapGroups = feasibleGroups ? new Set(feasibleGroups) : null;
+  const canToggleHeatmap = typeof onToggleInlineHeatmap === 'function';
 
   return (
     <ChartCard title="State Data Summary" subtitle="Population, demographics, party control, statewide vote, and ensemble availability">
@@ -212,16 +236,45 @@ function StateSummaryCard({ payload, stateData, isLoading, error }) {
               <th>Group</th>
               <th className="num">Population %</th>
               <th className="num">CVAP %</th>
+              {canToggleHeatmap && <th aria-label="Heat map toggle">Heat Map</th>}
             </tr>
           </thead>
           <tbody>
-            {summary.demographicRows.map((row) => (
-              <tr key={row.group}>
-                <td>{row.group}</td>
-                <td className="num">{formatPct(row.populationPct, 1)}</td>
-                <td className="num">{formatPct(row.cvapPct, 1)}</td>
-              </tr>
-            ))}
+            {summary.demographicRows.map((row) => {
+              const heatmapValue = HEATMAP_GROUP_VALUE[row.group];
+              const isToggleable = HEATMAP_TOGGLE_ROW_GROUPS.includes(row.group);
+              const isAllowed = !!heatmapValue && (!allowedHeatmapGroups || allowedHeatmapGroups.has(heatmapValue));
+              const isActive = !!heatmapValue && inlineHeatmapGroup === heatmapValue;
+              return (
+                <tr key={row.group}>
+                  <td>{row.group}</td>
+                  <td className="num">{formatPct(row.populationPct, 1)}</td>
+                  <td className="num">{formatPct(row.cvapPct, 1)}</td>
+                  {canToggleHeatmap && (
+                    <td>
+                      {isToggleable ? (
+                        <button
+                          type="button"
+                          className={`heatmap-toggle ${isActive ? 'heatmap-toggle--active' : ''}`}
+                          onClick={() => onToggleInlineHeatmap(heatmapValue)}
+                          disabled={!isAllowed}
+                          aria-pressed={isActive}
+                          title={!isAllowed
+                            ? `${row.group} population is below the demographic threshold for this state.`
+                            : isActive
+                              ? `Hide ${row.group} heat map`
+                              : `Show ${row.group} heat map`}
+                        >
+                          {isActive ? 'Hide Heat Map' : 'Show Heat Map'}
+                        </button>
+                      ) : (
+                        <span className="heatmap-toggle__placeholder" aria-hidden="true">-</span>
+                      )}
+                    </td>
+                  )}
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>

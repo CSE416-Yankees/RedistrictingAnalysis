@@ -240,22 +240,26 @@ export function resolveGuiUiConfig(guiSlug) {
   return GUI_SLUG_TO_CONFIG[guiSlug] || OVERVIEW_CONFIG;
 }
 
-/** Dropdown options: value matches AnalysisPanel routing */
+/** Dropdown options: value matches AnalysisPanel routing.
+ * Plan Explorer entries (map-centric or data-summary views) come first in the
+ * order they appear in the page; Analysis entries follow in pipeline order:
+ * test (Gingles, EI) -> simulation (Distribution, Splits, Effectiveness) ->
+ * legal threshold (VRA Impact). */
 export const ANALYSIS_OPTIONS = [
   { value: 'currentPlanMap', label: 'Current Plan Map', routeSlug: 'gui-2' },
   { value: 'stateSummary', label: 'State Data Summary', routeSlug: 'gui-3' },
   { value: 'demographicHeatMap', label: 'Demographic Heat Map', routeSlug: 'gui-4' },
   { value: 'planComparisonMap', label: 'Compare Plans', routeSlug: 'gui-8' },
   { value: 'districtDetails', label: 'Congressional Representation', routeSlug: 'gui-6' },
+  { value: 'interestingPlanMap', label: 'Interesting Plan', routeSlug: 'gui-19' },
+  { value: 'gingles', label: 'Gingles Analysis', routeSlug: 'gui-9' },
+  { value: 'eiCandidates', label: 'Ecological Inference Results', routeSlug: 'gui-12' },
   { value: 'boxWhisker', label: 'District Distribution', routeSlug: 'gui-17' },
   { value: 'ensembleSplits', label: 'Ensemble Vote Splits', routeSlug: 'gui-16' },
-  { value: 'vraImpact', label: 'VRA Impact Thresholds', routeSlug: 'gui-20' },
   { value: 'minorityEffectivenessBox', label: 'Minority Effectiveness Range', routeSlug: 'gui-21' },
   { value: 'minorityEffectivenessHistogram', label: 'Minority Effectiveness Histogram', routeSlug: 'gui-22' },
   { value: 'minorityRangeBars', label: 'Minority District Range Bars', routeSlug: 'gui-26' },
-  { value: 'gingles', label: 'Gingles Analysis', routeSlug: 'gui-9' },
-  { value: 'eiCandidates', label: 'Ecological Inference Results', routeSlug: 'gui-12' },
-  { value: 'interestingPlanMap', label: 'Interesting Plan', routeSlug: 'gui-19' },
+  { value: 'vraImpact', label: 'VRA Impact Thresholds', routeSlug: 'gui-20' },
 ];
 
 export const MAP_GUI_LINKS = [
