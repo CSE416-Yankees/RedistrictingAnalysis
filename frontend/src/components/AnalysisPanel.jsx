@@ -22,13 +22,16 @@ const EMPTY_LIST = [];
 // Chart sizes are tuned so each analysis tab fills the now full-width
 // workspace with very little blank space below the chart canvas.
 const ANALYSIS_CHART_HEIGHT = 520;
-const GINGLES_CHART_HEIGHT = 300;
+// Gingles shares vertical space with a paginated table, so its chart is
+// shorter than the other analysis tabs.
+const GINGLES_CHART_HEIGHT = 260;
 const EI_CHART_HEIGHT = 380;
 const MINORITY_EFFECTIVENESS_CHART_HEIGHT = 440;
 const MINORITY_HISTOGRAM_CHART_HEIGHT = 440;
 const RANGE_BAR_CHART_HEIGHT = 360;
-const GINGLES_PRECINCT_PAGE_SIZE = 12;
-const GINGLES_TABLE_PAGE_SIZE = 12;
+const GINGLES_PRECINCT_PAGE_SIZE = 8;
+const GINGLES_TABLE_PAGE_SIZE = 8;
+const PAGE_WINDOW_SIZE = 5;
 
 function eiPayloadRevision(payload) {
   const results = payload?.candidateResults;
@@ -1192,29 +1195,127 @@ function GinglesTable({
         </table>
       </div>
       {orderedRows.length > pageSize && (
-        <div className="analysis-pagination" aria-label="Precinct table pagination">
-          <button
-            type="button"
-            className="analysis-pagination__button"
-            disabled={safePageIndex === 0}
-            onClick={() => setPrecinctPageIndex(Math.max(0, safePageIndex - 1))}
-          >
-            Previous
-          </button>
-          <span className="analysis-pagination__status">
-            {visibleStart}-{visibleEnd} of {orderedRows.length}
-          </span>
-          <button
-            type="button"
-            className="analysis-pagination__button"
-            disabled={safePageIndex >= pageCount - 1}
-            onClick={() => setPrecinctPageIndex(Math.min(pageCount - 1, safePageIndex + 1))}
-          >
-            Next
-          </button>
-        </div>
+        <NumberedPagination
+          pageIndex={safePageIndex}
+          pageCount={pageCount}
+          onPageChange={setPrecinctPageIndex}
+          rangeLabel={`${visibleStart}-${visibleEnd} of ${orderedRows.length}`}
+          ariaLabel="Precinct table pagination"
+        />
       )}
     </ChartCard>
+  );
+}
+
+function buildPageWindow(currentIndex, totalPages, windowSize = PAGE_WINDOW_SIZE) {
+  if (totalPages <= 0) return [];
+  if (totalPages <= windowSize) {
+    return Array.from({ length: totalPages }, (_, index) => index);
+  }
+  const half = Math.floor(windowSize / 2);
+  let start = Math.max(0, currentIndex - half);
+  let end = start + windowSize - 1;
+  if (end > totalPages - 1) {
+    end = totalPages - 1;
+    start = end - windowSize + 1;
+  }
+  return Array.from({ length: end - start + 1 }, (_, index) => start + index);
+}
+
+function NumberedPagination({
+  pageIndex,
+  pageCount,
+  onPageChange,
+  rangeLabel,
+  ariaLabel = 'Pagination',
+}) {
+  if (pageCount <= 1) return null;
+  const goTo = (next) => {
+    const clamped = Math.max(0, Math.min(pageCount - 1, next));
+    if (clamped !== pageIndex) onPageChange(clamped);
+  };
+  const window = buildPageWindow(pageIndex, pageCount);
+  const showLeadingAnchor = window[0] > 0;
+  const showLeadingGap = window[0] > 1;
+  const showTrailingAnchor = window[window.length - 1] < pageCount - 1;
+  const showTrailingGap = window[window.length - 1] < pageCount - 2;
+
+  return (
+    <nav className="analysis-pagination" aria-label={ariaLabel}>
+      <button
+        type="button"
+        className="analysis-pagination__nav"
+        onClick={() => goTo(pageIndex - 1)}
+        disabled={pageIndex === 0}
+        aria-label="Previous page"
+      >
+        <svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M15 6 9 12l6 6" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      </button>
+
+      <ol className="analysis-pagination__pages">
+        {showLeadingAnchor && (
+          <li>
+            <button
+              type="button"
+              className={`analysis-pagination__page ${pageIndex === 0 ? 'analysis-pagination__page--active' : ''}`}
+              onClick={() => goTo(0)}
+              aria-label="Page 1"
+              aria-current={pageIndex === 0 ? 'page' : undefined}
+            >
+              1
+            </button>
+          </li>
+        )}
+        {showLeadingGap && (
+          <li aria-hidden="true" className="analysis-pagination__gap">…</li>
+        )}
+        {window.map((index) => (
+          <li key={index}>
+            <button
+              type="button"
+              className={`analysis-pagination__page ${index === pageIndex ? 'analysis-pagination__page--active' : ''}`}
+              onClick={() => goTo(index)}
+              aria-label={`Page ${index + 1}`}
+              aria-current={index === pageIndex ? 'page' : undefined}
+            >
+              {index + 1}
+            </button>
+          </li>
+        ))}
+        {showTrailingGap && (
+          <li aria-hidden="true" className="analysis-pagination__gap">…</li>
+        )}
+        {showTrailingAnchor && (
+          <li>
+            <button
+              type="button"
+              className={`analysis-pagination__page ${pageIndex === pageCount - 1 ? 'analysis-pagination__page--active' : ''}`}
+              onClick={() => goTo(pageCount - 1)}
+              aria-label={`Page ${pageCount}`}
+              aria-current={pageIndex === pageCount - 1 ? 'page' : undefined}
+            >
+              {pageCount}
+            </button>
+          </li>
+        )}
+      </ol>
+
+      <button
+        type="button"
+        className="analysis-pagination__nav"
+        onClick={() => goTo(pageIndex + 1)}
+        disabled={pageIndex >= pageCount - 1}
+        aria-label="Next page"
+      >
+        <svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="m9 6 6 6-6 6" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      </button>
+
+      {rangeLabel && <span className="analysis-pagination__status">{rangeLabel}</span>}
+    </nav>
   );
 }
 

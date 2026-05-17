@@ -660,7 +660,9 @@
   border-top-color: rgba(31, 111, 120, 0.42);
   border-radius: var(--radius-md);
   min-height: 0;
-  overflow: hidden;
+  /* Tabs whose content (chart + paginated table) can exceed the workspace
+   * height must scroll within the board rather than clip off-screen. */
+  overflow: auto;
   box-shadow: var(--shadow-sm);
 }
 
