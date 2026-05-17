@@ -554,6 +554,11 @@
   box-shadow: 0 2px 10px rgba(31, 111, 120, 0.28);
 }
 
+.state-analysis__action:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(31, 111, 120, 0.22);
+}
+
 .state-analysis__action--active {
   background: var(--color-primary);
   border-color: var(--color-primary);
@@ -573,6 +578,17 @@
   font-size: 0.8rem;
   font-weight: 700;
   border-radius: 999px;
+  cursor: pointer;
+}
+
+.state-analysis__check-pill:hover {
+  border-color: rgba(31, 111, 120, 0.55);
+  color: var(--color-text);
+}
+
+.state-analysis__check-pill:focus-within {
+  border-color: rgba(31, 111, 120, 0.55);
+  box-shadow: 0 0 0 3px rgba(31, 111, 120, 0.14);
 }
 
 .state-analysis__check-pill input {
@@ -582,14 +598,7 @@
 .state-analysis__static-pill {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  min-height: 34px;
-  padding: 4px 12px;
-  border-radius: 999px;
-  border: 1px solid rgba(178, 159, 138, 0.7);
-  background: rgba(255, 254, 251, 0.84);
-  color: #2a3e45;
-  font-size: 0.8rem;
+  gap: 6px;
 }
 
 .state-analysis__static-pill-label {
@@ -598,11 +607,20 @@
   font-weight: 800;
   letter-spacing: 0.2px;
   text-transform: uppercase;
+  white-space: nowrap;
 }
 
 .state-analysis__static-pill-value {
+  display: inline-flex;
+  align-items: center;
+  min-height: 32px;
+  padding: 5px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(178, 159, 138, 0.7);
+  background: #fffefb;
+  color: #2a3e45;
+  font-size: 0.8rem;
   font-weight: 700;
-  color: var(--color-primary-dark);
 }
 
 .state-analysis__analysis-shell {

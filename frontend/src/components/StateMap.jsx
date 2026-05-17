@@ -685,10 +685,10 @@ export default function StateMap({
     if (activeMetric === 'district' && !usePrecinctLayer && isPlanComparisonMode) {
       return {
         fillColor: color,
-        weight: isHighlighted ? 3.2 : isChanged ? 2.2 : 0.6,
+        weight: isHighlighted ? 3 : isChanged ? 1.8 : 0.6,
         opacity: 1,
-        color: isHighlighted ? '#1f6f78' : isChanged ? '#f97316' : '#3d5c63',
-        dashArray: isChanged ? '6 4' : undefined,
+        color: isHighlighted ? '#1f6f78' : isChanged ? '#c46a32' : '#3d5c63',
+        dashArray: isChanged ? '5 3' : undefined,
         fillOpacity: isHighlighted ? 0.92 : 0.78,
       };
     }
@@ -696,7 +696,7 @@ export default function StateMap({
       fillColor: color,
       weight: isHighlighted ? 1.4 : isChanged ? 1 : 0,
       opacity: 1,
-      color: isHighlighted ? '#1f6f78' : isChanged ? '#f97316' : color,
+      color: isHighlighted ? '#1f6f78' : isChanged ? '#c46a32' : color,
       fillOpacity: isHighlighted ? 0.92 : isChanged ? 0.86 : 0.72,
     };
   };
