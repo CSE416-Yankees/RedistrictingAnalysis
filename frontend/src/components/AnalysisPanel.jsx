@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Area,
   AreaChart,
@@ -1155,24 +1155,49 @@ function GinglesTable({
   subtitle = 'Precinct-level population and 2024 vote inputs',
   nested = false,
 }) {
-  const [pagination, setPagination] = useState({ key: '', pageIndex: 0 });
   const sourceRows = payload?.rows || EMPTY_LIST;
-  const orderedRows = useMemo(
-    () => prioritizeHighlightedRow(sourceRows, highlightedPrecinct),
-    [sourceRows, highlightedPrecinct],
-  );
   const pageSize = Math.max(1, Number(maxRows ?? GINGLES_TABLE_PAGE_SIZE));
-  const pageCount = Math.max(1, Math.ceil(orderedRows.length / pageSize));
-  const paginationKey = `${sourceRows.length}:${highlightedPrecinct ?? 'none'}:${pageSize}`;
-  const pageIndex = pagination.key === paginationKey ? pagination.pageIndex : 0;
-  const safePageIndex = Math.min(pageIndex, pageCount - 1);
+  const pageCount = Math.max(1, Math.ceil(sourceRows.length / pageSize));
+  const [pageIndex, setPageIndex] = useState(0);
+  // The row's natural index in the source list — preserved so selecting a
+  // precinct jumps the pager to its page instead of yanking the row to the
+  // top of the current page.
+  const highlightedIndex = useMemo(() => {
+    if (highlightedPrecinct == null) return -1;
+    return sourceRows.findIndex(
+      (row) => String(row.precinctId) === String(highlightedPrecinct),
+    );
+  }, [sourceRows, highlightedPrecinct]);
+  const highlightedRowRef = useRef(null);
+
+  // Reset to first page if the source list changes (e.g. group switch).
+  useEffect(() => {
+    setPageIndex(0);
+  }, [sourceRows.length]);
+
+  // When a precinct is highlighted (from the scatter or elsewhere), jump
+  // the pager to the page that actually contains that row.
+  useEffect(() => {
+    if (highlightedIndex < 0) return;
+    const targetPage = Math.floor(highlightedIndex / pageSize);
+    setPageIndex((current) => (current === targetPage ? current : targetPage));
+  }, [highlightedIndex, pageSize]);
+
+  const safePageIndex = Math.min(Math.max(pageIndex, 0), pageCount - 1);
   const pageStart = safePageIndex * pageSize;
-  const rows = orderedRows.slice(pageStart, pageStart + pageSize);
-  const visibleStart = orderedRows.length > 0 ? pageStart + 1 : 0;
-  const visibleEnd = Math.min(pageStart + rows.length, orderedRows.length);
-  const setPrecinctPageIndex = (nextPageIndex) => {
-    setPagination({ key: paginationKey, pageIndex: nextPageIndex });
-  };
+  const rows = sourceRows.slice(pageStart, pageStart + pageSize);
+  const visibleStart = sourceRows.length > 0 ? pageStart + 1 : 0;
+  const visibleEnd = Math.min(pageStart + rows.length, sourceRows.length);
+
+  // Scroll the highlighted row into view once it's actually on-screen.
+  useEffect(() => {
+    if (highlightedIndex < 0) return;
+    const targetPage = Math.floor(highlightedIndex / pageSize);
+    if (targetPage !== safePageIndex) return;
+    if (highlightedRowRef.current?.scrollIntoView) {
+      highlightedRowRef.current.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    }
+  }, [highlightedIndex, safePageIndex, pageSize]);
 
   return (
     <ChartCard title={title} subtitle={subtitle} nested={nested}>
@@ -1189,29 +1214,33 @@ function GinglesTable({
             </tr>
           </thead>
           <tbody>
-            {rows.map((row, index) => (
-              <tr
-                key={`${String(row.precinctId)}:${index}`}
-                className={String(row.precinctId) === String(highlightedPrecinct) ? 'analysis-table__row--active' : ''}
-              >
-                <td>{row.precinctId}</td>
-                <td>{row.precinctName}</td>
-                <td className="num">{formatNumber(row.totalPopulation)}</td>
-                <td className="num">{formatNumber(row.minorityPopulation)}</td>
-                <td className="num">{formatNumber(row.republicanVotes)}</td>
-                <td className="num">{formatNumber(row.democraticVotes)}</td>
-              </tr>
-            ))}
+            {rows.map((row, index) => {
+              const isActive = String(row.precinctId) === String(highlightedPrecinct);
+              return (
+                <tr
+                  key={`${String(row.precinctId)}:${index}`}
+                  ref={isActive ? highlightedRowRef : null}
+                  className={isActive ? 'analysis-table__row--active' : ''}
+                >
+                  <td>{row.precinctId}</td>
+                  <td>{row.precinctName}</td>
+                  <td className="num">{formatNumber(row.totalPopulation)}</td>
+                  <td className="num">{formatNumber(row.minorityPopulation)}</td>
+                  <td className="num">{formatNumber(row.republicanVotes)}</td>
+                  <td className="num">{formatNumber(row.democraticVotes)}</td>
+                </tr>
+              );
+            })}
             {rows.length === 0 && <EmptyTableRow colSpan={6} label="Gingles table rows are not available." />}
           </tbody>
         </table>
       </div>
-      {orderedRows.length > pageSize && (
+      {sourceRows.length > pageSize && (
         <NumberedPagination
           pageIndex={safePageIndex}
           pageCount={pageCount}
-          onPageChange={setPrecinctPageIndex}
-          rangeLabel={`${visibleStart}-${visibleEnd} of ${orderedRows.length}`}
+          onPageChange={setPageIndex}
+          rangeLabel={`${visibleStart}-${visibleEnd} of ${sourceRows.length}`}
           ariaLabel="Precinct table pagination"
         />
       )}
@@ -1718,13 +1747,6 @@ function ChartCard({ title, subtitle, children, nested = false }) {
       {children}
     </div>
   );
-}
-
-function prioritizeHighlightedRow(rows, highlightedPrecinct) {
-  if (!highlightedPrecinct) return rows;
-  const selected = rows.find((row) => String(row.precinctId) === String(highlightedPrecinct));
-  if (!selected) return rows;
-  return [selected, ...rows.filter((row) => String(row.precinctId) !== String(highlightedPrecinct))];
 }
 
 function SelectControl({ id, label, value, options, onChange }) {
