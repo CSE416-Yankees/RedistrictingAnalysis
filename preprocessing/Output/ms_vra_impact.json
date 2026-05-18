@@ -1,0 +1,20 @@
+{
+  "state": "MS",
+  "rows": [
+    {
+      "group": "Black",
+      "enactedThreshold": {
+        "rbPct": 0.85,
+        "vraPct": 1.0
+      },
+      "roughProportionality": {
+        "rbPct": 0.063,
+        "vraPct": 0.0708
+      },
+      "jointThreshold": {
+        "rbPct": 0.063,
+        "vraPct": 0.0708
+      }
+    }
+  ]
+}

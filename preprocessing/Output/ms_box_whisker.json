@@ -1,0 +1,93 @@
+{
+  "state": "MS",
+  "ensembles": {
+    "RB": {
+      "groups": {
+        "Black": {
+          "orderedBins": [
+            {
+              "min": 0.2422,
+              "q1": 0.2588,
+              "median": 0.2631,
+              "q3": 0.2709,
+              "max": 0.3544,
+              "order": 1,
+              "enactedDot": 0.2
+            },
+            {
+              "min": 0.2876,
+              "q1": 0.3099,
+              "median": 0.3199,
+              "q3": 0.3356,
+              "max": 0.4274,
+              "order": 2,
+              "enactedDot": 0.27
+            },
+            {
+              "min": 0.3306,
+              "q1": 0.4338,
+              "median": 0.4702,
+              "q3": 0.4886,
+              "max": 0.514,
+              "order": 3,
+              "enactedDot": 0.3
+            },
+            {
+              "min": 0.4379,
+              "q1": 0.5054,
+              "median": 0.5193,
+              "q3": 0.5472,
+              "max": 0.6458,
+              "order": 4,
+              "enactedDot": 0.65
+            }
+          ]
+        }
+      }
+    },
+    "VRA": {
+      "groups": {
+        "Black": {
+          "orderedBins": [
+            {
+              "min": 0.2443,
+              "q1": 0.2586,
+              "median": 0.2627,
+              "q3": 0.2702,
+              "max": 0.343,
+              "order": 1,
+              "enactedDot": 0.2
+            },
+            {
+              "min": 0.2883,
+              "q1": 0.3083,
+              "median": 0.3171,
+              "q3": 0.3273,
+              "max": 0.4094,
+              "order": 2,
+              "enactedDot": 0.27
+            },
+            {
+              "min": 0.3376,
+              "q1": 0.4283,
+              "median": 0.4668,
+              "q3": 0.4887,
+              "max": 0.5152,
+              "order": 3,
+              "enactedDot": 0.3
+            },
+            {
+              "min": 0.5,
+              "q1": 0.512,
+              "median": 0.5264,
+              "q3": 0.5562,
+              "max": 0.6369,
+              "order": 4,
+              "enactedDot": 0.65
+            }
+          ]
+        }
+      }
+    }
+  }
+}

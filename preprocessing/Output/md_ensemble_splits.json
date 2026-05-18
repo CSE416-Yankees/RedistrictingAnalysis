@@ -1,0 +1,24 @@
+{
+  "state": "MD",
+  "districtCount": 8,
+  "splits": [
+    {
+      "repWins": 2,
+      "demWins": 6,
+      "rbFrequency": 3249,
+      "vraFrequency": 3249
+    },
+    {
+      "repWins": 1,
+      "demWins": 7,
+      "rbFrequency": 1750,
+      "vraFrequency": 1751
+    },
+    {
+      "repWins": 0,
+      "demWins": 8,
+      "rbFrequency": 1,
+      "vraFrequency": 0
+    }
+  ]
+}

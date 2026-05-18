@@ -1,0 +1,25 @@
+{
+  "state": "MS",
+  "districtCount": 4,
+  "groupHistograms": {
+    "Black": {
+      "bins": [
+        {
+          "effectiveDistricts": 0,
+          "rbFrequency": 750,
+          "vraFrequency": 0
+        },
+        {
+          "effectiveDistricts": 1,
+          "rbFrequency": 3935,
+          "vraFrequency": 4646
+        },
+        {
+          "effectiveDistricts": 2,
+          "rbFrequency": 315,
+          "vraFrequency": 354
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,77 @@
+{
+  "state": "MD",
+  "districtRows": [
+    {
+      "districtNumber": 1,
+      "representative": "Andy Harris",
+      "party": "Republican",
+      "representativeGroup": "White",
+      "voteMarginPct": 35.0,
+      "effectivenessScore": 0.1515,
+      "calibratedEffectivenessScore": 0.1437
+    },
+    {
+      "districtNumber": 2,
+      "representative": "Dutch Ruppersberger",
+      "party": "Democrat",
+      "representativeGroup": "White",
+      "voteMarginPct": 28.0,
+      "effectivenessScore": 0.2369,
+      "calibratedEffectivenessScore": 0.2248
+    },
+    {
+      "districtNumber": 3,
+      "representative": "John Sarbanes",
+      "party": "Democrat",
+      "representativeGroup": "White",
+      "voteMarginPct": 31.0,
+      "effectivenessScore": 0.1844,
+      "calibratedEffectivenessScore": 0.1749
+    },
+    {
+      "districtNumber": 4,
+      "representative": "Glenn Ivey",
+      "party": "Democrat",
+      "representativeGroup": "Black",
+      "voteMarginPct": 44.0,
+      "effectivenessScore": 0.678,
+      "calibratedEffectivenessScore": 0.6433
+    },
+    {
+      "districtNumber": 5,
+      "representative": "Steny Hoyer",
+      "party": "Democrat",
+      "representativeGroup": "White",
+      "voteMarginPct": 22.0,
+      "effectivenessScore": 0.4342,
+      "calibratedEffectivenessScore": 0.412
+    },
+    {
+      "districtNumber": 6,
+      "representative": "David Trone",
+      "party": "Democrat",
+      "representativeGroup": "White",
+      "voteMarginPct": 18.0,
+      "effectivenessScore": 0.1349,
+      "calibratedEffectivenessScore": 0.128
+    },
+    {
+      "districtNumber": 7,
+      "representative": "Kweisi Mfume",
+      "party": "Democrat",
+      "representativeGroup": "Black",
+      "voteMarginPct": 55.0,
+      "effectivenessScore": 0.5767,
+      "calibratedEffectivenessScore": 0.5472
+    },
+    {
+      "districtNumber": 8,
+      "representative": "Jamie Raskin",
+      "party": "Democrat",
+      "representativeGroup": "White",
+      "voteMarginPct": 40.0,
+      "effectivenessScore": 0.1779,
+      "calibratedEffectivenessScore": 0.1688
+    }
+  ]
+}

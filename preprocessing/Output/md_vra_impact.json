@@ -1,0 +1,50 @@
+{
+  "state": "MD",
+  "rows": [
+    {
+      "group": "Black",
+      "enactedThreshold": {
+        "rbPct": 0.3126,
+        "vraPct": 0.3116
+      },
+      "roughProportionality": {
+        "rbPct": 0.0284,
+        "vraPct": 0.0276
+      },
+      "jointThreshold": {
+        "rbPct": 0.0284,
+        "vraPct": 0.0276
+      }
+    },
+    {
+      "group": "Hispanic",
+      "enactedThreshold": {
+        "rbPct": 1.0,
+        "vraPct": 1.0
+      },
+      "roughProportionality": {
+        "rbPct": 0.0,
+        "vraPct": 0.0
+      },
+      "jointThreshold": {
+        "rbPct": 0.0,
+        "vraPct": 0.0
+      }
+    },
+    {
+      "group": "Asian",
+      "enactedThreshold": {
+        "rbPct": 1.0,
+        "vraPct": 1.0
+      },
+      "roughProportionality": {
+        "rbPct": 0.0,
+        "vraPct": 0.0
+      },
+      "jointThreshold": {
+        "rbPct": 0.0,
+        "vraPct": 0.0
+      }
+    }
+  ]
+}

@@ -1,0 +1,35 @@
+{
+  "abbr": "MS",
+  "name": "Mississippi",
+  "population": 2976149,
+  "statewideVote": {
+    "demPct": 0.3762
+  },
+  "demographicSummaries": [
+    {
+      "group": "Black",
+      "populationPct": 0.38,
+      "cvapPct": 0.35
+    }
+  ],
+  "redistrictingControl": "Republican",
+  "representationSummary": {
+    "demSeats": 1
+  },
+  "ensembleSummaries": {
+    "RB": {
+      "planCount": 5000,
+      "populationEqualityThresholdPct": 2.0,
+      "roughProportionality": {
+        "Black": 0.6521
+      }
+    },
+    "VRA": {
+      "planCount": 5000,
+      "populationEqualityThresholdPct": 2.0,
+      "roughProportionality": {
+        "Black": 0.7649
+      }
+    }
+  }
+}

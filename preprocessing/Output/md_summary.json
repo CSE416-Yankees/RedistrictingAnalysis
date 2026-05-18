@@ -1,0 +1,49 @@
+{
+  "abbr": "MD",
+  "name": "Maryland",
+  "population": 6177224,
+  "statewideVote": {
+    "demPct": 0.6262
+  },
+  "demographicSummaries": [
+    {
+      "group": "Black",
+      "populationPct": 0.29,
+      "cvapPct": 0.27
+    },
+    {
+      "group": "Hispanic",
+      "populationPct": 0.12,
+      "cvapPct": 0.1
+    },
+    {
+      "group": "Asian",
+      "populationPct": 0.08,
+      "cvapPct": 0.07
+    }
+  ],
+  "redistrictingControl": "Democrat",
+  "representationSummary": {
+    "demSeats": 7
+  },
+  "ensembleSummaries": {
+    "RB": {
+      "planCount": 5000,
+      "populationEqualityThresholdPct": 2.0,
+      "roughProportionality": {
+        "Black": 0.6193,
+        "Hispanic": 0.0,
+        "Asian": 0.0
+      }
+    },
+    "VRA": {
+      "planCount": 5000,
+      "populationEqualityThresholdPct": 2.0,
+      "roughProportionality": {
+        "Black": 0.62,
+        "Hispanic": 0.0,
+        "Asian": 0.0
+      }
+    }
+  }
+}

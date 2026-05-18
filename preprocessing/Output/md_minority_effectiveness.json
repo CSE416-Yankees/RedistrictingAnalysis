@@ -1,0 +1,59 @@
+{
+  "state": "MD",
+  "groups": {
+    "Black": {
+      "RB": {
+        "min": 0.0,
+        "q1": 1.0,
+        "median": 1.0,
+        "q3": 2.0,
+        "max": 3.0,
+        "enacted": 2.0
+      },
+      "VRA": {
+        "min": 1.0,
+        "q1": 1.0,
+        "median": 1.0,
+        "q3": 2.0,
+        "max": 3.0,
+        "enacted": 2.0
+      }
+    },
+    "Hispanic": {
+      "RB": {
+        "min": 0.0,
+        "q1": 0.0,
+        "median": 0.0,
+        "q3": 0.0,
+        "max": 0.0,
+        "enacted": 0.0
+      },
+      "VRA": {
+        "min": 0.0,
+        "q1": 0.0,
+        "median": 0.0,
+        "q3": 0.0,
+        "max": 0.0,
+        "enacted": 0.0
+      }
+    },
+    "Asian": {
+      "RB": {
+        "min": 0.0,
+        "q1": 0.0,
+        "median": 0.0,
+        "q3": 0.0,
+        "max": 0.0,
+        "enacted": 0.0
+      },
+      "VRA": {
+        "min": 0.0,
+        "q1": 0.0,
+        "median": 0.0,
+        "q3": 0.0,
+        "max": 0.0,
+        "enacted": 0.0
+      }
+    }
+  }
+}

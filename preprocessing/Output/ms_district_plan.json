@@ -1,0 +1,15 @@
+{
+  "state": {
+    "abbr": "MS",
+    "name": "Mississippi",
+    "center": [
+      -89.7,
+      32.7
+    ],
+    "zoom": 7
+  },
+  "currentPlan": {
+    "precinctToDistrict": {},
+    "districts": []
+  }
+}

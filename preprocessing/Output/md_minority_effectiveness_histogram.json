@@ -1,0 +1,48 @@
+{
+  "state": "MD",
+  "districtCount": 8,
+  "groupHistograms": {
+    "Black": {
+      "bins": [
+        {
+          "effectiveDistricts": 0,
+          "rbFrequency": 17,
+          "vraFrequency": 0
+        },
+        {
+          "effectiveDistricts": 1,
+          "rbFrequency": 3420,
+          "vraFrequency": 3442
+        },
+        {
+          "effectiveDistricts": 2,
+          "rbFrequency": 1421,
+          "vraFrequency": 1420
+        },
+        {
+          "effectiveDistricts": 3,
+          "rbFrequency": 142,
+          "vraFrequency": 138
+        }
+      ]
+    },
+    "Hispanic": {
+      "bins": [
+        {
+          "effectiveDistricts": 0,
+          "rbFrequency": 5000,
+          "vraFrequency": 5000
+        }
+      ]
+    },
+    "Asian": {
+      "bins": [
+        {
+          "effectiveDistricts": 0,
+          "rbFrequency": 5000,
+          "vraFrequency": 5000
+        }
+      ]
+    }
+  }
+}

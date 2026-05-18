@@ -1,0 +1,41 @@
+{
+  "state": "MS",
+  "districtRows": [
+    {
+      "districtNumber": 1,
+      "representative": "Trent Kelly",
+      "party": "Republican",
+      "representativeGroup": "White",
+      "voteMarginPct": 38.0,
+      "effectivenessScore": 0.27,
+      "calibratedEffectivenessScore": 0.2435
+    },
+    {
+      "districtNumber": 2,
+      "representative": "Bennie Thompson",
+      "party": "Democrat",
+      "representativeGroup": "Black",
+      "voteMarginPct": 25.0,
+      "effectivenessScore": 0.65,
+      "calibratedEffectivenessScore": 0.5862
+    },
+    {
+      "districtNumber": 3,
+      "representative": "Michael Guest",
+      "party": "Republican",
+      "representativeGroup": "White",
+      "voteMarginPct": 42.0,
+      "effectivenessScore": 0.3,
+      "calibratedEffectivenessScore": 0.2705
+    },
+    {
+      "districtNumber": 4,
+      "representative": "Mike Ezell",
+      "party": "Republican",
+      "representativeGroup": "White",
+      "voteMarginPct": 45.0,
+      "effectivenessScore": 0.2,
+      "calibratedEffectivenessScore": 0.1804
+    }
+  ]
+}

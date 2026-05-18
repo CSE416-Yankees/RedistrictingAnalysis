@@ -1,0 +1,18 @@
+{
+  "state": "MS",
+  "districtCount": 4,
+  "splits": [
+    {
+      "repWins": 4,
+      "demWins": 0,
+      "rbFrequency": 3533,
+      "vraFrequency": 3205
+    },
+    {
+      "repWins": 3,
+      "demWins": 1,
+      "rbFrequency": 1467,
+      "vraFrequency": 1795
+    }
+  ]
+}
