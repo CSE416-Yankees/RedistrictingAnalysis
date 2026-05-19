@@ -333,16 +333,67 @@ Returns the distribution of Democrat/Republican seat splits across all plans in 
 
 ---
 
+### `GET /api/{state}/box-whisker`
+
+Returns the full box-and-whisker payload for all available ensemble types and groups. This is the primary GUI-17 payload shape.
+
+**Response**
+```json
+{
+  "id": "string",
+  "state": "MS",
+  "ensembles": {
+    "RB": {
+      "groups": {
+        "Black": {
+          "orderedBins": [
+            {
+              "order": 1,
+              "min": 0.24,
+              "q1": 0.26,
+              "median": 0.26,
+              "q3": 0.27,
+              "max": 0.35,
+              "enactedDot": 0.20
+            }
+          ]
+        },
+        "White": {
+          "orderedBins": [
+            {
+              "order": 1,
+              "min": 0.35,
+              "q1": 0.45,
+              "median": 0.48,
+              "q3": 0.49,
+              "max": 0.56,
+              "enactedDot": 0.44
+            }
+          ]
+        }
+      }
+    },
+    "VRA": {
+      "groups": {}
+    }
+  }
+}
+```
+
+Each bin corresponds to the Nth-ranked district by selected group percentage across all plans in the ensemble. `enactedDot` marks where the enacted plan falls within the ensemble distribution.
+
+---
+
 ### `GET /api/{state}/box-whisker?ensembleType={ensembleType}&group={group}`
 
-Returns box-and-whisker plot data for a specific ensemble type and minority group, showing the distribution of minority population percentage across ranked districts for all plans in the ensemble.
+Returns box-and-whisker plot data for a specific ensemble type and group. Both query parameters must be supplied together.
 
 **Query Parameters**
 
 | Parameter | Type | Values | Required |
 |-----------|------|--------|----------|
-| `ensembleType` | string | `RB`, `VRA` | Yes |
-| `group` | string | `Black`, `Hispanic`, `Asian`, `White` | Yes |
+| `ensembleType` | string | `RB`, `VRA` | Yes, when requesting a single group |
+| `group` | string | `Black`, `Hispanic`, `Asian`, `White` | Yes, when requesting a single group |
 
 **Response**
 ```json
@@ -370,7 +421,7 @@ Returns box-and-whisker plot data for a specific ensemble type and minority grou
 }
 ```
 
-Each bin corresponds to the Nth-ranked district (by minority percentage) across all plans in the ensemble. `enactedDot` marks where the enacted plan falls within the ensemble distribution.
+Each bin corresponds to the Nth-ranked district by selected group percentage across all plans in the ensemble. `enactedDot` marks where the enacted plan falls within the ensemble distribution.
 
 ---
 

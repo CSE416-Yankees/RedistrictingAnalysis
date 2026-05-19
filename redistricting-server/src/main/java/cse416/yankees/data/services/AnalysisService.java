@@ -39,6 +39,12 @@ public class AnalysisService {
         return result;
     }
 
+    public BoxWhisker getBoxWhisker(State state) {
+        BoxWhisker result = analysisRepository.findBoxWhisker(state);
+        if (result == null) throw new ResourceNotFoundException("BoxWhisker not found for state: " + state);
+        return result;
+    }
+
     public BoxWhiskerGroupData getBoxWhiskers(State state, EnsembleType ensembleType, Group group) {
         BoxWhisker doc = analysisRepository.findBoxWhisker(state);
         if (doc == null) throw new ResourceNotFoundException("BoxWhisker not found for state: " + state);

@@ -19,16 +19,101 @@ const HEAT_SCALE = [
 ];
 
 const DEMOGRAPHIC_SCALE = [
-  '#f1f8f2',
-  '#d8efdb',
-  '#bfe7c5',
-  '#9fdaaa',
-  '#78ca8a',
-  '#53b86f',
-  '#369e57',
-  '#1f7f42',
-  '#145e30',
+  '#dcefe0',
+  '#c4e6ca',
+  '#aadab4',
+  '#8bc99a',
+  '#68b87e',
+  '#45a461',
+  '#2f884c',
+  '#1f6d3b',
+  '#14542d',
 ];
+
+const MS_COUNTY_NAMES_BY_FIPS = {
+  '001': 'ADAMS',
+  '003': 'ALCORN',
+  '005': 'AMITE',
+  '007': 'ATTALA',
+  '009': 'BENTON',
+  '011': 'BOLIVAR',
+  '013': 'CALHOUN',
+  '015': 'CARROLL',
+  '017': 'CHICKASAW',
+  '019': 'CHOCTAW',
+  '021': 'CLAIBORNE',
+  '023': 'CLARKE',
+  '025': 'CLAY',
+  '027': 'COAHOMA',
+  '029': 'COPIAH',
+  '031': 'COVINGTON',
+  '033': 'DESOTO',
+  '035': 'FORREST',
+  '037': 'FRANKLIN',
+  '039': 'GEORGE',
+  '041': 'GREENE',
+  '043': 'GRENADA',
+  '045': 'HANCOCK',
+  '047': 'HARRISON',
+  '049': 'HINDS',
+  '051': 'HOLMES',
+  '053': 'HUMPHREYS',
+  '055': 'ISSAQUENA',
+  '057': 'ITAWAMBA',
+  '059': 'JACKSON',
+  '061': 'JASPER',
+  '063': 'JEFFERSON',
+  '065': 'JEFFERSON DAVIS',
+  '067': 'JONES',
+  '069': 'KEMPER',
+  '071': 'LAFAYETTE',
+  '073': 'LAMAR',
+  '075': 'LAUDERDALE',
+  '077': 'LAWRENCE',
+  '079': 'LEAKE',
+  '081': 'LEE',
+  '083': 'LEFLORE',
+  '085': 'LINCOLN',
+  '087': 'LOWNDES',
+  '089': 'MADISON',
+  '091': 'MARION',
+  '093': 'MARSHALL',
+  '095': 'MONROE',
+  '097': 'MONTGOMERY',
+  '099': 'NESHOBA',
+  '101': 'NEWTON',
+  '103': 'NOXUBEE',
+  '105': 'OKTIBBEHA',
+  '107': 'PANOLA',
+  '109': 'PEARL RIVER',
+  '111': 'PERRY',
+  '113': 'PIKE',
+  '115': 'PONTOTOC',
+  '117': 'PRENTISS',
+  '119': 'QUITMAN',
+  '121': 'RANKIN',
+  '123': 'SCOTT',
+  '125': 'SHARKEY',
+  '127': 'SIMPSON',
+  '129': 'SMITH',
+  '131': 'STONE',
+  '133': 'SUNFLOWER',
+  '135': 'TALLAHATCHIE',
+  '137': 'TATE',
+  '139': 'TIPPAH',
+  '141': 'TISHOMINGO',
+  '143': 'TUNICA',
+  '145': 'UNION',
+  '147': 'WALTHALL',
+  '149': 'WARREN',
+  '151': 'WASHINGTON',
+  '153': 'WAYNE',
+  '155': 'WEBSTER',
+  '157': 'WILKINSON',
+  '159': 'WINSTON',
+  '161': 'YALOBUSHA',
+  '163': 'YAZOO',
+};
 
 const DIVERGING_SCALE = [
   { t: 0 / 14, color: '#5c0000' },
@@ -63,6 +148,8 @@ const DISTRICT_PALETTE = [
   '#e377c2',
 ];
 
+const PRECINCT_LAYER_RENDERER = L.canvas({ padding: 0.5 });
+
 function colorForDistrict(districtId) {
   const value = Number(districtId);
   if (!Number.isFinite(value)) return '#d1d5db';
@@ -83,6 +170,78 @@ function interpolateColor(t, scale) {
   return scale[0].color;
 }
 
+function normalizeLookupText(value) {
+  return String(value ?? '')
+    .toUpperCase()
+    .replace(/&/g, ' AND ')
+    .replace(/[_/]/g, ' ')
+    .replace(/\bSW\b/g, 'SOUTHWEST')
+    .replace(/\bNW\b/g, 'NORTHWEST')
+    .replace(/\bSE\b/g, 'SOUTHEAST')
+    .replace(/\bNE\b/g, 'NORTHEAST')
+    .replace(/\bCOMM\b/g, 'COMMUNITY')
+    .replace(/\bCTR\b/g, 'CENTER')
+    .replace(/\bBLDG\b/g, 'BUILDING')
+    .replace(/\bPCT\b/g, 'PRECINCT')
+    .replace(/^\s*DIST(?:RICT)?\.?\s*\d+\s*[,/-]?\s*/, '')
+    .replace(/^\s*\d+(?:ST|ND|RD|TH)\s+DIST(?:RICT)?\s*[,/-]?\s*/, '')
+    .replace(/\bVOTING\s+DISTRICT\b/g, '')
+    .replace(/\bVOTING\s+PRECINCT\b/g, '')
+    .replace(/\bPRECINCT\b/g, '')
+    .replace(/\bFIRE\s*STATION\b/g, 'FIRE')
+    .replace(/\bST\.?\b/g, 'SAINT')
+    .replace(/\s+\d{3}$/g, '')
+    .replace(/[^A-Z0-9]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function normalizeCountyName(value) {
+  return normalizeLookupText(value).replace(/\s+COUNTY$/, '');
+}
+
+function normalizeCountyFips(value) {
+  if (value == null || value === '') return null;
+  const match = String(value).match(/\d+/);
+  return match ? match[0].padStart(3, '0').slice(-3) : null;
+}
+
+function countyNameCandidates(properties) {
+  const fips = normalizeCountyFips(
+    properties?.COUNTYFP20
+      ?? properties?.countyfp
+      ?? properties?.COUNTYFP
+      ?? (properties?.GEOID20 ? String(properties.GEOID20).slice(2, 5) : null),
+  );
+  return [
+    properties?.COUNTY,
+    properties?.county,
+    properties?.countyName,
+    properties?.COUNTYNAME,
+    fips ? MS_COUNTY_NAMES_BY_FIPS[fips] : null,
+  ]
+    .filter((value) => value != null && value !== '')
+    .map(normalizeCountyName);
+}
+
+function precinctNameVariants(value) {
+  const base = normalizeLookupText(value);
+  if (!base) return [];
+
+  const variants = new Set([
+    base,
+    base.replace(/\s+[A-Z]$/, ''),
+    base.replace(/\bBYWAY\b/g, 'BYWY'),
+    base.replace(/\bFOUNTAINBLEAU\b/g, 'FONTAINEBLEAU'),
+    base.replace(/\bHICKORY HILL\b/g, 'HICKORY HILLS'),
+    base.replace(/\bMURPHREESBORO\b/g, 'MURPHREESBORE'),
+    base.replace(/\bOCEAN SPRINGS\b/g, 'OS'),
+    base.replace(/\bVILLIA\b/g, 'VILLA'),
+  ]);
+
+  return [...variants].filter(Boolean);
+}
+
 function normalizeDistrictId(properties) {
   const raw = properties?.district
     ?? properties?.DISTRICT
@@ -96,6 +255,8 @@ function normalizeDistrictId(properties) {
 
 function featureIdCandidates(properties) {
   return [
+    properties?.UNIQUE_ID,
+    properties?.uniqueId,
     properties?.precinctId,
     properties?.precinct_id,
     properties?.geoid,
@@ -105,6 +266,7 @@ function featureIdCandidates(properties) {
     properties?.VTDST20,
     properties?.name,
     properties?.NAME20,
+    properties?.COUNTY && properties?.PRECINCT ? `${properties.COUNTY}-:-${properties.PRECINCT}` : null,
   ]
     .filter((value) => value != null)
     .map((value) => String(value));
@@ -234,17 +396,34 @@ function normalizeHeatMapPayload(payload) {
   );
   if (!bins.length || !Object.keys(precinctBins).length) return null;
   const binsByDistrict = {};
+  const precinctBinsByCountyAndName = {};
   Object.entries(precinctBins).forEach(([precinctId, binId]) => {
     const district = districtFromMockPrecinctId(precinctId);
     if (district == null || !Number.isFinite(binId)) return;
     binsByDistrict[district] ||= [];
     binsByDistrict[district].push(binId);
   });
+  Object.entries(precinctBins).forEach(([precinctId, binId]) => {
+    if (!Number.isFinite(binId)) return;
+    const [county, precinctName] = String(precinctId).split('-:-');
+    if (!county || !precinctName) return;
+    const countyKey = normalizeCountyName(county);
+    const bucket = precinctBinsByCountyAndName[countyKey] || {};
+    precinctNameVariants(precinctName).forEach((nameKey) => {
+      if (bucket[nameKey] != null && bucket[nameKey] !== binId) {
+        bucket[nameKey] = null;
+      } else if (!(nameKey in bucket)) {
+        bucket[nameKey] = binId;
+      }
+    });
+    precinctBinsByCountyAndName[countyKey] = bucket;
+  });
   return {
     group: payload.group,
     bins,
     precinctBins,
     binsByDistrict,
+    precinctBinsByCountyAndName,
   };
 }
 
@@ -256,6 +435,28 @@ function heatMapBinForFeature(feature, heatMap, fallbackDistrictId = null) {
     if (!Number.isFinite(binId)) continue;
     const bin = heatMap.bins.find((entry) => entry.bin === binId);
     if (bin) return bin;
+  }
+  const properties = feature.properties || {};
+  const countyKeys = countyNameCandidates(properties);
+  const precinctNames = [
+    properties?.UNIQUE_ID ? String(properties.UNIQUE_ID).split('-:-').at(-1) : null,
+    properties?.PRECINCT,
+    properties?.precinct,
+    properties?.NAME20,
+    properties?.name,
+    properties?.NAMELSAD20,
+  ].filter((value) => value != null && value !== '');
+  for (const countyKey of countyKeys) {
+    const lookup = heatMap.precinctBinsByCountyAndName?.[countyKey];
+    if (!lookup) continue;
+    for (const precinctName of precinctNames) {
+      for (const nameKey of precinctNameVariants(precinctName)) {
+        const binId = lookup[nameKey];
+        if (!Number.isFinite(binId)) continue;
+        const bin = heatMap.bins.find((entry) => entry.bin === binId);
+        if (bin) return bin;
+      }
+    }
   }
   if (fallbackDistrictId != null) {
     const binId = bucketValueForFeature(feature.properties || {}, heatMap.binsByDistrict?.[fallbackDistrictId]);
@@ -682,6 +883,7 @@ export default function StateMap({
     const value = valueForFeature(feature);
     const color = createColor(value);
     const isChanged = isPlanComparisonMode && assignmentChanged(feature);
+    const isPrecinctHeatMap = usePrecinctLayer && isDemographicMetric && !isDeltaMode;
     if (activeMetric === 'district' && !usePrecinctLayer && isPlanComparisonMode) {
       return {
         fillColor: color,
@@ -694,10 +896,12 @@ export default function StateMap({
     }
     return {
       fillColor: color,
-      weight: isHighlighted ? 1.4 : isChanged ? 1 : 0,
+      weight: isHighlighted ? 1.4 : isChanged ? 1 : isPrecinctHeatMap ? 0.45 : 0,
       opacity: 1,
       color: isHighlighted ? '#1f6f78' : isChanged ? '#c46a32' : color,
-      fillOpacity: isHighlighted ? 0.92 : isChanged ? 0.86 : 0.72,
+      fillOpacity: isHighlighted ? 0.96 : isChanged ? 0.88 : isPrecinctHeatMap ? 1 : 0.72,
+      lineCap: 'round',
+      lineJoin: 'round',
     };
   };
 
@@ -871,6 +1075,7 @@ export default function StateMap({
           <GeoJSON
             key={activeGeoJsonKey}
             data={activeGeoData}
+            renderer={usePrecinctLayer ? PRECINCT_LAYER_RENDERER : undefined}
             style={createFeatureStyle}
             onEachFeature={onEachFeature}
           />

@@ -3,7 +3,7 @@ import { featureCollection, union } from '@turf/turf';
 import L from 'leaflet';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { stateMarkers, states } from '../data/mockData';
+import { stateMarkers, states } from '../data/stateCatalog';
 import 'leaflet/dist/leaflet.css';
 
 const STATE_FILL_COLOR = '#1f6f78';

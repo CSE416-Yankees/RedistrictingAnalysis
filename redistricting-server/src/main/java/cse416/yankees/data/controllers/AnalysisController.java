@@ -36,12 +36,19 @@ public class AnalysisController {
     }
 
     @GetMapping("/box-whisker")
-    public BoxWhiskerGroupData getBoxWhiskers(
+    public Object getBoxWhiskers(
             @PathVariable String state,
-            @RequestParam String ensembleType,
-            @RequestParam String group) {
+            @RequestParam(required = false) String ensembleType,
+            @RequestParam(required = false) String group) {
+        State parsedState = State.valueOf(state.toUpperCase());
+        if (ensembleType == null && group == null) {
+            return analysisService.getBoxWhisker(parsedState);
+        }
+        if (ensembleType == null || group == null) {
+            throw new IllegalArgumentException("Both ensembleType and group are required when requesting a single box-whisker group.");
+        }
         return analysisService.getBoxWhiskers(
-                State.valueOf(state.toUpperCase()),
+                parsedState,
                 EnsembleType.valueOf(ensembleType.toUpperCase()),
                 Group.valueOf(group));
     }

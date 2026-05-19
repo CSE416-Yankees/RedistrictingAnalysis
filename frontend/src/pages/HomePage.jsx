@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import USMap from '../components/USMap';
-import { stateMarkers, states } from '../data/mockData';
+import { stateMarkers, states } from '../data/stateCatalog';
 import './HomePage.css';
 
 export default function HomePage() {

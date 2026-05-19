@@ -76,16 +76,6 @@ export const GUI_SLUG_TO_CONFIG = {
     mapMetric: 'demographic',
     mapDemographicGroup: 'overall',
   },
-  'gui-8': {
-    routeSlug: 'gui-8',
-    title: 'Compare district plans',
-    payloadKeys: ['planComparison'],
-    analysisView: 'planComparisonMap',
-    isAnalysisOpen: false,
-    mapPlanMode: 'comparison',
-    mapMetric: 'demographic',
-    mapDemographicGroup: 'overall',
-  },
   'gui-9': {
     routeSlug: 'gui-9',
     title: 'Gingles analysis',
@@ -240,7 +230,6 @@ export const PREFERRED_GUI_SLUGS = [
   'gui-7',
   'gui-10',
   'gui-11',
-  'gui-8',
   'gui-19',
   'gui-23',
 ];
@@ -266,14 +255,12 @@ export const ANALYSIS_OPTIONS = [
   { value: 'vraImpact', label: 'VRA Impact Thresholds', routeSlug: 'gui-20' },
   { value: 'minorityEffectivenessBox', label: 'Minority Effectiveness Box & Whisker', routeSlug: 'gui-21' },
   { value: 'minorityEffectivenessHistogram', label: 'Minority Effectiveness Histogram', routeSlug: 'gui-22' },
-  { value: 'planComparisonMap', label: 'Compare District Plans', routeSlug: 'gui-8' },
   { value: 'interestingPlanMap', label: 'Interesting District Plan', routeSlug: 'gui-19' },
 ];
 
 export const MAP_GUI_LINKS = [
   { slug: 'gui-2', label: 'Current plan map' },
   { slug: 'gui-4', label: 'Demographic heat map' },
-  { slug: 'gui-8', label: 'Compare plans' },
   { slug: 'gui-19', label: 'Interesting plan' },
 ];
 

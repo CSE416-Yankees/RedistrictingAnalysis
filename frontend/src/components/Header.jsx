@@ -64,7 +64,7 @@ export default function Header() {
               to={`/state/${stateKey}`}
               className={`header__link ${!isAnalysisView ? 'header__link--active' : ''}`}
             >
-              Plan Explorer
+              Current Plan
             </Link>
             <Link
               to={`/state/${stateKey}/gui/gui-9`}

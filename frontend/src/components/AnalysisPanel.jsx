@@ -74,7 +74,7 @@ export default function AnalysisPanel({
     );
   }
 
-  const MAP_ONLY_VIEWS = new Set(['currentPlanMap', 'demographicHeatMap', 'planComparisonMap', 'interestingPlanMap']);
+  const MAP_ONLY_VIEWS = new Set(['currentPlanMap', 'demographicHeatMap', 'interestingPlanMap']);
   if (MAP_ONLY_VIEWS.has(analysisView)) {
     return (
       <div className="analysis-panel">
@@ -125,8 +125,6 @@ export default function AnalysisPanel({
         <EnsembleSplitsChart
           payload={guiPayloads.ensembleSplits}
           summaryPayload={guiPayloads.stateSummary}
-          selectedEnsembleType={ensembleType}
-          onEnsembleTypeChange={onEnsembleTypeChange}
         />
       )}
       {analysisView === 'vraImpact' && (
@@ -435,50 +433,13 @@ function BoxWhiskerChart({
   );
 }
 
-function EnsembleSplitsChart({ payload, summaryPayload, selectedEnsembleType, onEnsembleTypeChange }) {
+function EnsembleSplitsChart({ payload, summaryPayload }) {
   const rows = (payload?.splits || EMPTY_LIST).map((row) => ({
     ...row,
     splitLabel: `${row.repWins}R/${row.demWins}D`,
   }));
-  const selectedKey = selectedEnsembleType === 'vra' ? 'VRA' : 'RB';
-  const ensembleSummaries = summaryPayload?.ensembleSummaries || {};
-  const handleSelectEnsemble = (nextEnsembleType) => {
-    onEnsembleTypeChange?.(nextEnsembleType);
-  };
-
   return (
     <ChartCard title="Ensemble Splits" subtitle="Race-Blind and VRA constrained simulated election split frequencies">
-      <div className="ensemble-card-toggle" role="group" aria-label="Ensemble metadata - click to switch">
-        {[
-          { typeValue: 'raceBlind', summaryKey: 'RB' },
-          { typeValue: 'vra', summaryKey: 'VRA' },
-        ].map(({ typeValue, summaryKey }) => {
-          const summary = ensembleSummaries[summaryKey];
-          const isActive = selectedKey === summaryKey;
-          return (
-            <button
-              key={summaryKey}
-              type="button"
-              className={`ensemble-card-toggle__card ${isActive ? 'ensemble-card-toggle__card--active' : ''}`}
-              onClick={() => handleSelectEnsemble(typeValue)}
-              aria-pressed={isActive}
-              title={isActive ? 'Currently selected ensemble' : `Switch to ${ENSEMBLE_LABELS[summaryKey]} ensemble`}
-            >
-              <span className="ensemble-card-toggle__label">
-                {isActive ? 'Selected Ensemble Metadata' : 'Switch To'}
-              </span>
-              <span className="ensemble-card-toggle__value">
-                {ENSEMBLE_LABELS[summaryKey]} / {formatPct(summary?.populationEqualityThresholdPct, 1, { alreadyPercent: true })}
-              </span>
-              {summary?.planCount != null && (
-                <span className="ensemble-card-toggle__meta">
-                  {formatNumber(summary.planCount)} plans
-                </span>
-              )}
-            </button>
-          );
-        })}
-      </div>
       <div className="analysis-table-wrap">
         <table className="analysis-table analysis-table--compact">
           <thead>
@@ -490,7 +451,7 @@ function EnsembleSplitsChart({ payload, summaryPayload, selectedEnsembleType, on
           </thead>
           <tbody>
             {Object.entries(summaryPayload?.ensembleSummaries || {}).map(([key, row]) => (
-              <tr key={key} className={key === selectedKey ? 'analysis-table__row--active' : ''}>
+              <tr key={key}>
                 <td>{ENSEMBLE_LABELS[key] || key}</td>
                 <td className="num">{formatNumber(row.planCount)}</td>
                 <td className="num">{formatPct(row.populationEqualityThresholdPct, 1, { alreadyPercent: true })}</td>
@@ -1054,6 +1015,21 @@ function GinglesSummary({
   }), [points]);
   const demTrend = useMemo(() => normalizeRegressionLine(demRegression), [demRegression]);
   const repTrend = useMemo(() => normalizeRegressionLine(repRegression), [repRegression]);
+  const tablePrecinctIds = useMemo(
+    () => new Set((tablePayload?.rows || []).map((row) => String(row.precinctId))),
+    [tablePayload?.rows],
+  );
+  const handleGinglesPointClick = (scatterEntry) => {
+    const payload = scatterEntry?.payload ?? scatterEntry;
+    const candidates = [
+      ...(Array.isArray(payload?.precinctIds) ? payload.precinctIds : []),
+      payload?.precinctId,
+    ]
+      .filter((value) => value != null && value !== '')
+      .map(String);
+    const match = candidates.find((id) => tablePrecinctIds.has(id)) || candidates[0];
+    if (match) onSelectPrecinct?.(match);
+  };
   const handleGroupChange = (nextGroup) => {
     setLocalSelectedGroup(nextGroup);
     onSelectedGroupChange?.(nextGroup);
@@ -1104,7 +1080,7 @@ function GinglesSummary({
               fillOpacity={0.34}
               shape={<GinglesScatterPoint />}
               isAnimationActive={false}
-              onClick={(point) => onSelectPrecinct?.(point?.payload?.precinctId)}
+              onClick={handleGinglesPointClick}
             />
             <Scatter
               name="Republican Vote"
@@ -1113,7 +1089,7 @@ function GinglesSummary({
               fillOpacity={0.34}
               shape={<GinglesScatterPoint />}
               isAnimationActive={false}
-              onClick={(point) => onSelectPrecinct?.(point?.payload?.precinctId)}
+              onClick={handleGinglesPointClick}
             />
             <Scatter
               name="Democratic Trend"
@@ -1178,6 +1154,13 @@ function GinglesTable({
   const highlightedRowRef = useRef(null);
   const initialPageIndex = highlightedIndex < 0 ? 0 : Math.floor(highlightedIndex / pageSize);
   const [pageIndex, setPageIndex] = useState(initialPageIndex);
+
+  useEffect(() => {
+    if (highlightedIndex < 0) return;
+    // Keep the pager in sync with a precinct selected from the scatterplot.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setPageIndex(Math.floor(highlightedIndex / pageSize));
+  }, [highlightedIndex, pageSize]);
 
   const safePageIndex = Math.min(Math.max(pageIndex, 0), pageCount - 1);
   const pageStart = safePageIndex * pageSize;
@@ -1586,11 +1569,11 @@ function normalizeStateSummary(payload, stateData) {
 function normalizeDistrictBoxRows(rows = EMPTY_LIST) {
   return rows
     .map((row) => {
-      const min = Number(row.min);
-      const q1 = Number(row.q1);
-      const median = Number(row.median);
-      const q3 = Number(row.q3);
-      const max = Number(row.max);
+      const min = valueToPercent(row.min);
+      const q1 = valueToPercent(row.q1);
+      const median = valueToPercent(row.median);
+      const q3 = valueToPercent(row.q3);
+      const max = valueToPercent(row.max);
       return {
         district: `D${row.order ?? '?'}`,
         min,
@@ -1598,8 +1581,8 @@ function normalizeDistrictBoxRows(rows = EMPTY_LIST) {
         median,
         q3,
         max,
-        enacted: Number(row.enactedDot),
-        proposed: row.proposedDot,
+        enacted: valueToPercent(row.enactedDot),
+        proposed: valueToPercent(row.proposedDot),
         iqrBase: q1,
         iqrHeight: q3 - q1,
         whisker: [median - min, max - median],
@@ -1780,7 +1763,9 @@ function aggregateGinglesScatterPoints(points, {
       bucket.otherPartyShareCount += 1;
     }
     bucket.count += 1;
-    bucket.precinctIds.push(point.precinctId);
+    if (point.precinctId != null && point.precinctId !== '') {
+      bucket.precinctIds.push(String(point.precinctId));
+    }
     bucket.districts.push(point.district);
     buckets.set(key, bucket);
   });
@@ -2055,6 +2040,7 @@ function groupColor(group) {
   if (key.includes('black')) return '#6f2da8';
   if (key.includes('hispanic')) return '#ef8c1a';
   if (key.includes('asian')) return '#0f8c75';
+  if (key.includes('white')) return '#525252';
   if (key.includes('rb')) return '#64b5f6';
   if (key.includes('vra')) return '#7b1fa2';
   return '#4f7f9a';
