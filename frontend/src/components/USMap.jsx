@@ -65,9 +65,6 @@ export default function USMap() {
         if (!geo?.features?.length) return null;
 
         const stateInfo = states[entry.abbr];
-        const tooltipText = stateInfo
-          ? `${stateInfo.name} — ${stateInfo.numDistricts} districts`
-          : entry.name;
 
         return (
           <GeoJSON

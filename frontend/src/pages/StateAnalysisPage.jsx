@@ -61,13 +61,6 @@ function feasibleDemographicGroupOptions(stateAbbr) {
   return DEMOGRAPHIC_GROUP_OPTIONS.filter((option) => allowedSet.has(option.value));
 }
 
-function feasibleAnalysisGroupOptions(stateAbbr) {
-  const allowed = feasibleGroupValues(stateAbbr);
-  if (!allowed) return ANALYSIS_GROUP_OPTIONS;
-  const allowedSet = new Set(allowed);
-  return ANALYSIS_GROUP_OPTIONS.filter((option) => allowedSet.has(option.value));
-}
-
 function coerceDemographicGroup(stateAbbr, group) {
   const allowed = feasibleGroupValues(stateAbbr);
   if (!allowed) return group;
@@ -783,15 +776,6 @@ function heatMapPayloadForGroup(heatMaps, groupValue) {
     asian: 'Asian',
   };
   return heatMaps?.[labelByValue[groupValue]] || null;
-}
-
-function groupLabelFromValue(groupValue) {
-  return ANALYSIS_GROUP_OPTIONS.find((option) => option.value === groupValue)?.label || 'Black';
-}
-
-function groupValueFromLabel(groupLabel) {
-  const normalized = String(groupLabel || '').trim().toLowerCase();
-  return ANALYSIS_GROUP_OPTIONS.find((option) => option.label.toLowerCase() === normalized)?.value;
 }
 
 function interestingPlanOptions(planComparisonPayload) {

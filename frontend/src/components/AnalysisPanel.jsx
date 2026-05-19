@@ -1036,7 +1036,9 @@ function GinglesSummary({
   const activeGroup = groups.includes(requestedGroup) ? requestedGroup : groups[0];
   const groupData = payload?.groups?.[activeGroup];
   const points = groupData?.points || EMPTY_LIST;
-  const demPoints = points.map((point) => ({
+  const demRegression = groupData?.regression?.dem;
+  const repRegression = groupData?.regression?.rep;
+  const demPoints = useMemo(() => points.map((point) => ({
     x: valueToPercent(point.x),
     y: valueToPercent(point.demVotePct),
     precinctId: point.precinctId,
@@ -1044,8 +1046,8 @@ function GinglesSummary({
     party: 'Democratic',
     otherPartyLabel: 'Republican',
     otherPartyShare: valueToPercent(point.repVotePct),
-  }));
-  const repPoints = points.map((point) => ({
+  })), [points]);
+  const repPoints = useMemo(() => points.map((point) => ({
     x: valueToPercent(point.x),
     y: valueToPercent(point.repVotePct),
     precinctId: point.precinctId,
@@ -1053,9 +1055,9 @@ function GinglesSummary({
     party: 'Republican',
     otherPartyLabel: 'Democratic',
     otherPartyShare: valueToPercent(point.demVotePct),
-  }));
-  const demTrend = normalizeRegressionLine(groupData?.regression?.dem);
-  const repTrend = normalizeRegressionLine(groupData?.regression?.rep);
+  })), [points]);
+  const demTrend = useMemo(() => normalizeRegressionLine(demRegression), [demRegression]);
+  const repTrend = useMemo(() => normalizeRegressionLine(repRegression), [repRegression]);
   const handleGroupChange = (nextGroup) => {
     setLocalSelectedGroup(nextGroup);
     onSelectedGroupChange?.(nextGroup);
@@ -1092,13 +1094,19 @@ function GinglesSummary({
               tickFormatter={(value) => `${value}%`}
               label={{ value: 'Party Vote Share (%)', angle: -90, position: 'insideLeft', fontSize: 12 }}
             />
-            <Tooltip content={(props) => <GinglesScatterTooltip {...props} groupLabel={activeGroup || 'Group'} />} />
+            <Tooltip
+              content={(props) => <GinglesScatterTooltip {...props} groupLabel={activeGroup || 'Group'} />}
+              cursor={false}
+              isAnimationActive={false}
+              animationDuration={0}
+            />
             <Legend wrapperStyle={{ fontSize: 11 }} />
             <Scatter
               name="Democratic Vote"
               data={demPoints}
               fill="#1e88e5"
               fillOpacity={0.34}
+              isAnimationActive={false}
               onClick={(point) => onSelectPrecinct?.(point?.payload?.precinctId)}
             />
             <Scatter
@@ -1106,6 +1114,7 @@ function GinglesSummary({
               data={repPoints}
               fill="#e53935"
               fillOpacity={0.34}
+              isAnimationActive={false}
               onClick={(point) => onSelectPrecinct?.(point?.payload?.precinctId)}
             />
             <Scatter
@@ -1134,6 +1143,7 @@ function GinglesSummary({
         <p className="analysis-note">Precinct-level Gingles chart data is not available.</p>
       )}
       <GinglesTable
+        key={`${activeGroup || 'group'}:${highlightedPrecinct || 'none'}:${tablePayload?.rows?.length || 0}`}
         payload={tablePayload}
         highlightedPrecinct={highlightedPrecinct}
         maxRows={GINGLES_PRECINCT_PAGE_SIZE}
@@ -1158,7 +1168,6 @@ function GinglesTable({
   const sourceRows = payload?.rows || EMPTY_LIST;
   const pageSize = Math.max(1, Number(maxRows ?? GINGLES_TABLE_PAGE_SIZE));
   const pageCount = Math.max(1, Math.ceil(sourceRows.length / pageSize));
-  const [pageIndex, setPageIndex] = useState(0);
   // The row's natural index in the source list — preserved so selecting a
   // precinct jumps the pager to its page instead of yanking the row to the
   // top of the current page.
@@ -1169,19 +1178,8 @@ function GinglesTable({
     );
   }, [sourceRows, highlightedPrecinct]);
   const highlightedRowRef = useRef(null);
-
-  // Reset to first page if the source list changes (e.g. group switch).
-  useEffect(() => {
-    setPageIndex(0);
-  }, [sourceRows.length]);
-
-  // When a precinct is highlighted (from the scatter or elsewhere), jump
-  // the pager to the page that actually contains that row.
-  useEffect(() => {
-    if (highlightedIndex < 0) return;
-    const targetPage = Math.floor(highlightedIndex / pageSize);
-    setPageIndex((current) => (current === targetPage ? current : targetPage));
-  }, [highlightedIndex, pageSize]);
+  const initialPageIndex = highlightedIndex < 0 ? 0 : Math.floor(highlightedIndex / pageSize);
+  const [pageIndex, setPageIndex] = useState(initialPageIndex);
 
   const safePageIndex = Math.min(Math.max(pageIndex, 0), pageCount - 1);
   const pageStart = safePageIndex * pageSize;
