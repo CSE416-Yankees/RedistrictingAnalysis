@@ -20,5 +20,131 @@
       "rbFrequency": 1,
       "vraFrequency": 0
     }
-  ]
+  ],
+  "groupDistributions": {
+    "Black": {
+      "minorityEffectiveDistricts": [
+        {
+          "districtCount": 1,
+          "rbFrequency": 80,
+          "vraFrequency": 79
+        },
+        {
+          "districtCount": 2,
+          "rbFrequency": 1899,
+          "vraFrequency": 1879
+        },
+        {
+          "districtCount": 3,
+          "rbFrequency": 2721,
+          "vraFrequency": 2785
+        },
+        {
+          "districtCount": 4,
+          "rbFrequency": 300,
+          "vraFrequency": 257
+        }
+      ],
+      "majorityMinorityDistricts": [
+        {
+          "districtCount": 0,
+          "rbFrequency": 17,
+          "vraFrequency": 0
+        },
+        {
+          "districtCount": 1,
+          "rbFrequency": 3420,
+          "vraFrequency": 3442
+        },
+        {
+          "districtCount": 2,
+          "rbFrequency": 1421,
+          "vraFrequency": 1420
+        },
+        {
+          "districtCount": 3,
+          "rbFrequency": 142,
+          "vraFrequency": 138
+        }
+      ]
+    },
+    "Hispanic": {
+      "minorityEffectiveDistricts": [
+        {
+          "districtCount": 0,
+          "rbFrequency": 5000,
+          "vraFrequency": 5000
+        }
+      ],
+      "majorityMinorityDistricts": [
+        {
+          "districtCount": 0,
+          "rbFrequency": 5000,
+          "vraFrequency": 5000
+        }
+      ]
+    },
+    "Asian": {
+      "minorityEffectiveDistricts": [
+        {
+          "districtCount": 0,
+          "rbFrequency": 5000,
+          "vraFrequency": 5000
+        }
+      ],
+      "majorityMinorityDistricts": [
+        {
+          "districtCount": 0,
+          "rbFrequency": 5000,
+          "vraFrequency": 5000
+        }
+      ]
+    },
+    "White": {
+      "minorityEffectiveDistricts": [
+        {
+          "districtCount": 4,
+          "rbFrequency": 94,
+          "vraFrequency": 106
+        },
+        {
+          "districtCount": 5,
+          "rbFrequency": 2204,
+          "vraFrequency": 2232
+        },
+        {
+          "districtCount": 6,
+          "rbFrequency": 2487,
+          "vraFrequency": 2440
+        },
+        {
+          "districtCount": 7,
+          "rbFrequency": 215,
+          "vraFrequency": 222
+        }
+      ],
+      "majorityMinorityDistricts": [
+        {
+          "districtCount": 2,
+          "rbFrequency": 142,
+          "vraFrequency": 148
+        },
+        {
+          "districtCount": 3,
+          "rbFrequency": 2184,
+          "vraFrequency": 2062
+        },
+        {
+          "districtCount": 4,
+          "rbFrequency": 2493,
+          "vraFrequency": 2608
+        },
+        {
+          "districtCount": 5,
+          "rbFrequency": 181,
+          "vraFrequency": 182
+        }
+      ]
+    }
+  }
 }

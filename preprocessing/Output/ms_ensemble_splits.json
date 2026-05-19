@@ -14,5 +14,74 @@
       "rbFrequency": 1467,
       "vraFrequency": 1795
     }
-  ]
+  ],
+  "groupDistributions": {
+    "Black": {
+      "minorityEffectiveDistricts": [
+        {
+          "districtCount": 1,
+          "rbFrequency": 437,
+          "vraFrequency": 530
+        },
+        {
+          "districtCount": 2,
+          "rbFrequency": 4494,
+          "vraFrequency": 4457
+        },
+        {
+          "districtCount": 3,
+          "rbFrequency": 69,
+          "vraFrequency": 13
+        }
+      ],
+      "majorityMinorityDistricts": [
+        {
+          "districtCount": 0,
+          "rbFrequency": 750,
+          "vraFrequency": 0
+        },
+        {
+          "districtCount": 1,
+          "rbFrequency": 3935,
+          "vraFrequency": 4646
+        },
+        {
+          "districtCount": 2,
+          "rbFrequency": 315,
+          "vraFrequency": 354
+        }
+      ]
+    },
+    "White": {
+      "minorityEffectiveDistricts": [
+        {
+          "districtCount": 3,
+          "rbFrequency": 182,
+          "vraFrequency": 224
+        },
+        {
+          "districtCount": 4,
+          "rbFrequency": 4818,
+          "vraFrequency": 4776
+        }
+      ],
+      "majorityMinorityDistricts": [
+        {
+          "districtCount": 2,
+          "rbFrequency": 309,
+          "vraFrequency": 350
+        },
+        {
+          "districtCount": 3,
+          "rbFrequency": 3930,
+          "vraFrequency": 4647
+        },
+        {
+          "districtCount": 4,
+          "rbFrequency": 761,
+          "vraFrequency": 3
+        }
+      ]
+    }
+  }
 }

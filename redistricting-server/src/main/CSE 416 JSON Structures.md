@@ -288,7 +288,7 @@ Display the results of the statewide EI analysis in response to a user GUI reque
 }
 
 GUI-16. Display ensemble splits in a bar chart (required) (SD)   
-Display the race-blind and VRA constrained ensemble results to allow the user to make a comparison. Each display will take the form of a bar chart of Republican/Democratic splits where each bar will show the frequency of a distinct simulated election as \#Republican wins / \#Democratic wins. The range of splits shown should be the range of the union of the two sets of splits (i.e., the range should be the same for both displays, but the *tails omitted if they are zero in both sets*.  
+Display the race-blind and VRA constrained ensemble results to allow the user to make a comparison. Each display will take the form of a bar chart of Republican/Democratic splits where each bar will show the frequency of a distinct simulated election as \#Republican wins / \#Democratic wins. The range of splits shown should be the range of the union of the two sets of splits (i.e., the range should be the same for both displays, but the *tails omitted if they are zero in both sets*. The response also includes per-group distributions showing how many minority-effective districts and majority-minority districts appear across the ensemble plans.  
 {  
   "districtCount": 8,  
   "splits": \[  
@@ -298,8 +298,28 @@ Display the race-blind and VRA constrained ensemble results to allow the user to
     { "repWins": 3, "demWins": 5, "rbFrequency": 403, "vraFrequency": 557 },  
     { "repWins": 4, "demWins": 4, "rbFrequency": 27, "vraFrequency": 41 },  
     { "repWins": 5, "demWins": 3, "rbFrequency": 6, "vraFrequency": 2 }  
-  \]  
-} \* should be more rows if non zero in other sets, here \[6,2\], \[7,1\], and \[8,0\] have 0
+  \],  
+  "groupDistributions": {  
+    "Black": {  
+      "minorityEffectiveDistricts": \[  
+        { "districtCount": 0, "rbFrequency": 12, "vraFrequency": 0 },  
+        { "districtCount": 1, "rbFrequency": 184, "vraFrequency": 41 },  
+        { "districtCount": 2, "rbFrequency": 921, "vraFrequency": 388 },  
+        { "districtCount": 3, "rbFrequency": 403, "vraFrequency": 977 },  
+        { "districtCount": 4, "rbFrequency": 27, "vraFrequency": 594 }  
+      \],  
+      "majorityMinorityDistricts": \[  
+        { "districtCount": 0, "rbFrequency": 3, "vraFrequency": 0 },  
+        { "districtCount": 1, "rbFrequency": 79, "vraFrequency": 12 },  
+        { "districtCount": 2, "rbFrequency": 455, "vraFrequency": 204 },  
+        { "districtCount": 3, "rbFrequency": 812, "vraFrequency": 991 },  
+        { "districtCount": 4, "rbFrequency": 151, "vraFrequency": 620 }  
+      \]  
+    },  
+    "Hispanic": { ... },  
+    "Asian": { ... }  
+  }  
+} \* splits should include more rows if non-zero in either ensemble; here \[6,2\], \[7,1\], and \[8,0\] are zero in both
 
 GUI-17. Display box & whisker data (required) (SD)   
 The user will be able to request the display of box & whisker data for each of your ensembles of district plans. The displays will be available for each of the feasible racial/ethnic groups in the state. Dots for each district in the current enacted district plan will be shown in the display (in order of increasing percentage of the minority group or associated display. If there is a proposed district plan awaiting approval (e.g., California), that will also be shown. The display should be sufficient in size to show your largest state and should include a legend and color selection to make the chart easily readable.  

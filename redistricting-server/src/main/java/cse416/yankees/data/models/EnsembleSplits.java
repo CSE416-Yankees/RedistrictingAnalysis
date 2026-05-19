@@ -1,10 +1,12 @@
 package cse416.yankees.data.models;
 
+import cse416.yankees.common.Group;
 import cse416.yankees.common.State;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.util.List;
+import java.util.Map;
 
 @Document("ensemble_splits")
 public class EnsembleSplits {
@@ -13,6 +15,7 @@ public class EnsembleSplits {
     private State state;
     private int districtCount;
     private List<SplitRow> splits;
+    private Map<Group, GroupDistribution> groupDistributions;
 
     public String getId() { return id; }
 
@@ -24,4 +27,7 @@ public class EnsembleSplits {
 
     public List<SplitRow> getSplits() { return splits; }
     public void setSplits(List<SplitRow> splits) { this.splits = splits; }
+
+    public Map<Group, GroupDistribution> getGroupDistributions() { return groupDistributions; }
+    public void setGroupDistributions(Map<Group, GroupDistribution> groupDistributions) { this.groupDistributions = groupDistributions; }
 }

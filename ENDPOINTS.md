@@ -290,7 +290,7 @@ Returns ecological inference (EI) candidate-level results, including vote prefer
 
 ### `GET /api/{state}/ensemble/splits`
 
-Returns the distribution of Democrat/Republican seat splits across all plans in both ensembles.
+Returns the distribution of Democrat/Republican seat splits across all plans in both ensembles, plus per-group histograms of minority-effective districts and majority-minority districts.
 
 **Response**
 ```json
@@ -299,23 +299,37 @@ Returns the distribution of Democrat/Republican seat splits across all plans in 
   "state": "MD",
   "districtCount": 8,
   "splits": [
-    {
-      "repWins": 1,
-      "demWins": 7,
-      "rbFrequency": 1200,
-      "vraFrequency": 850
+    { "repWins": 0, "demWins": 8, "rbFrequency": 12,  "vraFrequency": 3   },
+    { "repWins": 1, "demWins": 7, "rbFrequency": 184, "vraFrequency": 96  },
+    { "repWins": 2, "demWins": 6, "rbFrequency": 921, "vraFrequency": 811 },
+    { "repWins": 3, "demWins": 5, "rbFrequency": 403, "vraFrequency": 557 },
+    { "repWins": 4, "demWins": 4, "rbFrequency": 27,  "vraFrequency": 41  },
+    { "repWins": 5, "demWins": 3, "rbFrequency": 6,   "vraFrequency": 2   }
+  ],
+  "groupDistributions": {
+    "Black": {
+      "minorityEffectiveDistricts": [
+        { "districtCount": 0, "rbFrequency": 12,  "vraFrequency": 0   },
+        { "districtCount": 1, "rbFrequency": 184, "vraFrequency": 41  },
+        { "districtCount": 2, "rbFrequency": 921, "vraFrequency": 388 },
+        { "districtCount": 3, "rbFrequency": 403, "vraFrequency": 977 },
+        { "districtCount": 4, "rbFrequency": 27,  "vraFrequency": 594 }
+      ],
+      "majorityMinorityDistricts": [
+        { "districtCount": 0, "rbFrequency": 3,   "vraFrequency": 0   },
+        { "districtCount": 1, "rbFrequency": 79,  "vraFrequency": 12  },
+        { "districtCount": 2, "rbFrequency": 455, "vraFrequency": 204 },
+        { "districtCount": 3, "rbFrequency": 812, "vraFrequency": 991 },
+        { "districtCount": 4, "rbFrequency": 151, "vraFrequency": 620 }
+      ]
     },
-    {
-      "repWins": 2,
-      "demWins": 6,
-      "rbFrequency": 2300,
-      "vraFrequency": 2100
-    }
-  ]
+    "Hispanic": { "minorityEffectiveDistricts": [...], "majorityMinorityDistricts": [...] },
+    "Asian":    { "minorityEffectiveDistricts": [...], "majorityMinorityDistricts": [...] }
+  }
 }
 ```
 
-`rbFrequency` and `vraFrequency` are the number of plans in each ensemble that produced that split.
+`rbFrequency` / `vraFrequency` in `splits` are the number of plans in each ensemble that produced that R/D seat split. `splits` only includes rows that are non-zero in at least one ensemble. `groupDistributions` keys are `Group` enum values (`Black`, `Hispanic`, `Asian`, `White`). `districtCount` in each distribution bin is the number of qualifying districts in a plan; `rbFrequency` / `vraFrequency` are how many plans in each ensemble had that count.
 
 ---
 
@@ -341,8 +355,7 @@ Returns box-and-whisker plot data for a specific ensemble type and minority grou
       "median": 0.11,
       "q3": 0.15,
       "max": 0.22,
-      "enactedDot": 0.10,
-      "proposedDot": 0.13
+      "enactedDot": 0.10
     },
     {
       "order": 2,
@@ -351,14 +364,13 @@ Returns box-and-whisker plot data for a specific ensemble type and minority grou
       "median": 0.30,
       "q3": 0.38,
       "max": 0.47,
-      "enactedDot": 0.28,
-      "proposedDot": 0.35
+      "enactedDot": 0.28
     }
   ]
 }
 ```
 
-Each bin corresponds to the Nth-ranked district (by minority percentage) across all plans in the ensemble. `enactedDot` and `proposedDot` mark where the enacted and proposed plans fall.
+Each bin corresponds to the Nth-ranked district (by minority percentage) across all plans in the ensemble. `enactedDot` marks where the enacted plan falls within the ensemble distribution.
 
 ---
 

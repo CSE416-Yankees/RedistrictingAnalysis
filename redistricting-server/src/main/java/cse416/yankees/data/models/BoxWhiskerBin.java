@@ -8,7 +8,6 @@ public class BoxWhiskerBin {
     private double q3;
     private double max;
     private double enactedDot;
-    private double proposedDot;
 
     public int getOrder() { return order; }
     public void setOrder(int order) { this.order = order; }
@@ -30,7 +29,4 @@ public class BoxWhiskerBin {
 
     public double getEnactedDot() { return enactedDot; }
     public void setEnactedDot(double enactedDot) { this.enactedDot = enactedDot; }
-
-    public double getProposedDot() { return proposedDot; }
-    public void setProposedDot(double proposedDot) { this.proposedDot = proposedDot; }
 }

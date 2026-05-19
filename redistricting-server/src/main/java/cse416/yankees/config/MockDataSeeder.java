@@ -17,11 +17,12 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Seeds MongoDB with sample GUI payload documents when the seed profile is active.
+ * Seeds MongoDB with hardcoded mock data. Activate with --spring.profiles.active=mock-seed.
+ * For production data from preprocessing output, use the "seed" profile instead.
  */
 @Component
-@Profile("seed")
-public class DataSeeder implements CommandLineRunner {
+@Profile("mock-seed")
+public class MockDataSeeder implements CommandLineRunner {
 
     @Autowired
     private MongoTemplate mongoTemplate;
@@ -41,7 +42,7 @@ public class DataSeeder implements CommandLineRunner {
         seedVRAImpactTables();
         seedMinorityEffectiveness();
         seedMinorityEffectivenessHistograms();
-        System.out.println("Seed complete.");
+        System.out.println("Mock seed complete.");
     }
 
     // ─── StateSummary ────────────────────────────────────────────────────────
@@ -450,6 +451,48 @@ public class DataSeeder implements CommandLineRunner {
             splitRow(4, 4, 27,  41),
             splitRow(5, 3, 6,   2)
         ));
+        md.setGroupDistributions(Map.of(
+            Group.Black, groupDist(
+                Arrays.asList(
+                    distBin(0, 12,  0),
+                    distBin(1, 184, 41),
+                    distBin(2, 921, 388),
+                    distBin(3, 403, 977),
+                    distBin(4, 27,  594)
+                ),
+                Arrays.asList(
+                    distBin(0, 3,   0),
+                    distBin(1, 79,  12),
+                    distBin(2, 455, 204),
+                    distBin(3, 812, 991),
+                    distBin(4, 151, 620)
+                )
+            ),
+            Group.Hispanic, groupDist(
+                Arrays.asList(
+                    distBin(0, 55,  9),
+                    distBin(1, 302, 144),
+                    distBin(2, 611, 703),
+                    distBin(3, 80,  290)
+                ),
+                Arrays.asList(
+                    distBin(0, 210, 88),
+                    distBin(1, 618, 492),
+                    distBin(2, 220, 468)
+                )
+            ),
+            Group.Asian, groupDist(
+                Arrays.asList(
+                    distBin(0, 401, 120),
+                    distBin(1, 522, 640),
+                    distBin(2, 77,  240)
+                ),
+                Arrays.asList(
+                    distBin(0, 680, 310),
+                    distBin(1, 320, 690)
+                )
+            )
+        ));
 
         EnsembleSplits ms = new EnsembleSplits();
         ms.setState(State.MS);
@@ -458,6 +501,20 @@ public class DataSeeder implements CommandLineRunner {
             splitRow(1, 3, 420,  180),
             splitRow(2, 2, 3200, 2800),
             splitRow(3, 1, 1380, 2020)
+        ));
+        ms.setGroupDistributions(Map.of(
+            Group.Black, groupDist(
+                Arrays.asList(
+                    distBin(0, 120,  20),
+                    distBin(1, 3800, 2200),
+                    distBin(2, 6080, 7780)
+                ),
+                Arrays.asList(
+                    distBin(0, 580,  210),
+                    distBin(1, 6420, 5290),
+                    distBin(2, 3000, 4500)
+                )
+            )
         ));
 
         mongoTemplate.save(md);
@@ -473,6 +530,21 @@ public class DataSeeder implements CommandLineRunner {
         return r;
     }
 
+    private DistributionBin distBin(int districtCount, int rb, int vra) {
+        DistributionBin b = new DistributionBin();
+        b.setDistrictCount(districtCount);
+        b.setRbFrequency(rb);
+        b.setVraFrequency(vra);
+        return b;
+    }
+
+    private GroupDistribution groupDist(List<DistributionBin> effective, List<DistributionBin> majority) {
+        GroupDistribution g = new GroupDistribution();
+        g.setMinorityEffectiveDistricts(effective);
+        g.setMajorityMinorityDistricts(majority);
+        return g;
+    }
+
     // ─── BoxWhisker ──────────────────────────────────────────────────────────
 
     private void seedBoxWhiskers() {
@@ -483,27 +555,27 @@ public class DataSeeder implements CommandLineRunner {
         md.setEnsembles(Map.of(
             EnsembleType.RB, bwEnsemble(Map.of(
                 Group.Black, bwGroupData(Arrays.asList(
-                    bwBin(1, 5.2,  8.1,  12.3, 18.4, 28.0, 14.2, 15.0),
-                    bwBin(2, 10.0, 14.5, 19.2, 24.0, 32.5, 20.1, 21.0),
-                    bwBin(3, 45.0, 52.0, 58.5, 63.0, 71.0, 60.1, 62.0)
+                    bwBin(1, 5.2,  8.1,  12.3, 18.4, 28.0, 14.2),
+                    bwBin(2, 10.0, 14.5, 19.2, 24.0, 32.5, 20.1),
+                    bwBin(3, 45.0, 52.0, 58.5, 63.0, 71.0, 60.1)
                 )),
                 Group.Hispanic, bwGroupData(List.of(
-                    bwBin(1, 2.1, 4.0, 6.5, 9.0, 14.0, 7.2, 7.5)
+                    bwBin(1, 2.1, 4.0, 6.5, 9.0, 14.0, 7.2)
                 )),
                 Group.Asian, bwGroupData(List.of(
-                    bwBin(1, 1.0, 2.5, 4.0, 6.0, 9.5, 4.8, 5.0)
+                    bwBin(1, 1.0, 2.5, 4.0, 6.0, 9.5, 4.8)
                 ))
             )),
             EnsembleType.VRA, bwEnsemble(Map.of(
                 Group.Black, bwGroupData(Arrays.asList(
-                    bwBin(1, 12.0, 18.0, 24.0, 30.0, 37.0, 22.0, 25.0),
-                    bwBin(2, 15.0, 21.0, 26.0, 31.0, 40.0, 24.0, 28.0)
+                    bwBin(1, 12.0, 18.0, 24.0, 30.0, 37.0, 22.0),
+                    bwBin(2, 15.0, 21.0, 26.0, 31.0, 40.0, 24.0)
                 )),
                 Group.Hispanic, bwGroupData(List.of(
-                    bwBin(1, 3.0, 5.5, 8.0, 11.0, 16.0, 9.0, 9.5)
+                    bwBin(1, 3.0, 5.5, 8.0, 11.0, 16.0, 9.0)
                 )),
                 Group.Asian, bwGroupData(List.of(
-                    bwBin(1, 2.0, 4.0, 6.5, 8.5, 12.0, 7.0, 7.5)
+                    bwBin(1, 2.0, 4.0, 6.5, 8.5, 12.0, 7.0)
                 ))
             ))
         ));
@@ -513,12 +585,12 @@ public class DataSeeder implements CommandLineRunner {
         ms.setEnsembles(Map.of(
             EnsembleType.RB, bwEnsemble(Map.of(
                 Group.Black, bwGroupData(List.of(
-                    bwBin(1, 52.0, 58.0, 63.5, 68.0, 74.0, 64.1, 65.0)
+                    bwBin(1, 52.0, 58.0, 63.5, 68.0, 74.0, 64.1)
                 ))
             )),
             EnsembleType.VRA, bwEnsemble(Map.of(
                 Group.Black, bwGroupData(List.of(
-                    bwBin(1, 58.0, 63.0, 68.0, 72.0, 78.0, 67.0, 70.0)
+                    bwBin(1, 58.0, 63.0, 68.0, 72.0, 78.0, 67.0)
                 ))
             ))
         ));
@@ -540,7 +612,7 @@ public class DataSeeder implements CommandLineRunner {
     }
 
     private BoxWhiskerBin bwBin(int order, double min, double q1, double median,
-                                  double q3, double max, double enacted, double proposed) {
+                                  double q3, double max, double enacted) {
         BoxWhiskerBin b = new BoxWhiskerBin();
         b.setOrder(order);
         b.setMin(min);
@@ -549,7 +621,6 @@ public class DataSeeder implements CommandLineRunner {
         b.setQ3(q3);
         b.setMax(max);
         b.setEnactedDot(enacted);
-        b.setProposedDot(proposed);
         return b;
     }
 

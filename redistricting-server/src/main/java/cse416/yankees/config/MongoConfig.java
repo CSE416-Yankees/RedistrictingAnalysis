@@ -1,5 +1,6 @@
 package cse416.yankees.config;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mongodb.lang.NonNull;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -20,12 +21,18 @@ public class MongoConfig {
      * outside of Spring (e.g. seed scripts).
      */
     @Bean
+    public ObjectMapper objectMapper() {
+        return new ObjectMapper();
+    }
+
+    @Bean
     public MappingMongoConverter mappingMongoConverter(
             @NonNull MongoDatabaseFactory factory,
             @NonNull MongoMappingContext context) {
         DbRefResolver resolver = new DefaultDbRefResolver(factory);
         MappingMongoConverter converter = new MappingMongoConverter(resolver, context);
         converter.setTypeMapper(new DefaultMongoTypeMapper(null));
+        converter.setMapKeyDotReplacement("·"); // precinct names contain literal dots, which MongoDB forbids as map keys
         return converter;
     }
 }
