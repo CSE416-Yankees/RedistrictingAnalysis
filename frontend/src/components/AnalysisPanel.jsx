@@ -32,6 +32,9 @@ const RANGE_BAR_CHART_HEIGHT = 360;
 const GINGLES_PRECINCT_PAGE_SIZE = 8;
 const GINGLES_TABLE_PAGE_SIZE = 8;
 const PAGE_WINDOW_SIZE = 5;
+const GINGLES_X_BUCKET_PCT = 0.5;
+const GINGLES_Y_BUCKET_PCT = 1;
+const GINGLES_TOOLTIP_PREVIEW_LIMIT = 3;
 
 function eiPayloadRevision(payload) {
   const results = payload?.candidateResults;
@@ -59,6 +62,7 @@ export default function AnalysisPanel({
   feasibleGroups,
   inlineHeatmapGroup,
   onToggleInlineHeatmap,
+  showDistrictDetailsWithSummary = false,
 }) {
   const [highlightedGinglesPrecinct, setHighlightedGinglesPrecinct] = useState(null);
 
@@ -84,15 +88,24 @@ export default function AnalysisPanel({
   return (
     <div className="analysis-panel">
       {analysisView === 'stateSummary' && (
-        <StateSummaryCard
-          payload={guiPayloads.stateSummary}
-          stateData={stateData}
-          isLoading={isSummaryLoading}
-          error={summaryError}
-          feasibleGroups={feasibleGroups}
-          inlineHeatmapGroup={inlineHeatmapGroup}
-          onToggleInlineHeatmap={onToggleInlineHeatmap}
-        />
+        <>
+          <StateSummaryCard
+            payload={guiPayloads.stateSummary}
+            stateData={stateData}
+            isLoading={isSummaryLoading}
+            error={summaryError}
+            feasibleGroups={feasibleGroups}
+            inlineHeatmapGroup={inlineHeatmapGroup}
+            onToggleInlineHeatmap={onToggleInlineHeatmap}
+          />
+          {showDistrictDetailsWithSummary && (
+            <DistrictRepresentationTable
+              payload={guiPayloads.districtDetails}
+              highlightedDistrict={highlightedDistrict}
+              onHighlightDistrict={onHighlightDistrict}
+            />
+          )}
+        </>
       )}
       {analysisView === 'districtDetails' && (
         <DistrictRepresentationTable
@@ -172,16 +185,16 @@ function StateSummaryCard({
 }) {
   if (isLoading) {
     return (
-      <ChartCard title="State Data Summary" subtitle="Population, demographics, party control, statewide vote, and representation">
-        <p className="analysis-note">Loading state summary...</p>
+      <ChartCard title="State & District Overview" subtitle="Population, demographics, party control, statewide vote, and representation">
+        <p className="analysis-note">Loading state and district overview...</p>
       </ChartCard>
     );
   }
 
   if (!payload) {
     return (
-      <ChartCard title="State Data Summary" subtitle="Population, demographics, party control, statewide vote, and representation">
-        <p className="analysis-note">{error || 'State summary is currently unavailable.'}</p>
+      <ChartCard title="State & District Overview" subtitle="Population, demographics, party control, statewide vote, and representation">
+        <p className="analysis-note">{error || 'State and district overview is currently unavailable.'}</p>
       </ChartCard>
     );
   }
@@ -192,7 +205,7 @@ function StateSummaryCard({
   const canToggleHeatmap = typeof onToggleInlineHeatmap === 'function';
 
   return (
-    <ChartCard title="State Data Summary" subtitle="Population, demographics, party control, statewide vote, and ensemble availability">
+    <ChartCard title="State & District Overview" subtitle="Population, demographics, party control, statewide vote, and ensemble availability">
       <div className="analysis-kpi-grid">
         <Kpi label="Population" value={formatNumber(summary.population)} />
         <Kpi label="Congressional Districts" value={summary.congressionalDistricts} />
@@ -505,71 +518,60 @@ function EnsembleSplitsChart({ payload, summaryPayload, selectedEnsembleType, on
   );
 }
 
-function VraImpactThresholdTable({
-  payload,
-  selectedGroup,
-  onSelectedGroupChange,
-}) {
+function VraImpactThresholdTable({ payload }) {
   const rows = useMemo(() => payload?.rows || EMPTY_LIST, [payload?.rows]);
-  const [localSelectedGroup, setLocalSelectedGroup] = useState(rows[0]?.group || 'Black');
-  const requestedGroup = selectedGroup || localSelectedGroup;
-
-  const effectiveGroup =
-    rows.length === 0
-      ? requestedGroup
-      : rows.some((row) => row.group === requestedGroup)
-        ? requestedGroup
-        : rows[0].group;
-
-  const activeRow = rows.find((row) => row.group === effectiveGroup) || rows[0];
-  const metricRows = activeRow
-    ? [
-      ['Enacted effective-district threshold', activeRow.enactedThreshold],
-      ['Rough proportionality threshold', activeRow.roughProportionality],
-      ['Joint threshold', activeRow.jointThreshold],
-    ]
-    : EMPTY_LIST;
-  const handleGroupChange = (nextGroup) => {
-    setLocalSelectedGroup(nextGroup);
-    onSelectedGroupChange?.(nextGroup);
-  };
 
   return (
     <ChartCard title="VRA Impact Thresholds" subtitle="Legal threshold percentages compared side-by-side by ensemble">
-      {rows.length > 0 && !selectedGroup && (
-        <SelectControl
-          id="vra-impact-group-select"
-          label="Feasible Race"
-          value={effectiveGroup || ''}
-          options={rows.map((row) => ({ value: row.group, label: row.group }))}
-          onChange={handleGroupChange}
-        />
+      {rows.length > 0 ? (
+        <div className="vra-impact-grid" aria-label="VRA impact thresholds by feasible race">
+          {rows.map((row) => {
+            const metricRows = vraImpactMetricRows(row);
+
+            return (
+              <section className="vra-impact-card" key={row.group} aria-label={`${row.group} VRA impact thresholds`}>
+                <div className="vra-impact-card__header">
+                  <span>Feasible Race</span>
+                  <strong>{row.group}</strong>
+                </div>
+                <div className="analysis-table-wrap vra-impact-card__table">
+                  <table className="analysis-table analysis-table--compact">
+                    <thead>
+                      <tr>
+                        <th>Metric</th>
+                        <th className="num">Race-Blind</th>
+                        <th className="num">VRA Constrained</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {metricRows.map(([metric, values]) => (
+                        <tr key={metric}>
+                          <td>{metric}</td>
+                          <td className="num">{formatPct(values?.rbPct, 1)}</td>
+                          <td className="num">{formatPct(values?.vraPct, 1)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+            );
+          })}
+        </div>
+      ) : (
+        <p className="analysis-note">No VRA impact threshold rows are available.</p>
       )}
-      <div className="analysis-table-wrap">
-        <table className="analysis-table">
-          <thead>
-            <tr>
-              <th>Group</th>
-              <th>Metric</th>
-              <th className="num">Race-Blind</th>
-              <th className="num">VRA Constrained</th>
-            </tr>
-          </thead>
-          <tbody>
-            {metricRows.map(([metric, values]) => (
-              <tr key={metric}>
-                <td>{activeRow?.group}</td>
-                <td>{metric}</td>
-                <td className="num">{formatPct(values?.rbPct, 1)}</td>
-                <td className="num">{formatPct(values?.vraPct, 1)}</td>
-              </tr>
-            ))}
-            {metricRows.length === 0 && <EmptyTableRow colSpan={4} label="No VRA impact threshold rows are available." />}
-          </tbody>
-        </table>
-      </div>
     </ChartCard>
   );
+}
+
+function vraImpactMetricRows(row) {
+  if (!row) return EMPTY_LIST;
+  return [
+    ['Enacted effective-district threshold', row.enactedThreshold],
+    ['Rough proportionality threshold', row.roughProportionality],
+    ['Joint threshold', row.jointThreshold],
+  ];
 }
 
 function MinorityEffectivenessBoxChart({ payload, selectedGroup }) {
@@ -1038,24 +1040,18 @@ function GinglesSummary({
   const points = groupData?.points || EMPTY_LIST;
   const demRegression = groupData?.regression?.dem;
   const repRegression = groupData?.regression?.rep;
-  const demPoints = useMemo(() => points.map((point) => ({
-    x: valueToPercent(point.x),
-    y: valueToPercent(point.demVotePct),
-    precinctId: point.precinctId,
-    district: point.district,
+  const demPoints = useMemo(() => aggregateGinglesScatterPoints(points, {
+    voteKey: 'demVotePct',
+    otherVoteKey: 'repVotePct',
     party: 'Democratic',
     otherPartyLabel: 'Republican',
-    otherPartyShare: valueToPercent(point.repVotePct),
-  })), [points]);
-  const repPoints = useMemo(() => points.map((point) => ({
-    x: valueToPercent(point.x),
-    y: valueToPercent(point.repVotePct),
-    precinctId: point.precinctId,
-    district: point.district,
+  }), [points]);
+  const repPoints = useMemo(() => aggregateGinglesScatterPoints(points, {
+    voteKey: 'repVotePct',
+    otherVoteKey: 'demVotePct',
     party: 'Republican',
     otherPartyLabel: 'Democratic',
-    otherPartyShare: valueToPercent(point.demVotePct),
-  })), [points]);
+  }), [points]);
   const demTrend = useMemo(() => normalizeRegressionLine(demRegression), [demRegression]);
   const repTrend = useMemo(() => normalizeRegressionLine(repRegression), [repRegression]);
   const handleGroupChange = (nextGroup) => {
@@ -1106,6 +1102,7 @@ function GinglesSummary({
               data={demPoints}
               fill="#1e88e5"
               fillOpacity={0.34}
+              shape={<GinglesScatterPoint />}
               isAnimationActive={false}
               onClick={(point) => onSelectPrecinct?.(point?.payload?.precinctId)}
             />
@@ -1114,6 +1111,7 @@ function GinglesSummary({
               data={repPoints}
               fill="#e53935"
               fillOpacity={0.34}
+              shape={<GinglesScatterPoint />}
               isAnimationActive={false}
               onClick={(point) => onSelectPrecinct?.(point?.payload?.precinctId)}
             />
@@ -1728,6 +1726,87 @@ function normalizeEiCandidateData(payload) {
   return { candidates, groups, series, overlapRows };
 }
 
+function ginglesBucketKey(x, y) {
+  const bucketX = Math.round(x / GINGLES_X_BUCKET_PCT);
+  const bucketY = Math.round(y / GINGLES_Y_BUCKET_PCT);
+  return `${bucketX}:${bucketY}`;
+}
+
+function formatDistrictSummary(districts) {
+  const uniqueDistricts = [...new Set(districts.filter(Boolean).map(String))].sort((left, right) => {
+    const leftNumber = Number(left.replace(/\D/g, ''));
+    const rightNumber = Number(right.replace(/\D/g, ''));
+    if (Number.isFinite(leftNumber) && Number.isFinite(rightNumber)) {
+      return leftNumber - rightNumber;
+    }
+    return left.localeCompare(right);
+  });
+  if (uniqueDistricts.length === 0) return 'District N/A';
+  if (uniqueDistricts.length <= 3) return uniqueDistricts.join(', ');
+  return `${uniqueDistricts.slice(0, 3).join(', ')} +${uniqueDistricts.length - 3}`;
+}
+
+function aggregateGinglesScatterPoints(points, {
+  voteKey,
+  otherVoteKey,
+  party,
+  otherPartyLabel,
+}) {
+  const buckets = new Map();
+
+  points.forEach((point) => {
+    const x = valueToPercent(point.x);
+    const y = valueToPercent(point[voteKey]);
+    const otherPartyShare = valueToPercent(point[otherVoteKey]);
+    if (!Number.isFinite(x) || !Number.isFinite(y)) return;
+
+    const key = ginglesBucketKey(x, y);
+    const bucket = buckets.get(key) || {
+      xSum: 0,
+      ySum: 0,
+      otherPartyShareSum: 0,
+      otherPartyShareCount: 0,
+      precinctIds: [],
+      districts: [],
+      count: 0,
+      party,
+      otherPartyLabel,
+    };
+
+    bucket.xSum += x;
+    bucket.ySum += y;
+    if (Number.isFinite(otherPartyShare)) {
+      bucket.otherPartyShareSum += otherPartyShare;
+      bucket.otherPartyShareCount += 1;
+    }
+    bucket.count += 1;
+    bucket.precinctIds.push(point.precinctId);
+    bucket.districts.push(point.district);
+    buckets.set(key, bucket);
+  });
+
+  return [...buckets.values()].map((bucket) => {
+    const x = bucket.xSum / bucket.count;
+    const y = bucket.ySum / bucket.count;
+    const otherPartyShare = bucket.otherPartyShareCount > 0
+      ? bucket.otherPartyShareSum / bucket.otherPartyShareCount
+      : null;
+    const precinctIds = bucket.precinctIds.filter(Boolean).map(String);
+
+    return {
+      x,
+      y,
+      precinctId: precinctIds[0],
+      precinctIds,
+      district: formatDistrictSummary(bucket.districts),
+      party: bucket.party,
+      otherPartyLabel: bucket.otherPartyLabel,
+      otherPartyShare,
+      count: bucket.count,
+    };
+  }).sort((left, right) => left.x - right.x || left.y - right.y);
+}
+
 function normalizeRegressionLine(points) {
   if (!Array.isArray(points)) return EMPTY_LIST;
   return points
@@ -1874,14 +1953,48 @@ function GinglesScatterTooltip({ active, payload, groupLabel }) {
   if (!active || !payload || payload.length === 0) return null;
   const row = payload[0]?.payload;
   if (!row) return null;
+  const count = Number(row.count) || 1;
+  const precinctPreview = Array.isArray(row.precinctIds)
+    ? row.precinctIds.slice(0, GINGLES_TOOLTIP_PREVIEW_LIMIT).join(', ')
+    : row.precinctId;
+  const hiddenPrecinctCount = Array.isArray(row.precinctIds)
+    ? Math.max(0, row.precinctIds.length - GINGLES_TOOLTIP_PREVIEW_LIMIT)
+    : 0;
 
   return (
     <div className="analysis-tooltip">
-      <div className="analysis-tooltip__title">{row.precinctId} ({row.district})</div>
+      <div className="analysis-tooltip__title">
+        {count > 1 ? `${count} precincts` : row.precinctId} ({row.district})
+      </div>
+      {count > 1 && precinctPreview && (
+        <div>
+          Includes: {precinctPreview}{hiddenPrecinctCount > 0 ? ` +${hiddenPrecinctCount}` : ''}
+        </div>
+      )}
       <div>{groupLabel}: {fmtPct1(row.x)}</div>
       <div>{row.party} vote: {fmtPct1(row.y)}</div>
       <div>{row.otherPartyLabel} vote: {fmtPct1(row.otherPartyShare)}</div>
     </div>
+  );
+}
+
+function GinglesScatterPoint(props) {
+  const { cx, cy, fill, fillOpacity, payload } = props;
+  if (!Number.isFinite(cx) || !Number.isFinite(cy)) return null;
+  const count = Math.max(1, Number(payload?.count) || 1);
+  const radius = Math.min(7, 3.1 + Math.log2(count) * 0.7);
+
+  return (
+    <circle
+      cx={cx}
+      cy={cy}
+      r={radius}
+      fill={fill}
+      fillOpacity={fillOpacity ?? 0.34}
+      stroke={fill}
+      strokeOpacity={count > 1 ? 0.6 : 0}
+      strokeWidth={count > 1 ? 1 : 0}
+    />
   );
 }
 

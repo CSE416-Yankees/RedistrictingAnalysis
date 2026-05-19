@@ -38,7 +38,7 @@ export const GUI_SLUG_TO_CONFIG = {
   },
   'gui-3': {
     routeSlug: 'gui-3',
-    title: 'State data summary',
+    title: 'State and district overview',
     payloadKeys: ['stateSummary'],
     analysisView: 'stateSummary',
     isAnalysisOpen: true,
@@ -186,6 +186,16 @@ export const GUI_SLUG_TO_CONFIG = {
     mapMetric: 'demographic',
     mapDemographicGroup: 'overall',
   },
+  'gui-23': {
+    routeSlug: 'gui-23',
+    title: 'Reset page',
+    payloadKeys: ['currentPlan', 'stateSummary'],
+    analysisView: 'stateSummary',
+    isAnalysisOpen: true,
+    mapPlanMode: 'current',
+    mapMetric: 'demographic',
+    mapDemographicGroup: 'overall',
+  },
   'gui-24': {
     routeSlug: 'gui-24',
     title: 'Reset page',
@@ -218,21 +228,21 @@ export const REQUIRED_GUI_SLUGS = [
   'gui-6',
   'gui-9',
   'gui-12',
-  'gui-16',
   'gui-17',
+  'gui-16',
+  'gui-26',
   'gui-20',
   'gui-21',
   'gui-22',
-  'gui-26',
 ];
 
 export const PREFERRED_GUI_SLUGS = [
   'gui-7',
-  'gui-8',
   'gui-10',
   'gui-11',
+  'gui-8',
   'gui-19',
-  'gui-24',
+  'gui-23',
 ];
 
 export function resolveGuiUiConfig(guiSlug) {
@@ -241,25 +251,23 @@ export function resolveGuiUiConfig(guiSlug) {
 }
 
 /** Dropdown options: value matches AnalysisPanel routing.
- * Plan Explorer entries (map-centric or data-summary views) come first in the
- * order they appear in the page; Analysis entries follow in pipeline order:
- * test (Gingles, EI) -> simulation (Distribution, Splits, Effectiveness) ->
- * legal threshold (VRA Impact). */
+ * Ordered by the GUI use-case sequence. Interaction-only use cases such as
+ * highlighting are represented by the screen where that interaction lives. */
 export const ANALYSIS_OPTIONS = [
-  { value: 'currentPlanMap', label: 'Current Plan Map', routeSlug: 'gui-2' },
-  { value: 'stateSummary', label: 'State Data Summary', routeSlug: 'gui-3' },
-  { value: 'demographicHeatMap', label: 'Demographic Heat Map', routeSlug: 'gui-4' },
-  { value: 'planComparisonMap', label: 'Compare Plans', routeSlug: 'gui-8' },
+  { value: 'currentPlanMap', label: 'Current District Plan', routeSlug: 'gui-2' },
+  { value: 'stateSummary', label: 'State & District Overview', routeSlug: 'gui-3' },
+  { value: 'demographicHeatMap', label: 'Precinct Demographic Heat Map', routeSlug: 'gui-4' },
   { value: 'districtDetails', label: 'Congressional Representation', routeSlug: 'gui-6' },
-  { value: 'interestingPlanMap', label: 'Interesting Plan', routeSlug: 'gui-19' },
-  { value: 'gingles', label: 'Gingles Analysis', routeSlug: 'gui-9' },
-  { value: 'eiCandidates', label: 'Ecological Inference Results', routeSlug: 'gui-12' },
-  { value: 'boxWhisker', label: 'District Distribution', routeSlug: 'gui-17' },
+  { value: 'gingles', label: 'Gingles Results & Precinct Table', routeSlug: 'gui-9' },
+  { value: 'eiCandidates', label: 'EI Candidate Results', routeSlug: 'gui-12' },
+  { value: 'boxWhisker', label: 'District Box & Whisker', routeSlug: 'gui-17' },
   { value: 'ensembleSplits', label: 'Ensemble Vote Splits', routeSlug: 'gui-16' },
-  { value: 'minorityEffectivenessBox', label: 'Minority Effectiveness Range', routeSlug: 'gui-21' },
-  { value: 'minorityEffectivenessHistogram', label: 'Minority Effectiveness Histogram', routeSlug: 'gui-22' },
   { value: 'minorityRangeBars', label: 'Minority District Range Bars', routeSlug: 'gui-26' },
   { value: 'vraImpact', label: 'VRA Impact Thresholds', routeSlug: 'gui-20' },
+  { value: 'minorityEffectivenessBox', label: 'Minority Effectiveness Box & Whisker', routeSlug: 'gui-21' },
+  { value: 'minorityEffectivenessHistogram', label: 'Minority Effectiveness Histogram', routeSlug: 'gui-22' },
+  { value: 'planComparisonMap', label: 'Compare District Plans', routeSlug: 'gui-8' },
+  { value: 'interestingPlanMap', label: 'Interesting District Plan', routeSlug: 'gui-19' },
 ];
 
 export const MAP_GUI_LINKS = [

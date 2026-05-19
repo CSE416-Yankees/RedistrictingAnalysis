@@ -11,7 +11,10 @@ const ANALYSIS_ROUTE_SLUGS = new Set([
   'gui-20',
   'gui-21',
   'gui-22',
+  'gui-26',
 ]);
+
+const YANKEES_LOGO_URL = `${import.meta.env.BASE_URL}yankees-primary-logo.svg`;
 
 export default function Header() {
   const location = useLocation();
@@ -26,13 +29,12 @@ export default function Header() {
     <header className="header">
       <div className="header__left">
         <Link to="/" className="header__brand">
-          <svg className="header__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
-            <polyline points="9 22 9 12 15 12 15 22" />
-          </svg>
+          <span className="header__logo-frame" aria-hidden="true">
+            <img className="header__logo" src={YANKEES_LOGO_URL} alt="" />
+          </span>
           <span className="header__brand-copy">
-            <span className="header__title">District Story Lab</span>
-            <span className="header__subtitle">Redistricting analysis with people in mind</span>
+            <span className="header__title">Yankees Redistricting Analysis</span>
+            <span className="header__subtitle">Voting rights and district plan diagnostics</span>
           </span>
         </Link>
       </div>

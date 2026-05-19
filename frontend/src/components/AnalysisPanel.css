@@ -189,7 +189,7 @@
   font-size: 0.78rem;
 }
 
-/* Inline heat map toggle inside the State Summary demographic table. */
+/* Inline heat map toggle inside the overview demographic table. */
 .heatmap-toggle {
   display: inline-flex;
   align-items: center;
@@ -644,6 +644,52 @@
   margin-top: 6px;
   border: 1px solid rgba(232, 220, 204, 0.74);
   border-radius: var(--radius-sm);
+}
+
+.vra-impact-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 10px;
+}
+
+.vra-impact-card {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+  padding: 10px;
+  border: 1px solid rgba(190, 172, 150, 0.38);
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.58);
+}
+
+.vra-impact-card__header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  min-width: 0;
+}
+
+.vra-impact-card__header span {
+  color: #6d5e4c;
+  font-size: 0.62rem;
+  font-weight: 850;
+  letter-spacing: 0.06em;
+  line-height: 1.15;
+  text-transform: uppercase;
+}
+
+.vra-impact-card__header strong {
+  color: var(--color-primary-dark);
+  font-size: 0.94rem;
+  line-height: 1.15;
+}
+
+.vra-impact-card__table {
+  margin-top: 0;
+  border: 1px solid rgba(232, 220, 204, 0.74);
+  border-radius: var(--radius-sm);
+  overflow-x: auto;
 }
 
 .minority-histogram-summary {

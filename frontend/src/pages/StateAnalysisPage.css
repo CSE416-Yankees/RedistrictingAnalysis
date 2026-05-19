@@ -209,7 +209,7 @@
   border-radius: var(--radius-md);
   min-width: 0;
   min-height: 0;
-  overflow: visible;
+  overflow: auto;
   box-shadow: var(--shadow-sm);
 }
 
@@ -221,7 +221,7 @@
   border-radius: var(--radius-md);
   border: 1px solid rgba(190, 173, 152, 0.42);
   box-shadow: 0 1px 6px rgba(21, 35, 43, 0.05);
-  height: 100%;
+  height: auto;
   padding: 7px;
   background: linear-gradient(180deg, rgba(255, 253, 249, 0.94) 0%, rgba(255, 249, 241, 0.94) 100%);
 }
@@ -289,160 +289,6 @@
 
 .state-analysis__overview-panel .analysis-table th {
   font-size: 0.62rem;
-}
-
-.interesting-plan-panel {
-  height: 100%;
-  padding: 8px;
-  min-height: 0;
-}
-
-.interesting-plan-panel__card {
-  height: 100%;
-  display: grid;
-  grid-template-rows: auto auto auto minmax(0, 1fr);
-  gap: 8px;
-  padding: 12px;
-  border: 1px solid rgba(190, 173, 152, 0.42);
-  border-radius: var(--radius-md);
-  background: linear-gradient(180deg, rgba(255, 253, 249, 0.94) 0%, rgba(255, 249, 241, 0.94) 100%);
-  box-shadow: 0 1px 6px rgba(21, 35, 43, 0.05);
-  min-height: 0;
-}
-
-.interesting-plan-panel__heading {
-  display: grid;
-  gap: 4px;
-}
-
-.interesting-plan-panel__heading span,
-.interesting-plan-panel__selected span,
-.interesting-plan-panel__metrics span,
-.interesting-plan-panel__catalog-title span {
-  color: #6d5e4c;
-  font-size: 0.62rem;
-  font-weight: 850;
-  letter-spacing: 0.06em;
-  line-height: 1.15;
-  text-transform: uppercase;
-}
-
-.interesting-plan-panel__heading h3 {
-  margin: 0;
-  color: var(--color-primary-dark);
-  font-family: var(--font-display);
-  font-size: 1.12rem;
-  line-height: 1.08;
-}
-
-.interesting-plan-panel__heading p,
-.interesting-plan-panel__selected p {
-  margin: 0;
-  color: var(--color-text-secondary);
-  font-size: 0.74rem;
-  font-weight: 650;
-  line-height: 1.25;
-}
-
-.interesting-plan-panel__selected {
-  display: grid;
-  gap: 3px;
-  padding: 9px;
-  border: 1px solid rgba(190, 172, 150, 0.36);
-  border-radius: var(--radius-sm);
-  background: rgba(255, 255, 255, 0.62);
-}
-
-.interesting-plan-panel__selected strong {
-  color: var(--color-primary-dark);
-  font-size: 0.96rem;
-  line-height: 1.15;
-  overflow-wrap: anywhere;
-}
-
-.interesting-plan-panel__metrics {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 6px;
-}
-
-.interesting-plan-panel__metrics div {
-  display: grid;
-  gap: 2px;
-  min-width: 0;
-  padding: 7px;
-  border: 1px solid rgba(190, 172, 150, 0.36);
-  border-radius: var(--radius-sm);
-  background: rgba(255, 255, 255, 0.58);
-}
-
-.interesting-plan-panel__metrics strong {
-  color: var(--color-primary-dark);
-  font-size: 0.86rem;
-  line-height: 1.12;
-  overflow-wrap: anywhere;
-}
-
-.interesting-plan-panel__catalog {
-  min-height: 0;
-  display: grid;
-  grid-template-rows: auto minmax(0, 1fr);
-  gap: 6px;
-}
-
-.interesting-plan-panel__catalog-title {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 8px;
-}
-
-.interesting-plan-panel__catalog-title strong {
-  color: var(--color-primary-dark);
-  font-size: 0.86rem;
-}
-
-.interesting-plan-panel__list {
-  min-height: 0;
-  display: grid;
-  gap: 6px;
-  align-content: start;
-}
-
-.interesting-plan-panel__option {
-  width: 100%;
-  min-width: 0;
-  display: grid;
-  gap: 3px;
-  padding: 8px 9px;
-  border: 1px solid rgba(190, 172, 150, 0.44);
-  border-radius: var(--radius-sm);
-  background: rgba(255, 255, 255, 0.54);
-  color: var(--color-text);
-  text-align: left;
-}
-
-.interesting-plan-panel__option:hover,
-.interesting-plan-panel__option--active {
-  border-color: rgba(31, 111, 120, 0.45);
-  background: rgba(232, 248, 250, 0.86);
-}
-
-.interesting-plan-panel__option span {
-  color: var(--color-primary-dark);
-  font-size: 0.82rem;
-  font-weight: 850;
-  line-height: 1.12;
-  overflow-wrap: anywhere;
-}
-
-.interesting-plan-panel__option small,
-.interesting-plan-panel__empty {
-  color: var(--color-text-secondary);
-  font-size: 0.68rem;
-  font-weight: 650;
-  line-height: 1.24;
-  overflow-wrap: anywhere;
 }
 
 .state-analysis__plan-controls {
@@ -521,6 +367,13 @@
   top: auto;
   bottom: calc(100% + 6px);
   z-index: 2400;
+}
+
+.state-analysis__plan-selectors {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 
 .state-analysis__control-field,
@@ -783,6 +636,12 @@
   .state-analysis__analysis-toolbar {
     align-items: stretch;
     flex-direction: column;
+  }
+
+  .state-analysis__plan-selectors {
+    width: 100%;
+    flex-direction: column;
+    align-items: stretch;
   }
 
   .state-analysis__control-field,

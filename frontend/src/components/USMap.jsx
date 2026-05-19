@@ -1,4 +1,5 @@
 import { MapContainer, TileLayer, GeoJSON, Tooltip as LeafletTooltip } from 'react-leaflet';
+import { featureCollection, union } from '@turf/turf';
 import L from 'leaflet';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -15,6 +16,29 @@ function stateDataUrl(stateAbbr) {
   return `${trailing}data/${encodeURIComponent(stateAbbr)}.json`;
 }
 
+function stateOutlineFromDistricts(geo, entry) {
+  const features = Array.isArray(geo?.features) ? geo.features : [];
+  if (features.length <= 1) return geo;
+
+  try {
+    const outline = union(featureCollection(features));
+    if (!outline?.geometry) return geo;
+
+    return {
+      type: 'FeatureCollection',
+      features: [{
+        ...outline,
+        properties: {
+          abbr: entry.abbr,
+          name: entry.name,
+        },
+      }],
+    };
+  } catch {
+    return geo;
+  }
+}
+
 export default function USMap() {
   const navigate = useNavigate();
   const [stateGeo, setStateGeo] = useState({});
@@ -29,7 +53,7 @@ export default function USMap() {
           const response = await fetch(stateDataUrl(entry.abbr), { signal: controller.signal });
           if (!response.ok) return [entry.abbr, null];
           const json = await response.json();
-          return [entry.abbr, json];
+          return [entry.abbr, stateOutlineFromDistricts(json, entry)];
         } catch {
           return [entry.abbr, null];
         }
