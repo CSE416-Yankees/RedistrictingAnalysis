@@ -12,6 +12,7 @@ public class PlanComparison {
     private String id;
     private State state;
     private Map<String, PlanMapping> plans;
+    private Map<String, PlanMetadata> planMetadata;
 
     public String getId() { return id; }
 
@@ -20,4 +21,7 @@ public class PlanComparison {
 
     public Map<String, PlanMapping> getPlans() { return plans; }
     public void setPlans(Map<String, PlanMapping> plans) { this.plans = plans; }
+
+    public Map<String, PlanMetadata> getPlanMetadata() { return planMetadata; }
+    public void setPlanMetadata(Map<String, PlanMetadata> planMetadata) { this.planMetadata = planMetadata; }
 }

@@ -10,6 +10,11 @@
       "group": "Black",
       "populationPct": 0.38,
       "cvapPct": 0.35
+    },
+    {
+      "group": "White",
+      "populationPct": 0.6047,
+      "cvapPct": 0.63
     }
   ],
   "redistrictingControl": "Republican",

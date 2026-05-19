@@ -20,6 +20,25 @@
           "vraFrequency": 354
         }
       ]
+    },
+    "White": {
+      "bins": [
+        {
+          "effectiveDistricts": 2,
+          "rbFrequency": 309,
+          "vraFrequency": 350
+        },
+        {
+          "effectiveDistricts": 3,
+          "rbFrequency": 3930,
+          "vraFrequency": 4647
+        },
+        {
+          "effectiveDistricts": 4,
+          "rbFrequency": 761,
+          "vraFrequency": 3
+        }
+      ]
     }
   }
 }
